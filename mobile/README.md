@@ -3,30 +3,35 @@
 Khung thư mục cho app giao dịch chứng khoán chạy trên **Android + iOS**.
 Hiện tại mới có cấu trúc thư mục và file cấu hình; phần code sẽ viết sau.
 
-## 1. Sinh 2 thư mục native `android/` và `ios/`
+## 1. Trạng thái dự án
 
-Máy dựng khung này chưa cài Flutter SDK nên chưa sinh được phần native.
-Sau khi cài Flutter, chạy đúng 1 lệnh sau tại thư mục `mobile/`:
+`android/` và `ios/` đã được sinh sẵn bằng:
 
 ```bash
 flutter create --platforms=android,ios --org vn.stockmate --project-name stockmate .
-flutter pub get
 ```
 
-Lệnh này tạo `android/`, `ios/`, `lib/main.dart` từ template chính thức mà
-không đụng tới các thư mục đã có. Nếu `pubspec.yaml` bị ghi đè, khôi phục bằng:
+Đã chạy và pass trên Flutter 3.47.5 / Dart 3.13.4:
 
 ```bash
-git checkout -- pubspec.yaml
+flutter pub get     # OK
+flutter analyze     # No issues found!
+flutter test        # All tests passed (test mẫu của template)
 ```
 
-Kiểm tra môi trường và chạy thử:
+`lib/main.dart` và `test/widget_test.dart` hiện là bản mẫu của Flutter, sẽ thay khi vào code thật.
+
+Chạy app:
 
 ```bash
-flutter doctor            # bắt buộc xanh ở mục Android toolchain / Xcode
 flutter devices
-flutter run               # chọn emulator Android hoặc iOS simulator
+flutter run                 # chọn emulator Android / iOS simulator
 ```
+
+> **Cần cài thêm:** `flutter doctor` báo thiếu **Android SDK** nên chưa build được APK
+> (`flutter build apk` dừng với `No Android SDK found`). Cài Android Studio
+> (kèm SDK + emulator), rồi `flutter doctor --android-licenses`.
+> Build iOS bắt buộc máy macOS + Xcode.
 
 ## 2. Cấu trúc thư mục
 
@@ -89,17 +94,21 @@ khi đã có code thật trong thư mục.
 
 Chạy `flutter pub get` sau khi tạo xong phần native.
 
-## 4. Việc cần làm ở phần native sau khi `flutter create`
+## 4. Cấu hình native đã áp dụng
 
-**Android** — `android/app/src/main/AndroidManifest.xml`:
-```xml
-<uses-permission android:name="android.permission.INTERNET"/>
-```
-`android/app/build.gradle`: đặt `minSdk = 23` (yêu cầu của `flutter_secure_storage`).
+**Android** (`android/app/src/main/AndroidManifest.xml`)
+- thêm quyền `android.permission.INTERNET` để gọi API
+- `android:label` = `StockMate`
+- `applicationId` / namespace: `vn.stockmate.stockmate`
+- `minSdk` giữ mặc định của Flutter (**24**) — đã đủ cho `flutter_secure_storage` 11.x
 
-**iOS** — `ios/Runner/Info.plist`: đặt `CFBundleDisplayName` là `StockMate`.
-Khi test với backend chạy HTTP ở localhost, thêm tạm `NSAppTransportSecurity`
-→ `NSAllowsLocalNetworking = true` (production phải dùng HTTPS).
+**iOS** (`ios/Runner/Info.plist`)
+- `CFBundleDisplayName` = `StockMate`
+- `NSAppTransportSecurity` → `NSAllowsLocalNetworking = true` để gọi backend HTTP
+  trong mạng nội bộ lúc dev. **Production phải dùng HTTPS và bỏ khoá này.**
+
+Còn phải làm trước khi phát hành: ký APK release (`android/key.properties`,
+hiện release đang ký bằng debug key) và cấu hình signing team trong Xcode.
 
 ## 5. Kết nối với backend
 
