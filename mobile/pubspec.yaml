@@ -1,0 +1,45 @@
+name: stockmate
+description: StockMate - ung dung giao dich chung khoan (HOSE/HNX/UPCOM)
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.5.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+
+  # State management
+  flutter_riverpod: ^2.5.1
+
+  # Dieu huong
+  go_router: ^14.2.7
+
+  # Goi API FastAPI
+  dio: ^5.7.0
+
+  # Luu JWT an toan (Keychain tren iOS, EncryptedSharedPreferences tren Android)
+  flutter_secure_storage: ^9.2.2
+  shared_preferences: ^2.3.2
+
+  # Bieu do gia
+  fl_chart: ^0.69.0
+
+  # Dinh dang so / ngay theo locale vi_VN
+  intl: ^0.19.0
+
+  # Tien ich
+  equatable: ^2.0.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/icons/
