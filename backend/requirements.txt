@@ -1,0 +1,31 @@
+# Backend StockMate - FastAPI + PostgreSQL
+# Cai dat:  pip install -r requirements.txt
+# Sau khi chay on dinh, chot phien ban:  pip freeze > requirements.lock.txt
+
+# --- Web framework ---
+fastapi>=0.115
+uvicorn[standard]>=0.32
+
+# --- Validate du lieu / cau hinh ---
+pydantic>=2.9
+pydantic-settings>=2.5
+email-validator>=2.2
+
+# --- Database ---
+SQLAlchemy>=2.0
+alembic>=1.13
+psycopg[binary]>=3.2        # driver PostgreSQL (thay cho psycopg2)
+
+# --- Xac thuc ---
+python-jose[cryptography]>=3.3   # ky/giai ma JWT
+passlib[bcrypt]>=1.7             # hash mat khau bcrypt
+python-multipart>=0.0.9          # form OAuth2PasswordRequestForm
+
+# --- Tien ich ---
+python-dotenv>=1.0
+
+# --- Dev / test ---
+pytest>=8.3
+pytest-asyncio>=0.24
+httpx>=0.27
+ruff>=0.7
