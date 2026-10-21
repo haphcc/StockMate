@@ -8,6 +8,12 @@
 | Backend | FastAPI (Python) | [`backend/`](backend/README.md) |
 | Database | PostgreSQL | [`data/`](data/README.md) |
 
+## Kế hoạch & Phân công dự án
+
+- 📑 [Kế hoạch phát triển chi tiết 3 Sprint (PLAN.md)](docs/PLAN.md)
+- 👥 [Phân công công việc 6 thành viên & RACI (TASK_ASSIGNMENT.md)](docs/TASK_ASSIGNMENT.md)
+- 📊 [File phân công gốc theo Sprint (Mobile - Sheet1.csv)](docs/Mobile%20-%20Sheet1.csv)
+
 ## Bắt đầu
 
 ```bash
