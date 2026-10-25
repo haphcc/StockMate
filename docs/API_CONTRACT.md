@@ -1,8 +1,9 @@
 # Hợp đồng API v1
 
 Chủ: TV4 — LB; phần orders/transactions/notifications: TV5 — Tuệ.
-Schema chuẩn: `backend/app/schemas/`; snapshot máy đọc: [openapi.json](../backend/openapi.json).
-Swagger chạy tại http://localhost:8000/docs. Khung hiện trả 501 cho endpoint nghiệp vụ.
+Đây là đặc tả đích và JSON ví dụ để nhóm tự triển khai, chưa phải API chạy được.
+Các file backend/app/schemas chỉ là TODO. LB tự viết schema/routes, exporter và sinh backend/openapi.json;
+Swagger chỉ có sau khi app được triển khai.
 
 ## Quy ước dùng chung
 
@@ -16,7 +17,7 @@ Swagger chạy tại http://localhost:8000/docs. Khung hiện trả 501 cho endp
 - `StockResponse` là cấu trúc giá; `PortfolioResponse` **phẳng**, không có object `stock`.
 - `WatchlistResponse` có `stock` lồng theo schema; đây là lựa chọn riêng cho watchlist.
 - Page envelope: `{"items":[],"page":1,"page_size":20,"total":0}`; page≥1, page_size 1–100.
-- Các danh sách nhỏ (accounts, portfolio, chart, watchlist) là array thuần theo OpenAPI.
+- Các danh sách nhỏ (accounts, portfolio, chart, watchlist) là array thuần theo đặc tả này.
 - Sort cố định: board theo total_volume DESC rồi stock_symbol ASC; orders/transactions/notifications
   theo timestamp DESC rồi ID DESC; chart theo date ASC; accounts/portfolio/watchlist theo ID ASC.
 
@@ -50,7 +51,7 @@ Tất cả ngoài register/login/refresh và health cần JWT. MVP không có en
 
 `q` tìm không phân biệt hoa/thường theo mã hoặc tên. MVP không bỏ dấu tiếng Việt.
 Chart 1M/3M/6M = tối đa 22/66/132 phiên gần nhất, trả tăng dần theo ngày.
-Seed cũ chưa có client_order_id: migration 0002 phải backfill UUID cho lệnh lịch sử.
+Seed gốc chưa có client_order_id: Phuoc/Tuệ tự thiết kế migration và cách backfill UUID cho lịch sử.
 
 ## Request mẫu
 
@@ -99,6 +100,6 @@ MVP server chưa có blacklist token; không thêm route logout giả. Refresh t
 
 1. Sửa schema/route cùng response mapping; không chỉ sửa snapshot JSON.
 2. Cập nhật examples và test của payload bị ảnh hưởng.
-3. Trong `backend/`: `python -m scripts.export_openapi`.
-4. Chạy `python -m pytest` và `python -m scripts.export_openapi --check`.
+3. Khi LB đã viết exporter: sinh OpenAPI từ app và commit snapshot.
+4. Khi nhóm đã có test/exporter: chạy pytest và kiểm tra snapshot khớp app.
 5. PR có LB + chủ phần Flutter liên quan review; Châu chạy lại test case tích hợp.

@@ -322,7 +322,6 @@ Dòng 'TODO' trong source là file khung, chưa có tính năng.
 | [backend/app/services/auth_service.py](../backend/app/services/auth_service.py) |
 | [backend/app/services/market_service.py](../backend/app/services/market_service.py) |
 | [backend/app/utils/.gitkeep](../backend/app/utils/.gitkeep) |
-| [backend/openapi.json](../backend/openapi.json) |
 | [backend/pyproject.toml](../backend/pyproject.toml) |
 | [backend/requirements.lock.txt](../backend/requirements.lock.txt) |
 | [backend/requirements.txt](../backend/requirements.txt) |

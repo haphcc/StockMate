@@ -6,15 +6,15 @@ Ngày bắt đầu và deadline do nhóm điền; chưa giả định đã bắt
 
 | ID | Chủ | Việc | Chờ | Bàn giao/DoD | Trạng thái |
 |---|---|---|---|---|---|
-| PREP-01 | Phuoc/LB/Châu | Scope, rules, contract, structure, guide | — | Link đầy đủ; schema/tests nền; TODO có chủ | PREPARED |
-| ENV-01 | Phuoc | Dựng migrate/seed/health trên DB mới | — | QA-ENV-01/02/03 + log Châu xác nhận | TODO |
+| PREP-01 | Phuoc/LB/Châu | Scope, rules, contract, structure, guide | — | Link đầy đủ; TODO có chủ; không có implementation bổ sung | PREPARED |
+| ENV-01 | Phuoc | Tự viết Docker/migration/seed; cùng LB kiểm tra health | — | QA-ENV-01/02/03 + log Châu xác nhận | TODO |
 | FE-01 | Sơn | Model tiền và form auth đúng contract | — | Fixture parse chính xác, form validate, test xanh | TODO |
 | FE-03 | Me | Board/detail/chart từ fixture rồi API | FE-01 helper; API cần BE-02/03 | QA-MKT-01/02/03 | TODO |
-| BE-01 | LB | Auth thật + đăng ký atomic | ENV-01 | QA-AUTH-01–07 | TODO |
+| BE-01 | LB | Viết app/config/schema/health/session, auth + đăng ký atomic | ENV-01 | QA-AUTH-01–07 | TODO |
 | BE-02 | LB | Account/asset và board | BE-01 | Auth → account → board thật | TODO |
 | QA-01 | Châu | Setup và contract evidence | ENV-01 cho DB | G0, ghi environment.md | TODO |
 | FE-02 | Sơn | API repositories, JWT/refresh/account | FE-01 + BE-01/02 | G1 trên emulator, logout/restart đúng | TODO |
-| TR-01 | Tuệ + Phuoc | Test luật + migration invariant | — | Revision 0002, routine interface, backfill | TODO |
+| TR-01 | Tuệ + Phuoc | Test luật + migration invariant | — | Migration được review, routine interface, backfill | TODO |
 | BE-03 | LB | Portfolio hoàn chỉnh/chart/watchlist | BE-02; portfolio đợi TR-01 | G2 API | TODO |
 | FE-04 | Sơn + Me | Asset/portfolio/watchlist thật | FE-02 + BE-03 | QA-ACC/MKT liên quan | TODO |
 | TR-02 | Tuệ | Place/match/cancel/history/notifications | BE-01 + TR-01 | QA-ORD-01–09, QA-NOT-01 | TODO |

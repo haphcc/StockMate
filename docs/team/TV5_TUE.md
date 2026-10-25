@@ -1,7 +1,7 @@
 # TV5 — Tuệ: engine đặt/khớp/hủy, settlement và thông báo
 
 Tra file: `python scripts/check_preparation.py --owner TV5`.
-Đọc BUSINESS_RULES và DATABASE_WORKFLOW trước khi sửa trigger; baseline chưa phải engine hoàn chỉnh.
+Đọc BUSINESS_RULES và DATABASE_WORKFLOW trước khi sửa trigger; SQL prototype gốc chưa phải engine hoàn chỉnh; Alembic hiện chỉ là TODO.
 
 ## TR-01 — Khóa luật bằng test và schema, bắt đầu ngay
 
@@ -15,7 +15,7 @@ Tra file: `python scripts/check_preparation.py --owner TV5`.
 
 **File:** app/models/{stock_order,transaction,notification}.py; schemas/{trading,notifications}.py;
 tests/unit/test_trading.py; SQL đóng góp vào revision Phuoc giữ.
-**Xong khi:** migration 0002 được review, test reserve/cancel/khớp có expected numbers, chưa gọi xong G3.
+**Xong khi:** migration do nhóm viết được review, test reserve/cancel/khớp có expected numbers, chưa gọi xong G3.
 
 ## TR-02 — Order service và matching sau BE-01 + TR-01
 

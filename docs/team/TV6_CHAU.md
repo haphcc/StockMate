@@ -6,10 +6,10 @@ Châu xác nhận bằng kết quả chạy thực tế; người giữ feature 
 ## QA-01 — Kiểm tra nền, bắt đầu ngay
 
 1. Theo SETUP từ checkout mới; ghi phiên bản Docker/Python/Flutter/SDK, host/port và lỗi gặp.
-2. Chạy unit/contract tests backend, OpenAPI --check và check_preparation.
-3. Kiểm tra fixtures khớp schema; đăng ký/order có đủ trường, money string, portfolio phẳng.
-4. Xác nhận endpoint nghiệp vụ trả 501 ở scaffold và private route thiếu token trả 401.
-5. Phuoc chạy migrate/seed DB mới; Châu lưu evidence QA-ENV-01/02/03.
+2. Chạy check_preparation ngay; tự viết fixture và unit/contract/DB tests khi LB/Phuoc có implementation.
+3. Khi LB đã viết schema: kiểm tra fixtures khớp; đăng ký/order có đủ trường, money string, portfolio phẳng.
+4. Hiện backend/test chỉ là TODO: ghi NOT RUN. Sau BE-01, test health, validation, lỗi và private route 401.
+5. Sau khi Phuoc tự viết migration/seed, chạy trên DB mới; Châu lưu evidence QA-ENV-01/02/03.
 6. Điền trạng thái WORK_BOARD thực tế; đọc hướng dẫn từng người để phát hiện dependency bị bỏ sót.
 
 **File:** tests/unit/test_contract.py, tests/unit/test_http_contract.py, docs/qa/environment.md,

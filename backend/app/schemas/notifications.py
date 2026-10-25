@@ -1,15 +1,5 @@
-from typing import Literal
+"""TODO(TR-02) Owner: TV5 - Tuệ.
 
-from pydantic import AwareDatetime
-
-from app.schemas.common import ContractModel
-
-
-class NotificationResponse(ContractModel):
-    notification_id: int
-    title: str
-    content: str
-    notification_type: Literal["ORDER", "TRANSACTION", "PRICE_ALERT", "CASH", "SYSTEM", "NEWS"]
-    ref_id: int | None
-    is_read: bool
-    created_at: AwareDatetime
+Tu trien khai module nay theo API_CONTRACT, BUSINESS_RULES va huong dan ca nhan trong docs/team/.
+Chi la file khung, chua co implementation.
+"""

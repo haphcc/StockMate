@@ -49,18 +49,19 @@ Mốc là điều kiện nghiệm thu, không phải lời khẳng định đã 
 
 Các lệnh git ở đây là hướng dẫn cho nhóm; bộ chuẩn bị không tự push hay tạo PR.
 
-## 5. Đang chạy được gì, còn phải viết gì
+## 5. Giữ lại gì, nhóm phải tự viết gì
 
-- Có khung API, health checks, lỗi thống nhất, schema và Swagger/OpenAPI.
-- Có Docker Compose, migration baseline không reset DB, seed một lần và hash demo thật.
-- Có test nền, JSON mẫu, cây file và người phụ trách.
-- Endpoint nghiệp vụ hiện trả `501 NOT_IMPLEMENTED`; có token bất kỳ cũng không được truy cập dữ liệu.
-- Flutter mặc định vẫn dùng mock. `USE_MOCK=false` chỉ dùng sau khi FE-02 hoàn thành.
-- File có nhãn `TODO(task-id)` là vị trí bàn giao, không phải tính năng đã triển khai.
-- Trigger SQL baseline còn khoảng trống đã liệt kê trong [DATABASE_WORKFLOW.md](DATABASE_WORKFLOW.md).
+- Giữ UI/mock Flutter và SQL prototype gốc của nhóm.
+- Giữ cây file, TODO có chủ, tài liệu phạm vi/luật/API và JSON ví dụ.
+- Phần implementation bổ sung đã gỡ: backend, schema thực thi, migration/seed, Docker và tests mới đều là TODO.
+- Chưa có API/health/Swagger hoặc endpoint 501 hoạt động; LB tự viết từ BE-01.
+- Flutter gốc vẫn dùng useMock=true; Sơn tự thêm lựa chọn mock/API ở FE-02.
+- CI tự động chỉ kiểm tra bộ khung; Phuoc/Châu thêm test tính năng sau khi nhóm tự triển khai.
+- Việc DB xem [DATABASE_WORKFLOW.md](DATABASE_WORKFLOW.md).
 
 ## 6. Quy tắc khi các tài liệu khác nhau
 
-Phạm vi: MVP_SCOPE → luật: BUSINESS_RULES → wire format: schema Python + `backend/openapi.json`.
+Phạm vi: MVP_SCOPE → luật: BUSINESS_RULES → wire format đích: API_CONTRACT + JSON mẫu.
+Schema Python và OpenAPI do LB tự viết/sinh sau; hiện chưa có snapshot.
 PLAN/TASK_ASSIGNMENT giữ định hướng và lịch sử phân công. Thay đổi contract phải cập nhật schema,
 JSON mẫu, tài liệu và snapshot trong cùng PR; LB chủ trì, Sơn/Me xác nhận phần client bị ảnh hưởng.

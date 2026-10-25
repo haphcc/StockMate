@@ -1,9 +1,9 @@
-# Cài và chạy từng bước
+# Chuẩn bị máy và bắt đầu triển khai
 
-Chạy lệnh từ thư mục gốc repo, trừ khi có `cd backend`/`cd mobile`.
-Lệnh bên dưới dành cho PowerShell. Không cần đổi ExecutionPolicy: gọi thẳng Python trong .venv.
+Hiện chỉ giữ khung/TODO và hướng dẫn. Code database/frontend gốc của nhóm vẫn giữ nguyên.
+Các lệnh chạy backend, migration, seed hoặc Docker chỉ dùng sau khi người phụ trách đã viết chúng.
 
-## A. Kiểm tra máy — cả 6 người
+## A. Kiểm tra công cụ
 
 ```powershell
 git --version
@@ -13,71 +13,37 @@ flutter --version
 flutter doctor -v
 ```
 
-Chuẩn nhóm: Python 3.13 (3.14 cũng dùng để kiểm tra nền), PostgreSQL 16, Flutter 3.47.5
-và Dart ≥3.13 theo `pubspec.lock`, JDK 17, Android SDK + emulator.
-Không chỉ cài Dart 3.10 theo khai báo cũ rồi kỳ vọng lock hiện tại chạy được.
-Docker daemon phải có mục Server; lỗi named pipe nghĩa là cần mở Docker Desktop và chờ engine chạy.
-Máy FE vẫn cần chạy API bằng Docker hoặc dùng IP máy LB; không cần cài Python nếu chỉ dùng Docker.
+Mục tiêu: Python 3.13, PostgreSQL 16, Flutter 3.47.5 / Dart theo pubspec.lock,
+JDK 17, Android SDK và emulator. Người làm iOS cần macOS/Xcode.
 
-## B. Cách dễ nhất: Docker cho API + DB
+## B. Backend — LB/Tuệ
 
-```powershell
-docker compose up -d --build
-docker compose ps
-docker compose exec api python -m alembic upgrade head
-docker compose exec api python -m scripts.seed_demo
-Invoke-RestMethod http://localhost:8000/health/live
-Invoke-RestMethod http://localhost:8000/health/ready
-```
-
-Kết quả:
-
-- Migration tạo baseline 9 bảng + function/trigger/view và `alembic_version`.
-- Seed tạo 83 mã, 10 khách hàng, 13 account; mật khẩu demo được hash thật bằng bcrypt.
-- Live trả `status=ok`; ready trả `database=connected`.
-- Mở http://localhost:8000/docs xem các endpoint và nút Try it out.
-- Gọi login hiện trả **501** là đúng trạng thái khung, không phải DB đã đăng nhập thành công.
-- Seed chỉ cho DB trống. Chạy lại sẽ từ chối; không có reset ngầm.
-
-Nếu 5432 bận: sửa port host Compose, ví dụ `127.0.0.1:5433:5432`; API trong Docker vẫn dùng db:5432.
-Nếu 8000 bận: sửa port host API và API_BASE_URL của mobile cùng lúc.
-Schema không tự migrate mỗi lần server khởi động; Phuoc chạy migration chủ động theo từng PR.
-
-Xem log/dừng mà giữ dữ liệu:
+Từ repo gốc:
 
 ```powershell
-docker compose logs --tail 100 api
-docker compose stop
-docker compose start
-```
-
-## C. Backend local để LB/Tuệ phát triển
-
-Từ repo gốc, chỉ chạy DB bằng Docker:
-
-```powershell
-docker compose up -d db
 cd backend
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.lock.txt
-Copy-Item .env.example .env
-.\.venv\Scripts\python.exe -m alembic upgrade head
-.\.venv\Scripts\python.exe -m scripts.seed_demo
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Chỉ copy .env lần đầu; không ghi đè cấu hình riêng đang dùng.
-Nếu đã migrate/seed ở bước B thì bỏ hai lệnh đó tại C. Dừng API Docker để nhường cổng 8000:
-`docker compose stop api` (từ repo gốc).
-`.env` local dùng localhost; Compose đặt DATABASE_URL riêng theo hostname `db`.
-Khi bắt đầu auth, LB đọc SECRET_KEY từ env, dùng khóa tự sinh thay placeholder, fail startup khi cấu hình sai.
+Chỉ copy .env.example thành .env nếu chưa có. LB tự viết Settings đọc environment,
+FastAPI app, errors, health và schema trước khi nối endpoint. Phuoc bàn giao DB/session configuration.
+Chưa chạy Uvicorn: app/main.py hiện chỉ là TODO.
 
-Tài khoản demo sau khi BE-01 được triển khai: `an.nguyen@gmail.com` / `Matkhau@123`.
-Không dùng tài khoản đăng ký mới trùng email/SĐT seed.
+## C. Database và Docker — Phuoc
 
-## D. Mobile — Sơn/Me/Châu
+1. Đọc DATABASE_WORKFLOW và SQL prototype có sẵn trong data/postgres.
+2. Tự viết Dockerfile/Compose, PostgreSQL có volume và healthcheck.
+3. Khởi tạo Alembic bằng cấu hình/template thật; viết revision và SQL ban đầu từ thiết kế đã review.
+4. Tự viết seed chạy một lần, hash mật khẩu thật, từ chối DB có dữ liệu, không reset.
+5. Test migrate/seed trên DB DEV mới; Châu kiểm tra chạy lại và rollback.
+6. Sau khi LB có app, thêm API service, kiểm tra /health/live và /health/ready rồi ghi bằng chứng.
 
-Mở terminal khác, từ repo gốc:
+compose.yaml, Dockerfile, alembic.ini và các file SQL hiện chỉ là TODO.
+Chưa dùng `docker compose up`, `alembic upgrade head` hay `scripts.seed_demo` để dựng DB từ khung này.
+Không dùng 00_run_all.sql trên DB dùng chung: script gốc có DROP.
+
+## D. Chạy Flutter gốc — Sơn/Me
 
 ```powershell
 cd mobile
@@ -85,54 +51,28 @@ flutter pub get
 flutter analyze
 flutter test
 flutter devices
-flutter run --dart-define=USE_MOCK=true
+flutter run
 ```
 
-Mock là giao diện hiện có, chưa chứng minh luồng thật. Sau FE-02 + BE-01/02 mới chạy:
+AppConfig.useMock vẫn là true trong code gốc. Sơn tự thêm chọn môi trường ở FE-02;
+`--dart-define=USE_MOCK=false` chưa có hiệu lực ở trạng thái này.
+UI/mock có sẵn chưa chứng minh API/backend hoạt động. Các lỗi lint gốc do Sơn xử lý trong FE-01.
 
-```powershell
-flutter run --dart-define=USE_MOCK=false --dart-define=API_BASE_URL=http://10.0.2.2:8000
-```
-
-| Thiết bị | API_BASE_URL |
+| Thiết bị | API URL sau khi backend và cấu hình FE-02 đã có |
 |---|---|
-| Android Emulator của Android Studio | `http://10.0.2.2:8000` |
-| iOS simulator/macOS | `http://localhost:8000` |
-| Máy thật cùng Wi-Fi | `http://<IPv4-máy-chạy-API>:8000` |
-| Flutter web dev | `http://localhost:8000` |
+| Android emulator | http://10.0.2.2:8000 |
+| iOS simulator | http://localhost:8000 |
+| Máy thật cùng Wi-Fi | http://<IP-máy-API>:8000 |
 
-Máy thật không dùng localhost/10.0.2.2 của emulator. API phải bind 0.0.0.0 và firewall cho phép cổng dev.
-Android HTTP dev cần cấu hình cleartext **chỉ ở debug**; TV2 phụ trách, không mở toàn bộ release.
-Web dùng cổng cố định để khớp CORS: `flutter run -d chrome --web-port 8080 --dart-define=USE_MOCK=true`.
-Đổi origin thì sửa BACKEND_CORS_ORIGINS tương ứng; không thay bằng wildcard.
+LB cấu hình CORS; Sơn cấu hình HTTP debug/signing. Không mở HTTP release thay cho HTTPS.
 
-## E. Lệnh kiểm tra trước khi bàn giao
+## E. Kiểm tra khung hiện tại
 
-Từ `backend/`:
+Từ repo gốc: `python scripts/check_preparation.py`.
+Từ backend: `python -m ruff check app scripts tests alembic` và
+`python -m ruff format --check app scripts tests alembic` sau khi cài dependency.
 
-```powershell
-.\.venv\Scripts\python.exe -m ruff check app scripts tests alembic
-.\.venv\Scripts\python.exe -m pytest
-.\.venv\Scripts\python.exe -m scripts.export_openapi --check
-```
-
-Từ repo gốc: `python scripts/check_preparation.py` (kiểm tra link, ownership, cấu trúc).
-Từ `mobile/`: `flutter analyze`, `flutter test`.
-Đổi schema API: chạy export không `--check`, rồi commit `backend/openapi.json` cùng schema.
-
-## F. Lỗi thường gặp
-
-| Hiện tượng | Làm gì |
-|---|---|
-| `No module named app` | Đang ở sai thư mục; cd backend, dùng Python .venv |
-| `ModuleNotFoundError` sau khi pip install | Kiểm tra đang dùng cùng executable .venv cho pip/server/test |
-| `DATABASE_UNAVAILABLE` | Kiểm tra Docker, port, DATABASE_URL, postgres user/password |
-| Baseline báo existing tables | DB đã có prototype; dùng DB dev mới theo DATABASE_WORKFLOW, không stamp mù |
-| Seed từ chối có dữ liệu | Seed đã chạy hoặc có dữ liệu dở; dùng DB mới, không chạy script reset |
-| Login 501 | BE-01 chưa triển khai; xem task, không sửa thành trả token giả |
-| USE_MOCK=false ném UnimplementedError | FE-02 chưa triển khai API repositories |
-| JSON tiền parse lỗi | Model cũ đọc num; sửa theo contract string Decimal |
-| Flutter test tải font/network | Sơn mock platform/font theo task FE-01; không xóa test để né lỗi |
-| Thiếu Android SDK | Cài Android Studio SDK/emulator, chạy doctor và android-licenses |
-
-macOS/Linux thay `.venv\Scripts\python.exe` bằng `.venv/bin/python`; dùng `cp .env.example .env`.
+CI tự động chỉ kiểm tra tài liệu/ownership, lint/format và cú pháp khung Python.
+Flutter có thể chạy thủ công trong Actions → checks → Run workflow → run_mobile_checks.
+Phuoc/Châu tự thêm migration/seed/pytest/OpenAPI vào CI sau khi các task có code thật.
+Không tính CI khung xanh thành nghiệm thu backend/database/frontend.

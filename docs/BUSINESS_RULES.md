@@ -103,7 +103,7 @@ Ví dụ SELL 100 × 100000: gross 10000000.00, fee 15000.00, tax 10000.00, net 
 |---|---|---|
 | Kiểm tra request/JWT/ownership, mở transaction và lấy khóa | backend endpoints + services | LB/Tuệ |
 | Chọn lệnh đủ điều kiện, tạo fill duy nhất | `services/matching_service.py` | Tuệ |
-| Tính phí/thuế/net, apply fill, reserve/release, settlement | SQL function/procedure trong migration 0002+ | Phuoc + Tuệ |
+| Tính phí/thuế/net, apply fill, reserve/release, settlement | SQL function/procedure trong migration nhóm tự viết | Phuoc + Tuệ |
 | Serialize Decimal thành string và dựng response | schemas + endpoint mapping | LB/Tuệ |
 | Hiển thị và ước tính trước lệnh, không quyết định số dư thật | Flutter providers/widgets | Sơn/Me |
 

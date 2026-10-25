@@ -5,13 +5,13 @@ Tra đủ file bằng `python scripts/check_preparation.py --owner TV1` từ rep
 
 ## ENV-01 — Dựng môi trường chung, làm đầu tiên
 
-**Input:** Compose, migration 0001 và seed đã tạo. Không chờ LB viết auth.
+**Input:** SQL prototype gốc, BUSINESS_RULES và các file TODO. Chưa có Compose/migration/seed chạy được.
 
-1. Theo SETUP B: mở Docker, build, migrate trên DB mới, seed một lần.
-2. Kiểm tra live/ready, 83 stocks/10 customers/13 accounts; chạy seed lần hai phải từ chối.
-3. Kiểm tra email demo tồn tại; hash phải verify được với Matkhau@123, không sửa token/login stub.
+1. Theo SETUP C: tự viết Compose/Dockerfile, cấu hình Alembic, revision/SQL đầu tiên và seed an toàn.
+2. Tự test migrate/seed DB mới và seed lần hai từ chối; LB viết health để cùng kiểm tra live/ready sau.
+3. Kiểm tra email demo tồn tại; hash phải verify được với Matkhau@123, phối hợp LB khi auth đã được viết.
 4. Ghi log và version vào `docs/qa/environment.md`; bàn giao host/port/database, không gửi SECRET_KEY vào repo.
-5. Chạy CI tương đương local; bổ sung GitHub username thật nếu nhóm muốn CODEOWNERS/branch protection.
+5. Tự thêm migration/seed/DB tests vào CI khi implementation đã có; bổ sung GitHub username thật nếu nhóm muốn CODEOWNERS/branch protection.
 
 **File sửa:** compose.yaml, backend/Dockerfile, backend/alembic*, backend/scripts/seed_demo.py,
 .github/workflows/checks.yml, docs/SETUP.md, docs/DATABASE_WORKFLOW.md.
@@ -23,12 +23,12 @@ Tra đủ file bằng `python scripts/check_preparation.py --owner TV1` từ rep
 **Input:** BUSINESS_RULES; test case TR-01 của Tuệ. Chưa cần Flutter đặt lệnh.
 
 1. Cùng Tuệ liệt kê cột/constraint cần thêm: client_order_id, reserve, blocked_quantity, settlement lots.
-2. Tạo revision 0002 bằng Alembic, backfill UUID/dữ liệu từ seed cũ.
+2. Cùng Tuệ chốt invariant trong revision đầu tiên hoặc revision kế tiếp; thiết kế backfill dữ liệu nếu cần.
 3. Viết routine phong tỏa/hủy/apply fill theo CASH-01/SHARE-01; thống nhất Tuệ đưa SQL, Phuoc tích hợp migration.
-4. Sửa giá trần/sàn vùng chuyển bước giá; không chỉnh snapshot 0001 đã phát hành.
+4. Viết giá trần/sàn đúng vùng chuyển bước giá; chỉ đóng băng revision sau khi nhóm phát hành thật.
 5. Test upgrade từ DB trống và DB seed; bàn giao chính xác tên routine + params + lỗi cho Tuệ.
 
-**File sửa:** backend/alembic/versions/0002_*.py, snapshot SQL mới nếu cần;
+**File sửa:** backend/alembic/versions/, SQL tương ứng do nhóm tự viết;
 data/postgres/03–07 nếu schema đích ảnh hưởng seed. Không chạy lại 00_run_all vào DB nhóm.
 
 **Xong khi:** QA-ORD-01/03/04 và QA-SET-02 có nền schema, không âm hoặc lệch quantity.

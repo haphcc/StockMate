@@ -15,7 +15,7 @@ Tra file: `python scripts/check_preparation.py --owner TV2` từ repo gốc.
    Tách email/SĐT thành hai trường; bỏ default contact giả và gọi Form.validate() trước submit.
 5. Login chỉ email/password; bỏ tự điền credential rỗng. Ẩn Google/Apple/sinh trắc học/OTP/quên password chưa làm.
 6. Thêm unit test model từ fixture, string có phần lẻ và số lớn; widget test form.
-7. Sửa widget_test để mock secure storage/font/network có kiểm soát; test vẫn kiểm tra app thật khởi tạo.
+7. Tự sửa các lint const gốc và widget_test để mock secure storage/font/network khi cần; test vẫn kiểm tra app thật khởi tạo.
 
 **File chính:** core/utils/money.dart; data/models/{user,account,portfolio}_model.dart;
 features/auth/screens/*.dart; test/unit/money_test.dart; test/widget_test.dart; pubspec.yaml/lock.
@@ -30,7 +30,7 @@ features/auth/screens/*.dart; test/unit/money_test.dart; test/widget_test.dart; 
    Không refresh chính route login/refresh, không retry vòng lặp; không log token/password.
 3. Implement API auth/market datasource và ApiAuthRepository/ApiMarketRepository.
    `AuthRepository` trả UserModel cho caller; token được repository lưu/khôi phục theo TokenResponse.
-4. Sửa provider chọn repository theo USE_MOCK; false phải gọi API thật, không fallback mock.
+4. Tự thêm bool.fromEnvironment cho USE_MOCK (code gốc hiện useMock=true), sửa provider chọn repository; false phải gọi API thật, không fallback mock.
 5. Thêm selected_account_provider: gọi GET accounts, chọn CASH ACTIVE của user, truyền account_id
    vào assets/portfolio. `getAccountSummary(userId)` cũ phải đổi cùng caller thành account_id rõ nghĩa.
 6. Update AuthNotifier dùng token thật, không còn mock_token_123 ở đường API.

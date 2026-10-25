@@ -1,6 +1,5 @@
-"""Owner: TV5 - Tuệ.
+"""TODO(TR-03) Owner: TV5 - Tuệ.
 
-TODO(TR-03): Release each due purchase lot once; weekday T+2 simulation.
-
-This is a handoff placeholder, not an implemented feature. See docs/team/.
+Tu trien khai module nay theo API_CONTRACT, BUSINESS_RULES va huong dan ca nhan trong docs/team/.
+Chi la file khung, chua co implementation.
 """

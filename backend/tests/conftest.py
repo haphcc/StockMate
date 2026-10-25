@@ -1,10 +1,5 @@
-import pytest
-from fastapi.testclient import TestClient
+"""TODO(QA-01) Owner: TV6 - Châu.
 
-from app.main import create_app
-
-
-@pytest.fixture
-def client():
-    with TestClient(create_app()) as instance:
-        yield instance
+Tao fixture app/client/DB sau khi implementation duoc ban giao.
+Chi la file khung, chua co implementation.
+"""

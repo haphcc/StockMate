@@ -1,21 +1,22 @@
 # TV4 — LB: backend nền, auth, tài khoản và thị trường
 
 Tra file: `python scripts/check_preparation.py --owner TV4`. Làm trong `backend/`.
-Khung đã có schema/routes/errors/health/DB session; endpoint nghiệp vụ trả 501 có chủ ý.
+Các file hiện chỉ có TODO. LB tự viết app, config, schema, routes, errors, health và DB session.
 
 ## BE-01 — Auth thật và đăng ký atomic
 
 **Input:** ENV-01 của Phuoc; API_CONTRACT + AUTH-01; không chờ toàn bộ trading migration.
 
-1. Map SQLAlchemy Base + Customer/InvestmentAccount đúng tên/cột/Decimal; không create_all.
+1. Viết app/main.py, Settings, errors, health, DB session/Base, router và request/response schemas theo API_CONTRACT.
+   Map Customer/InvestmentAccount đúng tên/cột/Decimal; không dùng create_all thay migration.
 2. Điền core/security.py: bcrypt verify/hash, byte limit, JWT access/refresh phân biệt type.
 3. Đọc SECRET_KEY/TTL từ Settings; fail cấu hình auth thiếu/placeholder; không dùng khóa demo hardcode.
 4. Viết CRUD auth/accounts không commit; AuthService mở transaction tạo customer + CASH account
    + cấp tiền giả lập một lần. Account number unique, xử lý race bằng constraint/retry đúng transaction.
 5. Register/login/refresh trả TokenResponse theo schema; login sai trả 401 chung, trùng email/SĐT 409.
-6. Thay `require_user` stub bằng verify token + lấy customer; chặn token sai type/hết hạn và user bị khóa.
+6. Tự viết `require_user`: verify token + lấy customer; chặn token sai type/hết hạn và user bị khóa.
 7. GET me trả user hiện tại; logout MVP là clear local. Không thêm API thu hồi token chưa có lưu trữ.
-8. Unit test JWT/bcrypt; integration đăng ký atomic, duplicate/race. Cập nhật OpenAPI nếu contract đổi.
+8. Viết unit/integration test; tự viết exporter và sinh OpenAPI khi app/schema đã có. Bổ sung CI cùng Phuoc/Châu.
 
 **File:** app/core/{config,security,errors}.py; app/db/{base,session}.py;
 app/models/{customer,investment_account}.py; app/crud/{auth,accounts}.py;

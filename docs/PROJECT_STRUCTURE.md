@@ -6,8 +6,8 @@ triển khai; không được tính là feature hoàn thành. Toàn bộ invento
 ```text
 StockMate/
 ├── README.md                         TV1: lối vào dự án
-├── compose.yaml                      TV1: PostgreSQL + API
-├── .github/workflows/checks.yml      TV1: CI backend/DB/docs/Flutter
+├── compose.yaml                      TV1: TODO PostgreSQL + API
+├── .github/workflows/checks.yml      TV1: CI khung/docs; Flutter thủ công
 ├── scripts/check_preparation.py      TV6: link, ownership, inventory
 ├── docs/
 │   ├── START_HERE.md                 TV1: thứ tự bắt đầu
@@ -31,39 +31,38 @@ StockMate/
 │   ├── pyproject.toml               TV4: ruff + pytest
 │   ├── alembic.ini                  TV1
 │   ├── alembic/
-│   │   ├── env.py                   TV1: chạy migration, chặn autogenerate rỗng
-│   │   ├── sql/0001_*.sql           TV1: baseline snapshot bất biến
-│   │   └── versions/0001_baseline.py TV1: schema trống → baseline
-│   ├── openapi.json                 TV4: sinh từ app/schema
+│   │   ├── env.py                   TV1: TODO cấu hình migration
+│   │   ├── sql/0001_*.sql           TV1: TODO SQL do Phuoc tự viết
+│   │   └── versions/0001_baseline.py TV1: TODO revision đầu tiên
 │   ├── app/
 │   │   ├── main.py                  TV4: ghép app, middleware, router
 │   │   ├── api/deps.py              TV4: current user/JWT dependency
 │   │   ├── api/v1/api.py            TV4: đăng ký router
 │   │   ├── api/v1/endpoints/
-│   │   │   ├── health.py            TV4: health thật
-│   │   │   ├── auth.py              TV4: contract stub → BE-01
-│   │   │   ├── market.py            TV4: contract stub → BE-02/03
-│   │   │   ├── accounts.py          TV4: contract stub → BE-02/03
-│   │   │   ├── watchlist.py         TV4: contract stub → BE-03
-│   │   │   ├── orders.py            TV5: contract stub → TR-02
-│   │   │   ├── transactions.py      TV5: contract stub → TR-02
-│   │   │   └── notifications.py     TV5: contract stub → TR-02
+│   │   │   ├── health.py            TV4: TODO health
+│   │   │   ├── auth.py              TV4: TODO BE-01
+│   │   │   ├── market.py            TV4: TODO BE-02/03
+│   │   │   ├── accounts.py          TV4: TODO BE-02/03
+│   │   │   ├── watchlist.py         TV4: TODO BE-03
+│   │   │   ├── orders.py            TV5: TODO TR-02
+│   │   │   ├── transactions.py      TV5: TODO TR-02
+│   │   │   └── notifications.py     TV5: TODO TR-02
 │   │   ├── core/
-│   │   │   ├── config.py/errors.py  TV4: config/error thật
+│   │   │   ├── config.py/errors.py  TV4: TODO config/errors
 │   │   │   └── security.py          TV4: TODO BE-01
-│   │   ├── db/session.py            TV4: engine/session thật
+│   │   ├── db/session.py            TV4: TODO engine/session
 │   │   ├── db/base.py               TV4: TODO BE-01
 │   │   ├── models/                  TV4/TV5: TODO mapping từng bảng
-│   │   ├── schemas/                 TV4/TV5: request/response thật
+│   │   ├── schemas/                 TV4/TV5: TODO request/response
 │   │   ├── crud/                    TV4/TV5: TODO queries theo nhóm
 │   │   └── services/                TV4/TV5: TODO use case theo nhóm
 │   ├── scripts/
-│   │   ├── export_openapi.py        TV4: sinh/check hợp đồng
-│   │   ├── seed_demo.py             TV1: seed một lần DB trống
+│   │   ├── export_openapi.py        TV4: TODO exporter OpenAPI
+│   │   ├── seed_demo.py             TV1: TODO seed an toàn
 │   │   ├── settle_shares.py         TV5: TODO TR-03
 │   │   └── sync_market_data.py      TV4: TODO mở rộng BE-04
 │   └── tests/
-│       ├── conftest.py              TV6: HTTP fixture
+│       ├── conftest.py              TV6: TODO HTTP fixture
 │       ├── unit/                    TV6 nền; auth TV4, trading/settlement TV5
 │       └── integration/             TV6: PostgreSQL thật, phối hợp người viết feature
 └── mobile/
@@ -73,8 +72,8 @@ StockMate/
     ├── lib/
     │   ├── main.dart                TV2
     │   ├── core/
-    │   │   ├── config/app_config.dart TV2: USE_MOCK/API_BASE_URL
-    │   │   ├── network/             TV2: Dio, endpoints, TODO lỗi API
+    │   │   ├── config/app_config.dart TV2: useMock=true gốc; TODO chọn môi trường
+    │   │   ├── network/             TV2: Dio gốc; TODO endpoints/lỗi API
     │   │   ├── storage/             TV2: TODO tokens
     │   │   ├── utils/               TV2: format/validate + TODO tiền chính xác
     │   │   ├── router/              TV2: router chung, Me bàn giao route cần thêm
@@ -117,8 +116,9 @@ Services có thể dùng query trực tiếp phù hợp với repo hiện tại;
 ## File khung khác file đã chạy
 
 File Python chỉ có docstring TODO và file Dart chỉ có comment TODO chưa định nghĩa chức năng.
-Endpoint stub có schema để nhóm làm song song, trả 501 cho đến khi chủ task triển khai.
-Không đổi stub thành `return []`/token giả để làm test/demo trông có vẻ hoạt động.
+Toàn bộ Python backend bổ sung hiện chỉ là TODO; chưa có schema, route hoặc app thực thi.
+OpenAPI chưa tồn tại, LB sinh sau khi có app. Docker/Alembic/SQL mới cũng chỉ là TODO.
+Giữ code Flutter và SQL prototype gốc; không trả dữ liệu/token giả để nhận là luồng API thật.
 
 ## Thêm file mới
 

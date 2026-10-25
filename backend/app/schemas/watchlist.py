@@ -1,11 +1,5 @@
-from app.schemas.common import ContractModel, Symbol
-from app.schemas.market import StockResponse
+"""TODO(BE-01) Owner: TV4 - LB.
 
-
-class AddWatchlistRequest(ContractModel):
-    stock_symbol: Symbol
-
-
-class WatchlistResponse(ContractModel):
-    watchlist_id: int
-    stock: StockResponse
+Tu trien khai module nay theo API_CONTRACT, BUSINESS_RULES va huong dan ca nhan trong docs/team/.
+Chi la file khung, chua co implementation.
+"""

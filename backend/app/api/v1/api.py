@@ -1,20 +1,5 @@
-from fastapi import APIRouter
+"""TODO(BE-01) Owner: TV4 - LB.
 
-from app.api.v1.endpoints import (
-    accounts,
-    auth,
-    market,
-    notifications,
-    orders,
-    transactions,
-    watchlist,
-)
-
-api_router = APIRouter()
-api_router.include_router(auth.router)
-api_router.include_router(market.router)
-api_router.include_router(accounts.router)
-api_router.include_router(orders.router)
-api_router.include_router(transactions.router)
-api_router.include_router(watchlist.router)
-api_router.include_router(notifications.router)
+Tu trien khai module nay theo API_CONTRACT, BUSINESS_RULES va huong dan ca nhan trong docs/team/.
+Chi la file khung, chua co implementation.
+"""

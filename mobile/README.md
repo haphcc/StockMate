@@ -115,8 +115,8 @@ hiện release đang ký bằng debug key) và cấu hình signing team trong Xc
 ## 5. Kết nối với backend
 
 Base URL mặc định trong code là Android emulator `http://10.0.2.2:8000`.
-iOS simulator phải override `http://localhost:8000`. USE_MOCK mặc định true;
-chỉ bật false sau FE-02 và BE-01/02. Khi chạy với server thật:
+iOS simulator phải override `http://localhost:8000`. Code gốc hiện có useMock=true cố định;
+Sơn tự thêm đọc USE_MOCK trong FE-02. Sau khi hoàn thành FE-02 và BE-01/02 mới dùng lệnh dưới:
 
 ```bash
 flutter run --dart-define=USE_MOCK=false --dart-define=API_BASE_URL=http://10.0.2.2:8000

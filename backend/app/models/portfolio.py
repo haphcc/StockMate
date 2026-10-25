@@ -1,6 +1,5 @@
-"""Owner: TV4 - LB.
+"""TODO(BE-01) Owner: TV4 - LB.
 
-TODO(BE-02): Map the SQL table after confirming its migration; no create_all on shared databases.
-
-This is a handoff placeholder, not an implemented feature. See docs/team/.
+Tu trien khai module nay theo API_CONTRACT, BUSINESS_RULES va huong dan ca nhan trong docs/team/.
+Chi la file khung, chua co implementation.
 """
