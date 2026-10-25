@@ -1,24 +1,29 @@
-# Chuẩn bị máy và bắt đầu triển khai
+# Chuẩn bị máy
 
-Hiện chỉ giữ khung/TODO và hướng dẫn. Code database/frontend gốc của nhóm vẫn giữ nguyên.
-Các lệnh chạy backend, migration, seed hoặc Docker chỉ dùng sau khi người phụ trách đã viết chúng.
+| Ai | Cần cài |
+|---|---|
+| Phuoc, LB, Tuệ | Python 3.13, PostgreSQL 16 hoặc Docker Desktop |
+| Sơn, Me (TV3) | Flutter 3.47.5 / Dart theo lock, Android Studio/SDK, JDK 17, emulator |
+| Châu | Công cụ của phần đang kiểm thử; cần chạy được cả app và backend để thử tích hợp |
 
-## A. Kiểm tra công cụ
+Cả nhóm dùng Git. iOS cần macOS/Xcode; trước mắt bàn giao APK Android.
+
+## Chạy Flutter có sẵn
+
+Từ thư mục gốc repo:
 
 ```powershell
-git --version
-python --version
-docker version
-flutter --version
-flutter doctor -v
+cd mobile
+flutter pub get
+flutter run
 ```
 
-Mục tiêu: Python 3.13, PostgreSQL 16, Flutter 3.47.5 / Dart theo pubspec.lock,
-JDK 17, Android SDK và emulator. Người làm iOS cần macOS/Xcode.
+Nếu chưa chạy được, dùng `flutter doctor -v` để xem phần còn thiếu.
+App hiện dùng mock; Sơn tự viết lựa chọn mock/API khi nối backend.
 
-## B. Backend — LB/Tuệ
+## Chuẩn bị backend
 
-Từ repo gốc:
+Từ thư mục gốc repo:
 
 ```powershell
 cd backend
@@ -26,53 +31,18 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.lock.txt
 ```
 
-Chỉ copy .env.example thành .env nếu chưa có. LB tự viết Settings đọc environment,
-FastAPI app, errors, health và schema trước khi nối endpoint. Phuoc bàn giao DB/session configuration.
-Chưa chạy Uvicorn: app/main.py hiện chỉ là TODO.
+Chỉ copy .env.example thành .env nếu chưa có. Backend, Compose, migration và seed hiện là TODO.
+Phuoc viết phần DB/môi trường; LB viết app, cấu hình và API. Hai người cập nhật lệnh chạy tại đây
+sau khi đã chạy thử; hiện chưa chạy Uvicorn/Docker/migrate từ bộ khung này.
 
-## C. Database và Docker — Phuoc
+Khi có API, Android emulator dùng http://10.0.2.2:8000; máy thật dùng IP máy chạy API cùng Wi-Fi.
 
-1. Đọc DATABASE_WORKFLOW và SQL prototype có sẵn trong data/postgres.
-2. Tự viết Dockerfile/Compose, PostgreSQL có volume và healthcheck.
-3. Khởi tạo Alembic bằng cấu hình/template thật; viết revision và SQL ban đầu từ thiết kế đã review.
-4. Tự viết seed chạy một lần, hash mật khẩu thật, từ chối DB có dữ liệu, không reset.
-5. Test migrate/seed trên DB DEV mới; Châu kiểm tra chạy lại và rollback.
-6. Sau khi LB có app, thêm API service, kiểm tra /health/live và /health/ready rồi ghi bằng chứng.
+## Kiểm tra trước bàn giao
 
-compose.yaml, Dockerfile, alembic.ini và các file SQL hiện chỉ là TODO.
-Chưa dùng `docker compose up`, `alembic upgrade head` hay `scripts.seed_demo` để dựng DB từ khung này.
-Không dùng 00_run_all.sql trên DB dùng chung: script gốc có DROP.
+- Từ repo gốc: `python scripts/check_preparation.py`.
+- Từ mobile: `flutter analyze` và `flutter test`.
+- Từ backend: Ruff check/format; khi có test thật thì chạy pytest.
 
-## D. Chạy Flutter gốc — Sơn/Me (TV3)
-
-```powershell
-cd mobile
-flutter pub get
-flutter analyze
-flutter test
-flutter devices
-flutter run
-```
-
-AppConfig.useMock vẫn là true trong code gốc. Sơn tự thêm chọn môi trường ở FE-02;
-`--dart-define=USE_MOCK=false` chưa có hiệu lực ở trạng thái này.
-UI/mock có sẵn chưa chứng minh API/backend hoạt động. Các lỗi lint gốc do Sơn xử lý trong FE-01.
-
-| Thiết bị | API URL sau khi backend và cấu hình FE-02 đã có |
-|---|---|
-| Android emulator | http://10.0.2.2:8000 |
-| iOS simulator | http://localhost:8000 |
-| Máy thật cùng Wi-Fi | http://<IP-máy-API>:8000 |
-
-LB cấu hình CORS; Sơn cấu hình HTTP debug/signing. Không mở HTTP release thay cho HTTPS.
-
-## E. Kiểm tra khung hiện tại
-
-Từ repo gốc: `python scripts/check_preparation.py`.
-Từ backend: `python -m ruff check app scripts tests alembic` và
-`python -m ruff format --check app scripts tests alembic` sau khi cài dependency.
-
-CI tự động chỉ kiểm tra tài liệu/ownership, lint/format và cú pháp khung Python.
-Flutter có thể chạy thủ công trong Actions → checks → Run workflow → run_mobile_checks.
-Phuoc/Châu tự thêm migration/seed/pytest/OpenAPI vào CI sau khi các task có code thật.
-Không tính CI khung xanh thành nghiệm thu backend/database/frontend.
+CI tự động hiện chỉ kiểm tra khung/tài liệu. Phuoc/Châu thêm kiểm tra DB/API khi có implementation.
+Chi tiết dựng DB nằm ở [DATABASE_WORKFLOW](DATABASE_WORKFLOW.md).
+Không chạy script reset prototype lên DB cần giữ dữ liệu; không commit .env/khóa ký.

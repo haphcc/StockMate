@@ -1,7 +1,6 @@
 # Phạm vi bản demo đầu tiên
 
-Đây là baseline làm việc đã chọn từ đánh giá repo, có thể điều chỉnh bằng PR trước khi triển khai
-phần bị ảnh hưởng. Đây là phần thu gọn của PLAN, không phải mô phỏng đầy đủ quy chế sở giao dịch.
+Đặc tả chức năng bản demo; kế hoạch thực hiện theo 3 chặng trong [PLAN](PLAN.md).
 
 ## Bắt buộc
 
@@ -18,7 +17,7 @@ phần bị ảnh hưởng. Đây là phần thu gọn của PLAN, không phải
 | Thông báo | Trong app: đặt/khớp/hủy; danh sách và đánh dấu đã đọc | Tuệ + Me (TV3) |
 | Demo | APK Android, kịch bản có thể tái hiện ngoài giờ giao dịch thật | Phuoc + Châu |
 
-## Để sau G4
+## Sau bản demo
 
 - Margin, vay/nợ/lãi, eKYC thật, nạp/rút tiền thật.
 - MP/ATO/ATC, khớp một phần, đấu giá, ưu tiên sổ lệnh, tự hết hạn cuối phiên.
@@ -41,5 +40,5 @@ login thường rồi thông báo đăng nhập bằng các phương thức chư
 
 ## Điều kiện nghiệm thu
 
-Một người mới làm theo SETUP dựng được môi trường; chạy đủ G0 → G4 trong START_HERE.
+Một người mới làm theo SETUP dựng được môi trường; hoàn thành 3 chặng trong PLAN.
 Châu dùng [ACCEPTANCE_TESTS.md](ACCEPTANCE_TESTS.md) để ghi pass/fail và bằng chứng.
