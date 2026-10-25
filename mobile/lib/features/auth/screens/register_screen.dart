@@ -290,8 +290,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: const [
+                        const Row(
+                          children: [
                             Icon(Icons.group_outlined, color: AppColors.darkTextSecondary, size: 18),
                             SizedBox(width: 8),
                             Text(

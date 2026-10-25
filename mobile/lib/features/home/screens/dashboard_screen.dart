@@ -386,8 +386,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: const [
+              const Row(
+                children: [
                   Icon(Icons.bar_chart_rounded, color: AppColors.primary, size: 20),
                   SizedBox(width: 8),
                   Text(
@@ -423,10 +423,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           // Multi-segmented bar
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
-            child: SizedBox(
+            child: const SizedBox(
               height: 7,
               child: Row(
-                children: const [
+                children: [
                   Expanded(flex: 12, child: ColoredBox(color: AppColors.priceCeiling)),
                   SizedBox(width: 2),
                   Expanded(flex: 245, child: ColoredBox(color: AppColors.primary)),
@@ -499,12 +499,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  children: const [
+                  children: [
                     Icon(Icons.stars_rounded, color: Color(0xFFC084FC), size: 16),
                     SizedBox(width: 6),
                     Text(
@@ -518,8 +518,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                const Text(
+                SizedBox(height: 6),
+                Text(
                   'Dòng tiền lan tỏa nhóm Bán Lẻ & Công Nghệ',
                   style: TextStyle(
                     color: Colors.white,
@@ -528,8 +528,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     height: 1.3,
                   ),
                 ),
-                const SizedBox(height: 6),
-                const Text(
+                SizedBox(height: 6),
+                Text(
                   'Thanh khoản đạt 18.2K tỷ VNĐ, khối ngoại mua ròng SSI & MWG.',
                   style: TextStyle(
                     color: AppColors.darkTextSecondary,
@@ -634,8 +634,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         width: 0.8,
                       ),
                     ),
-                    child: Row(
-                      children: const [
+                    child: const Row(
+                      children: [
                         Text(
                           'Top Khối lượng',
                           style: TextStyle(
@@ -681,9 +681,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         const SizedBox(height: 12),
         // Columns header
-        Row(
+        const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: const [
+          children: [
             Text(
               'MÃ / CÔNG TY',
               style: TextStyle(

@@ -116,9 +116,9 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                         _symbolController.text,
                         style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                       ),
-                      Column(
+                      const Column(
                         crossAxisAlignment: CrossAxisAlignment.end,
-                        children: const [
+                        children: [
                           Text('64.5', style: TextStyle(color: AppColors.priceCeiling, fontSize: 18, fontWeight: FontWeight.bold)),
                           Text('+6.97% (Trần)', style: TextStyle(color: AppColors.priceCeiling, fontSize: 11)),
                         ],
@@ -126,9 +126,9 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                     ],
                   ),
                   const Divider(color: AppColors.darkCardBorder, height: 24),
-                  Row(
+                  const Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
+                    children: [
                       Text('Trần: 64.5', style: TextStyle(color: AppColors.priceCeiling, fontSize: 12)),
                       Text('TC: 60.3', style: TextStyle(color: AppColors.priceRef, fontSize: 12)),
                       Text('Sàn: 56.1', style: TextStyle(color: AppColors.priceFloor, fontSize: 12)),

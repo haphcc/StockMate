@@ -38,7 +38,11 @@ def upgrade() -> None:
             + ". Use a separate DEV database; do not reset an existing database."
         )
     for name in ("0001_schema.sql", "0001_functions.sql", "0001_views.sql"):
-        connection.exec_driver_sql((SNAPSHOTS / name).read_text(encoding="utf-8"))
+        # These scripts contain literal percent signs, not psycopg placeholders.
+        connection.exec_driver_sql(
+            (SNAPSHOTS / name).read_text(encoding="utf-8"),
+            execution_options={"no_parameters": True},
+        )
 
 
 def downgrade() -> None:

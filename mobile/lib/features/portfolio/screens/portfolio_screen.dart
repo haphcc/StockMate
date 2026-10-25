@@ -57,9 +57,9 @@ class PortfolioScreen extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Header
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Text(
                 'DANH MỤC NẮM GIỮ',
                 style: TextStyle(

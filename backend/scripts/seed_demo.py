@@ -36,7 +36,11 @@ def main() -> None:
             if connection.execute(text(f"SELECT EXISTS(SELECT 1 FROM {name})")).scalar():
                 raise SystemExit("Seed refused: database contains data. Use a new DEV database.")
         for name in SEEDS:
-            connection.exec_driver_sql((SQL_ROOT / name).read_text(encoding="utf-8"))
+            # Preserve literal percent signs, including SQL's modulo operator.
+            connection.exec_driver_sql(
+                (SQL_ROOT / name).read_text(encoding="utf-8"),
+                execution_options={"no_parameters": True},
+            )
         password_hash = bcrypt.hashpw(b"Matkhau@123", bcrypt.gensalt()).decode("ascii")
         connection.execute(
             text("UPDATE customers SET password_hash = :password_hash"),
