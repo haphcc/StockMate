@@ -1,7 +1,11 @@
 # StockMate — Backend (FastAPI + PostgreSQL)
 
-Khung thư mục cho API của app giao dịch chứng khoán.
-Hiện mới có cấu trúc thư mục và file cấu hình; phần code sẽ viết sau.
+Khung FastAPI đã chạy được health checks, config, lỗi thống nhất và OpenAPI.
+Endpoint nghiệp vụ có schema nhưng trả `501 NOT_IMPLEMENTED` cho đến khi chủ task triển khai.
+
+Đọc trước: [START_HERE](../docs/START_HERE.md), [SETUP](../docs/SETUP.md),
+[API_CONTRACT](../docs/API_CONTRACT.md), [DATABASE_WORKFLOW](../docs/DATABASE_WORKFLOW.md).
+LB làm theo [TV4](../docs/team/TV4_LB.md), Tuệ theo [TV5](../docs/team/TV5_TUE.md).
 
 ## 1. Chuẩn bị môi trường
 
@@ -11,17 +15,18 @@ python -m venv .venv
 .venv\Scripts\activate          # Windows
 # source .venv/bin/activate     # macOS / Linux
 
-pip install -r requirements.txt
+pip install -r requirements.lock.txt
 copy .env.example .env          # Windows  (cp .env.example .env trên macOS/Linux)
 ```
 
-Nạp database (xem `../data/README.md`):
+Database phải trống, PostgreSQL 16 đang chạy (xem SETUP; không reset DB cũ):
 
 ```bash
-psql -h localhost -U postgres -d stock_exchange -f ../data/postgres/00_run_all.sql
+python -m alembic upgrade head
+python -m scripts.seed_demo
 ```
 
-Chạy server (sau khi đã có `app/main.py`):
+Chạy server:
 
 ```bash
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -59,14 +64,13 @@ backend/
 └── requirements.txt
 ```
 
-Mỗi thư mục có `.gitkeep`; xoá khi đã có code thật. Nhớ thêm `__init__.py`
-vào các thư mục trong `app/` khi bắt đầu code để Python nhận là package.
+Các module có docstring TODO(task-id) là file bàn giao, chưa có implementation.
+Phân quyền file: [FILE_OWNERS](../docs/FILE_OWNERS.md). Không tính số file TODO là tiến độ feature.
 
 ## 3. Phân chia việc theo nhóm endpoint
 
-Các đường dẫn dưới đây đã được thống nhất sẵn với frontend
-(`mobile/lib/core/network/api_endpoints.dart` sẽ dùng đúng danh sách này)
-và bám theo các view trong `../data/postgres/08_views.sql`.
+Danh sách dưới đây là tóm tắt; source chuẩn là app/schemas, openapi.json và API_CONTRACT.
+`mobile/lib/core/network/api_endpoints.dart` đã có hằng số URL tương ứng.
 
 | Nhóm | Endpoint | View / bảng dùng |
 |---|---|---|
@@ -77,16 +81,25 @@ và bám theo các view trong `../data/postgres/08_views.sql`.
 | Danh mục | `GET /api/accounts/{id}/portfolio` | `v_portfolio_detail` |
 | Lệnh | `GET/POST /api/accounts/{id}/orders`, `DELETE /api/orders/{id}` | `v_order_book`, `stock_orders` |
 | Lịch sử GD | `GET /api/accounts/{id}/transactions` | `v_transaction_history` |
-| Quan tâm | `GET/POST/DELETE /api/watchlist` | `v_watchlist_detail` |
+| Quan tâm | `GET/POST /api/watchlist`, `DELETE /api/watchlist/{symbol}` | `v_watchlist_detail` |
 | Thông báo | `GET /api/notifications`, `POST /api/notifications/{id}/read` | `notifications` |
 
 ## 4. Lưu ý khi code
 
-- **Nghiệp vụ khớp lệnh đã nằm trong database**: chỉ cần `INSERT` vào `transactions`,
-  trigger sẽ tự cập nhật danh mục, giá vốn bình quân, số dư tiền và trạng thái lệnh.
-  Đừng tính lại ở tầng Python để tránh lệch số liệu.
+- Backend xác thực/ownership, validation sau khóa, điều phối một transaction; SQL routine tính và
+  apply số dư/giao dịch. Trigger baseline chưa xử lý đủ reserve/cancel/settlement: làm TR-01/02/03.
 - Tiền và giá dùng `NUMERIC` → map sang `Decimal` trong Python, **không dùng `float`**.
-- Mật khẩu hash bằng `passlib` (bcrypt). Hash trong dữ liệu mẫu là chuỗi mẫu,
-  phải sinh lại trước khi bật đăng nhập (xem `../data/README.md`).
+- scripts.seed_demo tạo hash bcrypt thật cho mật khẩu demo; endpoint auth vẫn cần BE-01.
 - `.env` chứa `SECRET_KEY` và mật khẩu DB — đã bị `.gitignore` chặn, đừng commit.
-- Nếu `passlib` báo lỗi khi đọc version của `bcrypt`, pin `bcrypt<5` trong requirements.
+- Dependency đã có lock; đổi dependency thì resolve lại và kiểm tra CI Python 3.13/Linux.
+
+## 5. Kiểm tra nền
+
+```bash
+python -m ruff check app scripts tests alembic
+python -m pytest -q
+python -m scripts.export_openapi --check
+```
+
+Đổi contract: chạy `python -m scripts.export_openapi` rồi commit snapshot cùng schema.
+Database integration cần TEST_DATABASE_URL tới DB dùng riêng tên kết thúc `_test`, đã migrate/seed.

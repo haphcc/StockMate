@@ -1,7 +1,9 @@
 # StockMate — Mobile app (Flutter + Dart)
 
-Khung thư mục cho app giao dịch chứng khoán chạy trên **Android + iOS**.
-Hiện tại mới có cấu trúc thư mục và file cấu hình; phần code sẽ viết sau.
+App Flutter chạy trên **Android + iOS**, đã có UI auth/dashboard/order/portfolio dùng mock.
+API repository và các feature TODO chưa triển khai. Hướng dẫn hiện hành:
+[START_HERE](../docs/START_HERE.md), [SETUP](../docs/SETUP.md), [API_CONTRACT](../docs/API_CONTRACT.md).
+Sơn theo [TV2](../docs/team/TV2_SON.md), Me theo [TV3](../docs/team/TV3_ME.md).
 
 ## 1. Trạng thái dự án
 
@@ -11,15 +13,16 @@ Hiện tại mới có cấu trúc thư mục và file cấu hình; phần code 
 flutter create --platforms=android,ios --org vn.stockmate --project-name stockmate .
 ```
 
-Đã chạy và pass trên Flutter 3.47.5 / Dart 3.13.4:
+Chuẩn nhóm Flutter 3.47.5 / Dart >=3.13 theo lock. Chạy lại để kiểm tra checkout hiện tại:
 
 ```bash
-flutter pub get     # OK
-flutter analyze     # No issues found!
-flutter test        # All tests passed (test mẫu của template)
+flutter pub get
+flutter analyze
+flutter test
 ```
 
-`lib/main.dart` và `test/widget_test.dart` hiện là bản mẫu của Flutter, sẽ thay khi vào code thật.
+`lib/main.dart` đã dùng Riverpod + GoRouter; test hiện là smoke test khởi tạo app.
+Chưa có kiểm chứng E2E API thật. File chỉ có comment TODO là vị trí bàn giao, không phải feature đã xong.
 
 Chạy app:
 
@@ -28,8 +31,7 @@ flutter devices
 flutter run                 # chọn emulator Android / iOS simulator
 ```
 
-> **Cần cài thêm:** `flutter doctor` báo thiếu **Android SDK** nên chưa build được APK
-> (`flutter build apk` dừng với `No Android SDK found`). Cài Android Studio
+> Kiểm tra SDK trên từng máy bằng `flutter doctor`. Máy thiếu Android SDK cần cài Android Studio
 > (kèm SDK + emulator), rồi `flutter doctor --android-licenses`.
 > Build iOS bắt buộc máy macOS + Xcode.
 
@@ -112,11 +114,12 @@ hiện release đang ký bằng debug key) và cấu hình signing team trong Xc
 
 ## 5. Kết nối với backend
 
-Base URL mặc định khi chạy máy ảo: Android emulator `http://10.0.2.2:8000`,
-iOS simulator `http://localhost:8000`. Khi chạy với server thật:
+Base URL mặc định trong code là Android emulator `http://10.0.2.2:8000`.
+iOS simulator phải override `http://localhost:8000`. USE_MOCK mặc định true;
+chỉ bật false sau FE-02 và BE-01/02. Khi chạy với server thật:
 
 ```bash
-flutter run --dart-define=API_BASE_URL=https://api.stockmate.vn
+flutter run --dart-define=USE_MOCK=false --dart-define=API_BASE_URL=http://10.0.2.2:8000
 ```
 
 Schema và dữ liệu mẫu của backend nằm ở `../data/postgres/` (xem `../data/README.md`).

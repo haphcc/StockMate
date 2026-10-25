@@ -1,0 +1,199 @@
+{
+  "register": {
+    "full_name": "Nguyen Van Demo",
+    "email": "demo@example.com",
+    "phone_number": "0909999999",
+    "password": "Matkhau@123"
+  },
+  "login": {
+    "email": "an.nguyen@gmail.com",
+    "password": "Matkhau@123"
+  },
+  "user": {
+    "customer_id": 1,
+    "full_name": "Nguyễn Văn An",
+    "email": "an.nguyen@gmail.com",
+    "phone_number": "0901234567",
+    "avatar_url": null,
+    "status": "ACTIVE"
+  },
+  "account": {
+    "account_id": 1,
+    "account_number": "068C100001",
+    "account_type": "CASH",
+    "status": "ACTIVE"
+  },
+  "create_order": {
+    "client_order_id": "12345678-1234-4234-8234-123456789abc",
+    "stock_symbol": "FPT",
+    "order_type": "BUY",
+    "order_kind": "LO",
+    "quantity": 100,
+    "order_price": "100000.00"
+  },
+  "error": {
+    "error": {
+      "code": "INSUFFICIENT_CASH",
+      "message": "Không đủ sức mua.",
+      "details": {}
+    }
+  },
+  "stock": {
+    "stock_id": 38,
+    "stock_symbol": "FPT",
+    "company_name": "CTCP FPT",
+    "exchange": "HOSE",
+    "industry": "Công nghệ thông tin",
+    "current_price": "99000.00",
+    "reference_price": "99800.00",
+    "ceiling_price": "106700.00",
+    "floor_price": "92900.00",
+    "price_change": "-800.00",
+    "change_percent": "-0.80",
+    "price_state": "DOWN",
+    "total_volume": 5320700,
+    "status": "ACTIVE",
+    "updated_at": "2026-10-23T07:30:00Z",
+    "data_source": "DEMO",
+    "is_stale": true
+  },
+  "market_page": {
+    "items": [
+      {
+        "stock_id": 38,
+        "stock_symbol": "FPT",
+        "company_name": "CTCP FPT",
+        "exchange": "HOSE",
+        "industry": "Công nghệ thông tin",
+        "current_price": "99000.00",
+        "reference_price": "99800.00",
+        "ceiling_price": "106700.00",
+        "floor_price": "92900.00",
+        "price_change": "-800.00",
+        "change_percent": "-0.80",
+        "price_state": "DOWN",
+        "total_volume": 5320700,
+        "status": "ACTIVE",
+        "updated_at": "2026-10-23T07:30:00Z",
+        "data_source": "DEMO",
+        "is_stale": true
+      }
+    ],
+    "page": 1,
+    "page_size": 20,
+    "total": 1
+  },
+  "assets": {
+    "account_id": 1,
+    "account_number": "068C100001",
+    "account_type": "CASH",
+    "status": "ACTIVE",
+    "cash_balance": "990085150.00",
+    "blocked_balance": "0.00",
+    "stock_value": "9900000.00",
+    "total_asset_value": "999985150.00",
+    "total_profit_loss": "0.00",
+    "profit_loss_percent": "0.00"
+  },
+  "portfolio": {
+    "portfolio_id": 1,
+    "account_id": 1,
+    "stock_id": 38,
+    "stock_symbol": "FPT",
+    "company_name": "CTCP FPT",
+    "exchange": "HOSE",
+    "quantity": 100,
+    "available_quantity": 0,
+    "blocked_quantity": 0,
+    "pending_quantity": 100,
+    "average_price": "99000.00",
+    "market_price": "99000.00",
+    "current_value": "9900000.00",
+    "profit_loss": "0.00",
+    "profit_loss_percent": "0.00"
+  },
+  "order": {
+    "order_id": 59,
+    "client_order_id": "12345678-1234-4234-8234-123456789abc",
+    "account_id": 1,
+    "stock_symbol": "FPT",
+    "order_type": "BUY",
+    "order_kind": "LO",
+    "quantity": 100,
+    "filled_quantity": 100,
+    "remaining_quantity": 0,
+    "order_price": "100000.00",
+    "status": "COMPLETED",
+    "reject_reason": null,
+    "order_date": "2026-10-23T07:30:00Z",
+    "matched_at": "2026-10-23T07:30:00Z"
+  },
+  "transaction": {
+    "transaction_id": 47,
+    "order_id": 59,
+    "account_id": 1,
+    "stock_symbol": "FPT",
+    "transaction_type": "BUY",
+    "quantity": 100,
+    "price": "99000.00",
+    "total_amount": "9900000.00",
+    "transaction_fee": "14850.00",
+    "tax_amount": "0.00",
+    "net_amount": "9914850.00",
+    "transaction_date": "2026-10-23T07:30:00Z",
+    "settlement_date": "2026-10-27"
+  },
+  "token": {
+    "access_token": "EXAMPLE_ONLY_NOT_A_VALID_JWT",
+    "refresh_token": "EXAMPLE_ONLY_NOT_A_VALID_REFRESH",
+    "token_type": "bearer",
+    "expires_in": 900,
+    "user": {
+      "customer_id": 1,
+      "full_name": "Nguyễn Văn An",
+      "email": "an.nguyen@gmail.com",
+      "phone_number": "0901234567",
+      "avatar_url": null,
+      "status": "ACTIVE"
+    }
+  },
+  "candle": {
+    "recorded_date": "2026-10-22",
+    "open_price": "100000.00",
+    "close_price": "99800.00",
+    "highest_price": "100500.00",
+    "lowest_price": "99500.00",
+    "trading_volume": 1200000
+  },
+  "watchlist": {
+    "watchlist_id": 1,
+    "stock": {
+      "stock_id": 38,
+      "stock_symbol": "FPT",
+      "company_name": "CTCP FPT",
+      "exchange": "HOSE",
+      "industry": "Công nghệ thông tin",
+      "current_price": "99000.00",
+      "reference_price": "99800.00",
+      "ceiling_price": "106700.00",
+      "floor_price": "92900.00",
+      "price_change": "-800.00",
+      "change_percent": "-0.80",
+      "price_state": "DOWN",
+      "total_volume": 5320700,
+      "status": "ACTIVE",
+      "updated_at": "2026-10-23T07:30:00Z",
+      "data_source": "DEMO",
+      "is_stale": true
+    }
+  },
+  "notification": {
+    "notification_id": 1,
+    "title": "Khớp lệnh mua FPT",
+    "content": "Mua 100 FPT giá 99000.00, phí 14850.00.",
+    "notification_type": "TRANSACTION",
+    "ref_id": 47,
+    "is_read": false,
+    "created_at": "2026-10-23T07:30:00Z"
+  }
+}

@@ -1,0 +1,329 @@
+{
+  "description": "First matching rule wins. Globs are repository-relative Python fnmatch patterns; * also matches /.",
+  "people": {
+    "TV1": "Phuoc — DB, DevOps, integration order",
+    "TV2": "Sơn — Flutter foundation, auth, dashboard, portfolio",
+    "TV3": "Me — Flutter market, watchlist, trading, notifications",
+    "TV4": "LB — Backend foundation, auth, market, accounts",
+    "TV5": "Tuệ — Trading engine, settlement, notifications",
+    "TV6": "Châu — QA, integration evidence, report"
+  },
+  "rules": [
+    {
+      "pattern": "docs/team/TV1*",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "docs/team/TV2*",
+      "owner": "TV2"
+    },
+    {
+      "pattern": "docs/team/TV3*",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "docs/team/TV4*",
+      "owner": "TV4"
+    },
+    {
+      "pattern": "docs/team/TV5*",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "docs/team/TV6*",
+      "owner": "TV6"
+    },
+    {
+      "pattern": "docs/MVP_SCOPE.md",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "docs/BUSINESS_RULES.md",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "docs/PROJECT_STRUCTURE.md",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "docs/FILE_OWNERS*",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "docs/PLAN.md",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "docs/TASK_ASSIGNMENT.md",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "docs/START_HERE.md",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "docs/DATABASE_WORKFLOW.md",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "docs/SETUP.md",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "docs/API_CONTRACT.md",
+      "owner": "TV4"
+    },
+    {
+      "pattern": "docs/contracts/*",
+      "owner": "TV4"
+    },
+    {
+      "pattern": "docs/*",
+      "owner": "TV6"
+    },
+    {
+      "pattern": "backend/alembic*",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "backend/Dockerfile",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "backend/scripts/seed_demo.py",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "backend/tests/unit/test_auth*",
+      "owner": "TV4"
+    },
+    {
+      "pattern": "backend/tests/unit/test_trading*",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/tests/unit/test_settlement*",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/tests/*",
+      "owner": "TV6"
+    },
+    {
+      "pattern": "backend/app/api/v1/endpoints/orders.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/api/v1/endpoints/transactions.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/api/v1/endpoints/notifications.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/schemas/trading.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/schemas/notifications.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/models/stock_order.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/models/transaction.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/models/notification.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/models/settlement.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/crud/orders.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/crud/transactions.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/crud/notifications.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/services/order_service.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/services/matching_service.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/services/settlement_service.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/app/services/notification_service.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/scripts/settle_shares.py",
+      "owner": "TV5"
+    },
+    {
+      "pattern": "backend/*",
+      "owner": "TV4"
+    },
+    {
+      "pattern": "data/*",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "mobile/lib/features/market/*",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/features/watchlist/*",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/features/order/*",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/features/transaction/*",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/features/notification/*",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/data/models/stock_model.dart",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/data/models/candle_model.dart",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/data/models/order_model.dart",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/data/models/transaction_model.dart",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/data/models/notification_model.dart",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/data/datasources/trading_datasource.dart",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/data/datasources/watchlist_datasource.dart",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/data/datasources/notification_datasource.dart",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/data/repositories/trading_repository.dart",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/data/repositories/watchlist_repository.dart",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/lib/data/repositories/notification_repository.dart",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/android/app/src/debug/AndroidManifest.xml",
+      "owner": "TV2"
+    },
+    {
+      "pattern": "mobile/ios/Runner/Info.plist",
+      "owner": "TV2"
+    },
+    {
+      "pattern": "mobile/android/*",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "mobile/ios/*",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "mobile/web/*",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "mobile/test/unit/order*",
+      "owner": "TV3"
+    },
+    {
+      "pattern": "mobile/test/unit/money*",
+      "owner": "TV2"
+    },
+    {
+      "pattern": "mobile/test/widget_test.dart",
+      "owner": "TV2"
+    },
+    {
+      "pattern": "mobile/test/*",
+      "owner": "TV6"
+    },
+    {
+      "pattern": "mobile/integration_test/*",
+      "owner": "TV6"
+    },
+    {
+      "pattern": "mobile/*",
+      "owner": "TV2"
+    },
+    {
+      "pattern": "scripts/check_preparation.py",
+      "owner": "TV6"
+    },
+    {
+      "pattern": "scripts/*",
+      "owner": "TV1"
+    },
+    {
+      "pattern": ".github/*",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "README.md",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "compose.yaml",
+      "owner": "TV1"
+    },
+    {
+      "pattern": ".dockerignore",
+      "owner": "TV1"
+    },
+    {
+      "pattern": ".gitignore",
+      "owner": "TV1"
+    },
+    {
+      "pattern": ".editorconfig",
+      "owner": "TV1"
+    }
+  ]
+}

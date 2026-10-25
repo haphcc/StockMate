@@ -1,5 +1,10 @@
 # StockMate — Kế Hoạch Phát Triển Ứng Dụng (Master Project Plan)
 
+> Tài liệu định hướng đầy đủ và lịch sử sprint. Bản đầu hiện triển khai theo
+> [MVP_SCOPE](MVP_SCOPE.md), [BUSINESS_RULES](BUSINESS_RULES.md) và [WORK_BOARD](WORK_BOARD.md).
+> Điểm bắt đầu và hướng dẫn từng người: [START_HERE](START_HERE.md).
+> Mốc 04/10 bên dưới thuộc kế hoạch cũ; nhóm cần điền lịch mới ở WORK_BOARD.
+
 > **Môn học:** Lập trình Thiết bị Di động  
 > **Dự án:** StockMate — Ứng dụng giao dịch chứng khoán mô phỏng thị trường Việt Nam (HOSE / HNX / UPCOM)  
 > **Quy mô nhóm:** 6 thành viên  

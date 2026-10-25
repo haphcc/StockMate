@@ -3,6 +3,11 @@
 Bộ script trong `data/postgres/` tạo đầy đủ schema và dữ liệu mẫu theo mô hình Entity
 đã thiết kế, mô phỏng thị trường chứng khoán Việt Nam (HOSE / HNX / UPCOM).
 
+**Đường chạy nhóm dùng:** [SETUP](../docs/SETUP.md) và
+[DATABASE_WORKFLOW](../docs/DATABASE_WORKFLOW.md): Alembic baseline → seed_demo.
+Các lệnh psql dưới đây là đường prototype; 00_run_all có DROP TABLE, chỉ dùng DB bỏ được.
+Engine còn phải hoàn thiện theo [BUSINESS_RULES](../docs/BUSINESS_RULES.md).
+
 ## 1. Chạy
 
 ```bash
@@ -45,7 +50,8 @@ psql -h localhost -U postgres -d stock_exchange -f 09_check.sql     # kiểm tra
 | Phí giao dịch 0,15%; thuế TNCN 0,1% khi bán | tính trong `05_seed_trading.sql`, lưu ở `transactions.transaction_fee` / `tax_amount` |
 | Tiền phong tỏa cho lệnh mua chờ khớp | `investment_accounts.blocked_balance` |
 
-Nghĩa là backend FastAPI chỉ cần `INSERT` vào `transactions`, database sẽ tự lo phần còn lại.
+Đây là các phần prototype đã có. Chưa đủ cho luồng giao dịch mới: reserve/release, chống trùng,
+khớp đồng thời và T+2 từng đợt cần migration 0002+; xem DATABASE_WORKFLOW.
 
 ## 4. View ↔ màn hình app
 
@@ -71,6 +77,9 @@ Nghĩa là backend FastAPI chỉ cần `INSERT` vào `transactions`, database s�
 Mật khẩu demo: `Matkhau@123`.
 **`password_hash` trong file 04 là chuỗi mẫu đúng định dạng bcrypt, không phải hash thật** —
 trước khi bật đăng nhập hãy sinh lại:
+
+`python -m scripts.seed_demo` từ backend đã tự thay hash sau khi nạp trên DB trống;
+không cần chạy UPDATE tay nếu dùng đường Alembic + seed mới.
 
 ```python
 from passlib.context import CryptContext

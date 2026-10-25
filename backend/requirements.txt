@@ -19,6 +19,7 @@ psycopg[binary]>=3.2        # driver PostgreSQL (thay cho psycopg2)
 # --- Xac thuc ---
 python-jose[cryptography]>=3.3   # ky/giai ma JWT
 passlib[bcrypt]>=1.7             # hash mat khau bcrypt
+bcrypt>=4.3,<5                  # passlib chua tuong thich bcrypt 5
 python-multipart>=0.0.9          # form OAuth2PasswordRequestForm
 
 # --- Tien ich ---

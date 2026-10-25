@@ -1,6 +1,8 @@
 # Bảng Phân Công Nhiệm Vụ 6 Thành Viên — Dự Án StockMate
 
-> **Tài liệu căn cứ:** `docs/Mobile - Sheet1.csv`  
+> **Hướng dẫn thực thi:** [START_HERE](START_HERE.md), [WORK_BOARD](WORK_BOARD.md),
+> [FILE_OWNERS](FILE_OWNERS.md) và thư mục `docs/team/`. CSV gốc không có trong repo.
+> Phân công sprint dưới đây giữ làm định hướng; task ID và phạm vi MVP mới có ưu tiên khi khác nhau.
 > **Dự án:** Ứng dụng Giao dịch Chứng khoán StockMate  
 > **Quy mô:** 6 thành viên (TV1 – TV6)  
 > **Lộ trình:** 3 Sprint (Sprint 1: Tuần 1-2 | Sprint 2: Tuần 3-4 | Sprint 3: Tuần 5-6)
