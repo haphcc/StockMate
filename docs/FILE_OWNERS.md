@@ -4,6 +4,8 @@ Nguồn máy đọc: FILE_OWNERS.json; quy tắc khớp đầu tiên có hiệu 
 Một file có một chủ chính; người khác vẫn có thể đề xuất sửa bằng PR phối hợp.
 Chủ file chịu trách nhiệm tích hợp/review, không phải cơ chế khóa file của GitHub.
 
+Tên Me là thành viên TV3, không phải đại từ tôi hoặc người yêu cầu chuẩn bị repo.
+
 Không có GitHub username của nhóm nên chưa tạo CODEOWNERS giả.
 Phuoc thêm username thật sau và cấu hình branch protection nếu nhóm dùng GitHub.
 
@@ -11,11 +13,11 @@ Phuoc thêm username thật sau và cấu hình branch protection nếu nhóm d�
 
 | File/nhóm | Chủ chính | Ai cần cùng kiểm tra |
 |---|---|---|
-| Schema/OpenAPI/examples | LB; trading schema: Tuệ | Sơn, Me, Châu |
+| Schema/OpenAPI/examples | LB; trading schema: Tuệ | Sơn, Me (TV3), Châu |
 | Migration/SQL | Phuoc | Tuệ (luật), LB (mapping), Châu (regression) |
-| Router/providers/network/shared models | Sơn | Me đề xuất thay đổi qua cùng PR |
-| MarketRepository hiện có | Sơn | Me dùng để đọc thị trường; phối hợp nếu thêm method |
-| Pubspec/lock/theme/assets | Sơn | Me dùng lại, không tự tạo bộ theme thứ hai |
+| Router/providers/network/shared models | Sơn | Me (TV3) đề xuất thay đổi qua cùng PR |
+| MarketRepository hiện có | Sơn | Me (TV3) dùng để đọc thị trường; phối hợp nếu thêm method |
+| Pubspec/lock/theme/assets | Sơn | Me (TV3) dùng lại, không tự tạo bộ theme thứ hai |
 | Tests integration/E2E | Châu | Người viết tính năng cung cấp fixture và điều kiện test |
 
 ## Tra cứu nhanh

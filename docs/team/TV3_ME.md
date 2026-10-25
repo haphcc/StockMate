@@ -1,5 +1,7 @@
 # TV3 — Me: thị trường, watchlist, giao dịch và thông báo
 
+**Tên thành viên:** “Me” là tên gọi riêng của thành viên **TV3**, không phải đại từ “tôi” hay người yêu cầu chuẩn bị repo.
+
 Tra file: `python scripts/check_preparation.py --owner TV3` từ repo gốc.
 Đọc API_CONTRACT, BUSINESS_RULES và fixture; nhận helper tiền/network/router từ Sơn.
 

@@ -1,5 +1,5 @@
 {
-  "description": "First matching rule wins. Globs are repository-relative Python fnmatch patterns; * also matches /.",
+  "description": "First matching rule wins. Globs are repository-relative Python fnmatch patterns; * also matches /. TV3 refers to the team member named Me, not the requester or the first-person pronoun.",
   "people": {
     "TV1": "Phuoc — DB, DevOps, integration order",
     "TV2": "Sơn — Flutter foundation, auth, dashboard, portfolio",

@@ -35,7 +35,7 @@ data/postgres/03–07 nếu schema đích ảnh hưởng seed. Không chạy l�
 
 ## ENV-02 — Build demo sau G3
 
-1. Sơn/Me xác nhận app chạy API thật trên emulator.
+1. Sơn/Me (TV3) xác nhận app chạy API thật trên emulator.
 2. Châu chạy kịch bản ngoài giờ/internet tắt; chuẩn bị DB demo riêng để không đụng dữ liệu nhóm.
 3. Theo dõi debug HTTP vs release HTTPS; cấu hình release endpoint phù hợp trước build APK demo.
 4. Build Android; ghi command, commit SHA và vị trí APK trong hướng dẫn deploy.

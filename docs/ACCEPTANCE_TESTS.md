@@ -16,9 +16,9 @@ Không đánh dấu pass từ tài liệu. Ghi task/commit, môi trường, ngà
 | QA-AUTH-06 | G1 | Refresh sai/hết hạn, restart app, logout | Xóa phiên khi lỗi; khôi phục phiên hợp lệ; logout local rõ ràng | LB/Sơn |
 | QA-AUTH-07 | G1 | Dùng refresh token làm access và ngược lại | Bị từ chối theo type claim | LB |
 | QA-OWN-01 | G1 | User A gọi assets/portfolio/orders/transactions/cancel của B | 404, không thấy hoặc đổi dữ liệu B | LB/Tuệ |
-| QA-MKT-01 | G1 | Filter HOSE/HNX/UPCOM, tìm mã/tên, paginate | Đúng danh sách và envelope, sort ổn định | LB/Me |
-| QA-MKT-02 | G2 | Chart 1M/3M/6M, watchlist add/delete lặp | Đúng date ASC; không trùng watchlist | LB/Me |
-| QA-MKT-03 | G2 | Price_state đủ 5 trạng thái | Đúng tím/xanh lơ/vàng/xanh lá/đỏ | Me |
+| QA-MKT-01 | G1 | Filter HOSE/HNX/UPCOM, tìm mã/tên, paginate | Đúng danh sách và envelope, sort ổn định | LB/Me (TV3) |
+| QA-MKT-02 | G2 | Chart 1M/3M/6M, watchlist add/delete lặp | Đúng date ASC; không trùng watchlist | LB/Me (TV3) |
+| QA-MKT-03 | G2 | Price_state đủ 5 trạng thái | Đúng tím/xanh lơ/vàng/xanh lá/đỏ | Me (TV3) |
 | QA-MKT-04 | G2 | Đổi giá DEV một mã đang giữ | Board và NAV đúng sau refresh, vẫn ghi nguồn DEMO | Phuoc/LB/Sơn |
 | QA-ACC-01 | G2 | Chọn hai account, logout/login user khác | Không lẫn cache; request dùng account_id đúng | Sơn |
 | QA-ORD-01 | G3 | BUY ví dụ CASH-01 | Cash/blocked/gross/fee/holdings đúng từng bước | Tuệ |
@@ -33,8 +33,8 @@ Không đánh dấu pass từ tài liệu. Ghi task/commit, môi trường, ngà
 | QA-SET-01 | G3 | Mua thứ Sáu 23/10/2026 | Settlement 27/10/2026 theo lịch mô phỏng | Tuệ |
 | QA-SET-02 | G3 | Hai đợt 100/200 về khác ngày; chạy lại job | Giải phóng đúng 100 rồi 200, không lặp | Tuệ |
 | QA-SET-03 | G3 | Settlement khi có SELL đang giữ cổ phiếu khác | Không giải phóng phần blocked SELL | Tuệ |
-| QA-UI-01 | G2/G3 | Loading/empty/error/timeout/501/network off | Không hiện thành công giả; retry cùng UUID | Sơn/Me |
-| QA-NOT-01 | G3 | Đặt/khớp/hủy, mark-read hai lần, user khác | Notification đúng chủ, không lặp do retry | Tuệ/Me |
+| QA-UI-01 | G2/G3 | Loading/empty/error/timeout/501/network off | Không hiện thành công giả; retry cùng UUID | Sơn/Me (TV3) |
+| QA-NOT-01 | G3 | Đặt/khớp/hủy, mark-read hai lần, user khác | Notification đúng chủ, không lặp do retry | Tuệ/Me (TV3) |
 | QA-DEMO-01 | G4 | Chạy kịch bản ngoài giờ, mất internet, APK máy thật | Demo dùng seed; không phụ thuộc nguồn live | Phuoc/Châu |
 
 ## Tự động hóa trước

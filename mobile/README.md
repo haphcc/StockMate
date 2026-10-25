@@ -3,7 +3,7 @@
 App Flutter chạy trên **Android + iOS**, đã có UI auth/dashboard/order/portfolio dùng mock.
 API repository và các feature TODO chưa triển khai. Hướng dẫn hiện hành:
 [START_HERE](../docs/START_HERE.md), [SETUP](../docs/SETUP.md), [API_CONTRACT](../docs/API_CONTRACT.md).
-Sơn theo [TV2](../docs/team/TV2_SON.md), Me theo [TV3](../docs/team/TV3_ME.md).
+Sơn theo [TV2](../docs/team/TV2_SON.md), Me (TV3) theo [TV3](../docs/team/TV3_ME.md).
 
 ## 1. Trạng thái dự án
 

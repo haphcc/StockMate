@@ -15,7 +15,7 @@ Châu xác nhận bằng kết quả chạy thực tế; người giữ feature 
 **File:** tests/unit/test_contract.py, tests/unit/test_http_contract.py, docs/qa/environment.md,
 docs/WORK_BOARD.md, docs/ACCEPTANCE_TESTS.md, scripts/check_preparation.py.
 
-## QA-02 — G1 và G2, sau LB/Sơn/Me bàn giao
+## QA-02 — G1 và G2, sau LB/Sơn/Me (TV3) bàn giao
 
 1. Chuẩn bị hai user và ít nhất hai account của cùng user để test ID và cache.
 2. Viết integration test DB riêng cho ownership; không dùng DB cá nhân hoặc shared DB có dữ liệu thật.
@@ -26,7 +26,7 @@ docs/WORK_BOARD.md, docs/ACCEPTANCE_TESTS.md, scripts/check_preparation.py.
 
 **File:** backend/tests/integration/test_auth_accounts.py (tạo khi BE-01 có code),
 backend/tests/integration/test_market.py; mobile/integration_test/auth_market_test.dart;
-docs/qa/*.md. Báo Sơn/Me sửa implementation thay vì Châu sửa chồng mọi file.
+docs/qa/*.md. Báo Sơn/Me (TV3) sửa implementation thay vì Châu sửa chồng mọi file.
 
 **Xong khi:** QA-AUTH/OWN/MKT/ACC case liên quan pass và có log/ảnh của luồng API thật.
 

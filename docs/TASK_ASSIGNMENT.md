@@ -1,5 +1,7 @@
 # Bảng Phân Công Nhiệm Vụ 6 Thành Viên — Dự Án StockMate
 
+**Tên thành viên:** “Me” là tên gọi riêng của thành viên **TV3**, không phải đại từ “tôi” hay người yêu cầu chuẩn bị repo.
+
 > **Hướng dẫn thực thi:** [START_HERE](START_HERE.md), [WORK_BOARD](WORK_BOARD.md),
 > [FILE_OWNERS](FILE_OWNERS.md) và thư mục `docs/team/`. CSV gốc không có trong repo.
 > Phân công sprint dưới đây giữ làm định hướng; task ID và phạm vi MVP mới có ưu tiên khi khác nhau.

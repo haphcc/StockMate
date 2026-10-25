@@ -32,7 +32,7 @@ tests/unit/test_trading.py; SQL đóng góp vào revision Phuoc giữ.
 
 **File:** services/{order,matching,notification}_service.py; crud/{orders,transactions,notifications}.py;
 endpoints/{orders,transactions,notifications}.py; models/schemas trading; tests/unit/test_trading.py.
-**Phối hợp:** Phuoc migration/routine; Châu integration test; Me UI payload/refresh state.
+**Phối hợp:** Phuoc migration/routine; Châu integration test; Me (TV3) UI payload/refresh state.
 **Xong khi:** QA-ORD-01–09 và QA-NOT-01 pass bằng số thực tế; không che negative bằng clamp.
 
 ## TR-03 — T+2 từng đợt
@@ -49,5 +49,5 @@ tests/unit/test_settlement.py; SQL migration phối hợp Phuoc.
 **Xong khi:** QA-SET-01/02/03 pass.
 
 **PR đầu tiên:** `codex/TR-01-trading-invariants`.
-**Bàn giao:** Me nhận JSON/error codes; LB nhận transaction ownership; Châu nhận seed cho cạnh tranh.
+**Bàn giao:** Me (TV3) nhận JSON/error codes; LB nhận transaction ownership; Châu nhận seed cho cạnh tranh.
 **Không làm:** auto fill bằng cách chỉ INSERT transactions rồi tin trigger cũ đã bao hết reserve/T+2.

@@ -10,7 +10,7 @@ Tra file: `python scripts/check_preparation.py --owner TV2` từ repo gốc.
 1. Làm `core/utils/money.dart`: tiền từ string, giữ chính xác đến 0.01 đồng bằng Decimal hoặc BigInt cents.
    Chọn một biểu diễn dùng xuyên model; không qua double. Nếu thêm package, cập nhật pubspec và lock cùng PR.
 2. Sửa AccountModel/UserModel/PortfolioModel; portfolio phẳng, thêm cash blocked và qty blocked/pending.
-3. Phối hợp Me sửa StockModel theo cùng helper tiền. MarketRepository hiện do Sơn giữ để tránh đụng file.
+3. Phối hợp Me (TV3) sửa StockModel theo cùng helper tiền. MarketRepository hiện do Sơn giữ để tránh đụng file.
 4. Register form gửi đủ full_name/email/phone_number/password; kiểm tra confirm ở client.
    Tách email/SĐT thành hai trường; bỏ default contact giả và gọi Form.validate() trước submit.
 5. Login chỉ email/password; bỏ tự điền credential rỗng. Ẩn Google/Apple/sinh trắc học/OTP/quên password chưa làm.
@@ -48,15 +48,15 @@ khởi động lại khôi phục phiên, logout xóa cache, 401 chỉ refresh m
 ## FE-04 — Dashboard và portfolio sau BE-03
 
 1. Dashboard đọc data thật, bỏ số dư/chỉ số/tin tức/table viết cứng; ẩn phần chưa có nguồn.
-2. Nhận widget/table từ Me hoặc route sang MarketBoard; tránh dựng hai bộ bảng giá khác nhau.
+2. Nhận widget/table từ Me (TV3) hoặc route sang MarketBoard; tránh dựng hai bộ bảng giá khác nhau.
 3. PortfolioScreen dùng provider theo account, đủ available/blocked/pending, giá vốn và P/L.
 4. Đổi account/user phải đổi khóa provider và xóa state cũ; không hiển thị tài khoản người trước.
-5. Thống nhất callback/invalidation với Me sau place/cancel; kiểm tra tài sản đổi theo giá demo.
+5. Thống nhất callback/invalidation với Me (TV3) sau place/cancel; kiểm tra tài sản đổi theo giá demo.
 6. Đủ loading/empty/error, retry và nguồn DEMO; giữ theme/widget dùng chung.
 
 **File chính:** features/home/*, features/portfolio/*, providers/selected_account_provider.dart.
 **Xong khi:** QA-ACC-01, QA-MKT-04, QA-UI-01 pass.
 
 **PR đầu tiên:** `codex/FE-01-models-auth-form`.
-**Bàn giao cho Me:** helper tiền, router/network conventions, selected account và provider invalidation.
-**Khi cần sửa file Me giữ:** báo rõ method/field cần thêm trong PR; không tự copy model/utility thứ hai.
+**Bàn giao cho Me (TV3):** helper tiền, router/network conventions, selected account và provider invalidation.
+**Khi cần sửa file Me (TV3) giữ:** báo rõ method/field cần thêm trong PR; không tự copy model/utility thứ hai.

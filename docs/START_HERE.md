@@ -1,5 +1,7 @@
 # Bắt đầu làm StockMate — đọc file này trước
 
+**Tên thành viên:** “Me” là tên gọi riêng của thành viên **TV3**, không phải đại từ “tôi” hay người yêu cầu chuẩn bị repo.
+
 Bộ hướng dẫn làm việc cho 6 thành viên, lập ngày 25/10/2026.
 Phạm vi bản đầu nằm trong [MVP_SCOPE.md](MVP_SCOPE.md); kế hoạch cũ là định hướng mở rộng.
 
@@ -18,10 +20,10 @@ Phạm vi bản đầu nằm trong [MVP_SCOPE.md](MVP_SCOPE.md); kế hoạch c�
 | Người | Mở ngay | Việc đầu tiên | Bàn giao cho |
 |---|---|---|---|
 | TV1 — Phuoc | [TV1_PHUOC.md](team/TV1_PHUOC.md) | ENV-01: dựng DB mới, migrate, seed, ghi bằng chứng | LB, Tuệ, Châu |
-| TV2 — Sơn | [TV2_SON.md](team/TV2_SON.md) | FE-01: sửa model tiền và form đăng ký theo contract | LB, Me, Châu |
+| TV2 — Sơn | [TV2_SON.md](team/TV2_SON.md) | FE-01: sửa model tiền và form đăng ký theo contract | LB, Me (TV3), Châu |
 | TV3 — Me | [TV3_ME.md](team/TV3_ME.md) | FE-03: dựng bảng giá/chi tiết bằng JSON mẫu | Sơn, Châu |
 | TV4 — LB | [TV4_LB.md](team/TV4_LB.md) | BE-01: auth + khách hàng/tài khoản trong DB | Sơn, Tuệ, Châu |
-| TV5 — Tuệ | [TV5_TUE.md](team/TV5_TUE.md) | TR-01: đặc tả test phong tỏa và khớp lệnh | Phuoc, LB, Me |
+| TV5 — Tuệ | [TV5_TUE.md](team/TV5_TUE.md) | TR-01: đặc tả test phong tỏa và khớp lệnh | Phuoc, LB, Me (TV3) |
 | TV6 — Châu | [TV6_CHAU.md](team/TV6_CHAU.md) | QA-01: kiểm tra setup và chạy contract tests | Cả nhóm |
 
 ## 3. Mốc phải qua theo thứ tự
@@ -64,4 +66,4 @@ Các lệnh git ở đây là hướng dẫn cho nhóm; bộ chuẩn bị không
 Phạm vi: MVP_SCOPE → luật: BUSINESS_RULES → wire format đích: API_CONTRACT + JSON mẫu.
 Schema Python và OpenAPI do LB tự viết/sinh sau; hiện chưa có snapshot.
 PLAN/TASK_ASSIGNMENT giữ định hướng và lịch sử phân công. Thay đổi contract phải cập nhật schema,
-JSON mẫu, tài liệu và snapshot trong cùng PR; LB chủ trì, Sơn/Me xác nhận phần client bị ảnh hưởng.
+JSON mẫu, tài liệu và snapshot trong cùng PR; LB chủ trì, Sơn/Me (TV3) xác nhận phần client bị ảnh hưởng.

@@ -10,12 +10,12 @@ phần bị ảnh hưởng. Đây là phần thu gọn của PLAN, không phải
 | Đăng ký | Họ tên + email + SĐT + password; tạo CASH account, cấp 1 tỷ tiền giả lập một lần | LB + Sơn |
 | Phiên đăng nhập | Email/password JSON, access + refresh JWT, tự refresh một lần khi 401 | LB + Sơn |
 | Tài khoản | Danh sách của chính khách hàng; chọn account theo `account_id`; chỉ CASH được giao dịch | LB + Sơn |
-| Thị trường | HOSE/HNX/UPCOM, tìm kiếm, chi tiết mã, OHLCV; giá DEMO là mặc định | LB + Me |
+| Thị trường | HOSE/HNX/UPCOM, tìm kiếm, chi tiết mã, OHLCV; giá DEMO là mặc định | LB + Me (TV3) |
 | Tài sản | Tiền khả dụng/phong tỏa, NAV, danh mục, giá vốn và lãi/lỗ | LB + Sơn |
-| Watchlist | Một danh sách mặc định; thêm/xóa mã, không có cảnh báo giá tự động | LB + Me |
-| Giao dịch | BUY/SELL LO, bội số 100, khớp toàn bộ nếu đạt điều kiện; chờ hoặc hủy nếu chưa khớp | Tuệ + Me |
+| Watchlist | Một danh sách mặc định; thêm/xóa mã, không có cảnh báo giá tự động | LB + Me (TV3) |
+| Giao dịch | BUY/SELL LO, bội số 100, khớp toàn bộ nếu đạt điều kiện; chờ hoặc hủy nếu chưa khớp | Tuệ + Me (TV3) |
 | Thanh toán | Cổ phiếu mua về sau 2 ngày làm việc mô phỏng; tiền bán cộng ngay | Tuệ + Phuoc |
-| Thông báo | Trong app: đặt/khớp/hủy; danh sách và đánh dấu đã đọc | Tuệ + Me |
+| Thông báo | Trong app: đặt/khớp/hủy; danh sách và đánh dấu đã đọc | Tuệ + Me (TV3) |
 | Demo | APK Android, kịch bản có thể tái hiện ngoài giờ giao dịch thật | Phuoc + Châu |
 
 ## Để sau G4

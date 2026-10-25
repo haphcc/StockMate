@@ -105,6 +105,6 @@ Ví dụ SELL 100 × 100000: gross 10000000.00, fee 15000.00, tax 10000.00, net 
 | Chọn lệnh đủ điều kiện, tạo fill duy nhất | `services/matching_service.py` | Tuệ |
 | Tính phí/thuế/net, apply fill, reserve/release, settlement | SQL function/procedure trong migration nhóm tự viết | Phuoc + Tuệ |
 | Serialize Decimal thành string và dựng response | schemas + endpoint mapping | LB/Tuệ |
-| Hiển thị và ước tính trước lệnh, không quyết định số dư thật | Flutter providers/widgets | Sơn/Me |
+| Hiển thị và ước tính trước lệnh, không quyết định số dư thật | Flutter providers/widgets | Sơn/Me (TV3) |
 
 TR-01 phải tạo migration/routine theo luật trên; baseline 0001 chưa phải engine đạt chuẩn.

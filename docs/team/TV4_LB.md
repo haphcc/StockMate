@@ -37,7 +37,7 @@ tests/unit/test_auth.py (tạo khi viết tính năng); integration phối hợp
 
 **File:** app/models/{stock,portfolio}.py; app/crud/{accounts,market}.py;
 app/services/{account,market}_service.py; endpoints/{accounts,market}.py.
-**Xong khi:** QA-OWN-01 (phần read), QA-MKT-01, Sơn/Me đạt G1.
+**Xong khi:** QA-OWN-01 (phần read), QA-MKT-01, Sơn/Me (TV3) đạt G1.
 
 ## BE-03 — Chart, portfolio hoàn chỉnh và watchlist sau TR-01
 

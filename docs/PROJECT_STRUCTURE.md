@@ -76,7 +76,7 @@ StockMate/
     │   │   ├── network/             TV2: Dio gốc; TODO endpoints/lỗi API
     │   │   ├── storage/             TV2: TODO tokens
     │   │   ├── utils/               TV2: format/validate + TODO tiền chính xác
-    │   │   ├── router/              TV2: router chung, Me bàn giao route cần thêm
+    │   │   ├── router/              TV2: router chung, Me (TV3) bàn giao route cần thêm
     │   │   └── theme/widgets/       TV2: dùng lại toàn app
     │   ├── providers/               TV2: app providers + TODO selected account
     │   ├── data/

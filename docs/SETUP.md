@@ -43,7 +43,7 @@ compose.yaml, Dockerfile, alembic.ini và các file SQL hiện chỉ là TODO.
 Chưa dùng `docker compose up`, `alembic upgrade head` hay `scripts.seed_demo` để dựng DB từ khung này.
 Không dùng 00_run_all.sql trên DB dùng chung: script gốc có DROP.
 
-## D. Chạy Flutter gốc — Sơn/Me
+## D. Chạy Flutter gốc — Sơn/Me (TV3)
 
 ```powershell
 cd mobile
