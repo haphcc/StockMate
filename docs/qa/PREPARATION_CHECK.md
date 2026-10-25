@@ -6,18 +6,20 @@ Phạm vi: khung dự án và hướng dẫn, chưa phải nghiệm thu tính n�
 |---|---|
 | Python local | 3.14.7; nhóm/Docker/CI dùng Python 3.13 |
 | Dependency backend | Cài trong backend/.venv, khóa phiên bản; pip check không có dependency lỗi |
-| Unit/HTTP/fixture tests | PASS: 36 passed; 3 DB integration tests skipped do chưa có TEST_DATABASE_URL |
-| Migration/seed integration | NOT RUN local: Docker Linux engine chưa kết nối được, không có PostgreSQL local |
+| Unit/HTTP/fixture + DB tests | PASS CI: 39 passed, không skip; local: 36 passed, 3 DB tests skipped |
+| Migration/seed integration | PASS CI PostgreSQL 16: migrate, seed, kiểm tra dữ liệu, từ chối seed lặp và migrate lặp; chưa chạy PostgreSQL local |
 | Compose | PASS `docker compose config --quiet`; chưa chạy container/migrate/seed thực tế |
-| Flutter analyze/test/APK | NOT RUN: Flutter không có trong PATH phiên chuẩn bị |
+| Flutter analyze/test | PASS CI Flutter 3.47.5: analyze không có issue, 1 widget test passed; Flutter chưa có trong PATH local |
+| Flutter APK | NOT RUN: workflow hiện chưa build APK |
 | Luồng register/login/market/trading thật | TODO theo WORK_BOARD; nghiệp vụ hiện trả 501 |
 | Ownership + Markdown links | PASS: 323 file có chủ; liên kết nội bộ tồn tại |
 | OpenAPI snapshot | PASS: khớp schema/route hiện tại |
 | Ruff + format | PASS; 68 file Python đúng quy ước formatter |
-| Alembic history | PASS: nhận revision 0001 head; chưa áp dụng lên PostgreSQL local |
+| Alembic history | PASS: revision 0001 head; đã áp dụng lên PostgreSQL 16 trong CI |
 
 Pytest có một cảnh báo deprecation từ Starlette TestClient/httpx ở dependency mới;
-không có test failure. CI Python 3.13/Linux và Flutter vẫn cần chạy trên môi trường nhóm/remote.
+không có test failure. CI Python 3.13/Linux và Flutter đã PASS tại commit `99bea65`:
+[GitHub Actions run 40209906134](https://github.com/haphcc/StockMate/actions/runs/40209906134).
 
 ## Điểm đã xác nhận từ source/test nền
 
@@ -27,7 +29,7 @@ không có test failure. CI Python 3.13/Linux và Flutter vẫn cần chạy tr�
 - Schema money giữ phần lẻ, số lớn; từ chối float/NaN/Infinity và lot không hợp lệ.
 - Fixture các nhóm API có test đối chiếu schema.
 - Migration baseline bỏ DROP, từ chối DB đã có bảng app; seed không reset DB và từ chối dữ liệu có sẵn.
-  Hai đặc tính DB này vẫn phải chạy integration thực tế trước khi ENV-01 sang DONE.
+  CI đã xác nhận seed từ chối dữ liệu sẵn có và migrate lặp không thay đổi schema.
 
 ## Lệnh chạy lại
 
@@ -37,4 +39,6 @@ Từ backend: `python -m ruff check app scripts tests alembic`,
 Từ repo gốc: `python scripts/check_preparation.py`, `docker compose config --quiet`.
 Xem SETUP cho lệnh Python .venv trên PowerShell.
 
-CI đã khai báo PostgreSQL thật để kiểm tra bootstrap khi chạy workflow; chưa có kết quả CI remote trong phiên này.
+Workflow nằm ở `.github/workflows/checks.yml`, chạy khi push lên `main` hoặc mở/cập nhật pull request.
+Lỗi CI ban đầu đã sửa: thực thi script SQL không truyền tham số để giữ nguyên `%`,
+và bổ sung `const` tại các widget Flutter được analyzer chỉ ra. Cả hai job backend/mobile đã PASS.
