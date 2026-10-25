@@ -53,7 +53,6 @@ Dòng 'TODO' trong source là file khung, chưa có tính năng.
 | [data/postgres/06_seed_price_history.sql](../data/postgres/06_seed_price_history.sql) |
 | [data/postgres/07_seed_notifications.sql](../data/postgres/07_seed_notifications.sql) |
 | [data/postgres/08_views.sql](../data/postgres/08_views.sql) |
-| [data/postgres/09_check.sql](../data/postgres/09_check.sql) |
 | [docs/BUSINESS_RULES.md](../docs/BUSINESS_RULES.md) |
 | [docs/DATABASE_WORKFLOW.md](../docs/DATABASE_WORKFLOW.md) |
 | [docs/FILE_OWNERS.json](../docs/FILE_OWNERS.json) |

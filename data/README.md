@@ -19,7 +19,6 @@ createdb -h localhost -U postgres stock_exchange
 
 cd data/postgres
 psql -h localhost -U postgres -d stock_exchange -f 00_run_all.sql   # tạo + nạp dữ liệu
-psql -h localhost -U postgres -d stock_exchange -f 09_check.sql     # kiểm tra + ví dụ truy vấn
 ```
 
 `00_run_all.sql` chạy lần lượt 8 file; chạy lại được nhiều lần (file 01 có `DROP TABLE ... CASCADE`).

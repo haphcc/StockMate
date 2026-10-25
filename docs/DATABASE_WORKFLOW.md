@@ -50,4 +50,3 @@ không mặc định đã tồn tại migration 0001 chạy được trong repo 
 - Hash mật khẩu trong seed gốc là mẫu; Phuoc phải sinh hash thật trước khi LB test login.
 - Nếu chạy SQL thô qua psycopg, chú ý ký tự % và toán tử modulo khi không có tham số.
 - Test bất biến tiền/số lượng, ownership, duplicate, hai request cạnh tranh và rollback toàn bộ.
-- Các query 09_check.sql là quan sát; Châu cần test tự động có assertion.
