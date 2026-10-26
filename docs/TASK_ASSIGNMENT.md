@@ -19,8 +19,7 @@ Thứ tự làm chung nằm ở [PLAN](PLAN.md).
 - LB và Tuệ chia endpoint/model/service theo chức năng; mỗi người viết test cho phần mình, Châu kiểm tra tích hợp.
 - Làm một việc trên một nhánh; gửi PR để người nhận thử rồi cập nhật [WORK_BOARD](WORK_BOARD.md).
 
-Muốn tra chính xác từng file: [FILE_OWNERS](FILE_OWNERS.md), hoặc
-`python scripts/check_preparation.py --owner TV3` (đổi số theo thành viên).
+Muốn tra chính xác từng file: [FILE_OWNERS](FILE_OWNERS.md).
 Hướng dẫn từng người nằm trong [START_HERE](START_HERE.md).
 
 ## Báo cáo

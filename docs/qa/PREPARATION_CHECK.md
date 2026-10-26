@@ -18,5 +18,5 @@ bước chuẩn bị thêm đã đưa về TODO. Đây không phải nghiệm th
 Kết quả 39 test backend/Flutter xanh trước đây thuộc implementation đã gỡ,
 không còn dùng để khẳng định trạng thái hiện tại. Nhóm tự bổ sung bằng chứng khi hoàn thành task.
 
-Lệnh kiểm tra hiện dùng: `python scripts/check_preparation.py`, Ruff check/format cho backend.
+Lệnh kiểm tra hiện dùng: Ruff check/format cho backend.
 Kết quả chạy cụ thể xem job preparation trong GitHub Actions của commit tương ứng.

@@ -34,5 +34,3 @@ Giữ các lớp đã có; chỉ thêm lớp khi có xử lý cần đặt vào 
 [TASK_ASSIGNMENT](TASK_ASSIGNMENT.md) chia người theo chức năng;
 [FILE_OWNERS](FILE_OWNERS.md) liệt kê chủ từng file. Sơn giữ file Flutter dùng chung,
 Phuoc giữ migration, LB/Tuệ chia backend theo endpoint.
-
-Sau khi thêm file, chạy `python scripts/check_preparation.py --write-owners` từ repo gốc.

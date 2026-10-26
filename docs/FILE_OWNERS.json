@@ -310,10 +310,6 @@
       "owner": "TV2"
     },
     {
-      "pattern": "scripts/check_preparation.py",
-      "owner": "TV6"
-    },
-    {
       "pattern": "scripts/*",
       "owner": "TV1"
     },
