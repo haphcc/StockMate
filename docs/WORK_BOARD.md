@@ -15,7 +15,7 @@ Châu cập nhật khi người nhận đã thử bàn giao. Chọn một trạn
 | Chặng | Xong khi | Trạng thái |
 |---|---|---|
 | 1 — Nền và đăng nhập | Dựng lại được môi trường; app đăng ký/đăng nhập lấy tài khoản thật | Chưa xong |
-| 2 — Thị trường và tài sản | Bảng giá, chi tiết/chart, watchlist, tài sản/danh mục nối API; nạp tiền payOS VietQR (Phuoc + Sơn); phân hệ Quản trị Admin: API CRUD tất cả các bảng (Phuoc) & Tab Quản trị ẩn mobile (Châu) | Chưa xong |
+| 2 — Thị trường và tài sản | Bảng giá, chi tiết/chart, watchlist, tài sản/danh mục nối API; nạp tiền payOS VietQR (Phuoc + Sơn); phân hệ Quản trị Admin: API CRUD toàn diện tất cả các bảng gồm xóa khách hàng, đổi status (Phuoc) & Tab Quản trị ẩn mobile (Châu) | Chưa xong |
 | 3 — Giao dịch và demo | Mua/bán/hủy, T+2 đúng; test trọn luồng và APK demo | Chưa xong |
 
 Qua mỗi chặng, thay cột việc trong bảng đầu theo [PLAN](PLAN.md), không tạo thêm bảng sprint.

@@ -5,12 +5,12 @@ Thứ tự làm chung nằm ở [PLAN](PLAN.md).
 
 | Người | Làm gì | File/thư mục chính | Bàn giao cho |
 |---|---|---|---|
-| Phuoc — TV1 | Database, migration/seed, Docker, CI, APK, backend nạp tiền payOS, Backend Quản trị Admin | data/postgres/, backend/alembic/, backend/scripts/seed_demo.py, backend/app/api/v1/endpoints/payments.py, backend/app/api/v1/endpoints/admin/, backend/Dockerfile, compose.yaml, .github/workflows/, mobile/android/ và ios/ | LB/Tuệ nhận DB; Sơn nhận API nạp tiền; Châu nhận API Admin và APK |
+| Phuoc — TV1 | Database, migration/seed, Docker, CI, APK, backend nạp tiền payOS, Backend Quản trị Admin (CRUD toàn diện tất cả các bảng, xóa khách hàng, đổi status) | data/postgres/, backend/alembic/, backend/scripts/seed_demo.py, backend/app/api/v1/endpoints/payments.py, backend/app/api/v1/endpoints/admin/, backend/Dockerfile, compose.yaml, .github/workflows/, mobile/android/ và ios/ | LB/Tuệ nhận DB; Sơn nhận API nạp tiền; Châu nhận API Admin và APK |
 | Sơn — TV2 | Flutter chung; auth, dashboard, portfolio, nạp tiền payOS | mobile/lib/core/, providers/, features/auth/, home/, portfolio/; data/models/ và repositories/ phần auth/account/portfolio/deposit | Me nhận network/router/helper; Châu nhận luồng đăng nhập/tài sản |
 | Me — TV3 | Bảng giá/chi tiết/biểu đồ, watchlist, đặt lệnh, lịch sử, thông báo | mobile/lib/features/market/, watchlist/, order/, transaction/, notification/; models/datasources/repositories liên quan | Sơn nhận màn hình để gắn app; Châu nhận luồng thị trường/giao dịch |
 | LB — TV4 | FastAPI chung, auth, accounts, assets, market, watchlist | backend/app/main.py, core/, db/, api/, models/, schemas/, crud/, services/ phần mình | Sơn/Me nhận API; Tuệ nhận xác thực và DB session |
 | Tuệ — TV5 | Mua/bán, giữ tiền/cổ phiếu, khớp/hủy, T+2, thông báo | backend/app/ phần orders/transactions/notifications/settlement; backend/scripts/settle_shares.py; SQL phối hợp Phuoc | Me nhận API giao dịch; Châu nhận tình huống test |
-| Châu — TV6 | Test, QA/QC, báo cáo/slide, Frontend Tab Quản trị Admin (ẩn trên mobile) | backend/tests/, mobile/test/, mobile/integration_test/, mobile/lib/features/admin/, docs/qa/, WORK_BOARD.md | Báo lỗi cho đúng người; nhận API Admin từ Phuoc; hoàn thiện giao diện quản trị |
+| Châu — TV6 | Test, QA/QC, báo cáo/slide, Frontend Tab Quản trị Admin (ẩn trên mobile, CRUD toàn diện tất cả các bảng) | backend/tests/, mobile/test/, mobile/integration_test/, mobile/lib/features/admin/, docs/qa/, WORK_BOARD.md | Báo lỗi cho đúng người; nhận API Admin từ Phuoc; hoàn thiện giao diện quản trị |
 
 ## Cách phối hợp
 

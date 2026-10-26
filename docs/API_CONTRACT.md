@@ -38,14 +38,35 @@ Tất cả ngoài register/login/refresh và health cần JWT. MVP không có en
 | POST `/api/accounts/{account_id}/deposit` | {amount} → DepositResponse (order_code, checkout_url, qr_code, status), 201 | Phuoc |
 | POST `/api/payments/payos/webhook` | PayOSWebhookRequest → 200 {success: true} (Xác thực chữ ký checksum và cộng cash_balance) | Phuoc |
 | GET `/api/admin/customers` | Admin query danh sách khách hàng, filter role, status → Page[CustomerDetailResponse] | Phuoc |
-| PUT `/api/admin/customers/{customer_id}` | Admin cập nhật thông tin, đổi role (CUSTOMER/ADMIN), đổi status (ACTIVE/LOCKED) | Phuoc |
+| POST `/api/admin/customers` | Admin tạo tài khoản khách hàng mới {full_name, email, phone, password, role} → 201 | Phuoc |
+| GET `/api/admin/customers/{customer_id}` | Admin xem chi tiết thông tin, tài khoản, danh mục của khách hàng | Phuoc |
+| PUT `/api/admin/customers/{customer_id}` | Admin sửa thông tin, đặt lại mật khẩu, đổi role (CUSTOMER/ADMIN), đổi status (ACTIVE/LOCKED/PENDING/CLOSED) | Phuoc |
+| DELETE `/api/admin/customers/{customer_id}` | Admin xóa hoàn toàn tài khoản khách hàng (tự động cascade xóa tài khoản, lệnh, giao dịch liên quan) → 204 | Phuoc |
+| GET `/api/admin/accounts` | Admin xem toàn bộ tài khoản đầu tư, filter status, type → Page[AccountResponse] | Phuoc |
+| PUT `/api/admin/accounts/{account_id}` | Admin điều chỉnh số dư cash_balance, margin_limit, đổi status (ACTIVE/SUSPENDED/CLOSED) | Phuoc |
+| DELETE `/api/admin/accounts/{account_id}` | Admin đóng/xóa tài khoản đầu tư → 204 | Phuoc |
 | GET `/api/admin/stocks` | Admin xem toàn bộ cổ phiếu cả active và suspended → StockResponse[] | Phuoc |
 | POST `/api/admin/stocks` | Admin thêm mã cổ phiếu mới {symbol, company_name, exchange, price...} → StockResponse, 201 | Phuoc |
-| PUT `/api/admin/stocks/{stock_id}` | Admin sửa thông tin doanh nghiệp, giá tham chiếu/trần/sàn → StockResponse, 200 | Phuoc |
-| DELETE `/api/admin/stocks/{stock_id}` | Admin xóa hoặc tạm dừng giao dịch mã cổ phiếu → 204 | Phuoc |
-| GET `/api/admin/orders` | Admin tra cứu toàn bộ sổ lệnh của tất cả tài khoản → Page[OrderResponse] | Phuoc |
-| DELETE `/api/admin/orders/{order_id}` | Admin can thiệp hủy lệnh chờ trên sàn → OrderResponse, 200 | Phuoc |
-| POST `/api/admin/notifications` | Admin phát thông báo broadcast toàn hệ thống hoặc gửi đích danh khách hàng | Phuoc |
+| PUT `/api/admin/stocks/{stock_id}` | Admin sửa thông tin doanh nghiệp, cập nhật giá tham chiếu/trần/sàn, đổi status (ACTIVE/SUSPENDED) → StockResponse, 200 | Phuoc |
+| DELETE `/api/admin/stocks/{stock_id}` | Admin xóa mã cổ phiếu khỏi hệ thống → 204 | Phuoc |
+| GET `/api/admin/orders` | Admin tra cứu toàn bộ sổ lệnh của tất cả tài khoản trên sàn → Page[OrderResponse] | Phuoc |
+| PUT `/api/admin/orders/{order_id}` | Admin cập nhật trạng thái lệnh (PENDING/PARTIAL/COMPLETED/CANCELLED/REJECTED) | Phuoc |
+| DELETE `/api/admin/orders/{order_id}` | Admin can thiệp hủy/xóa lệnh trên sàn → OrderResponse, 200 | Phuoc |
+| GET `/api/admin/transactions` | Admin xem lịch sử giao dịch khớp lệnh toàn sàn → Page[TransactionResponse] | Phuoc |
+| POST `/api/admin/transactions` | Admin tạo giao dịch điều chỉnh số dư/khối lượng → TransactionResponse, 201 | Phuoc |
+| DELETE `/api/admin/transactions/{transaction_id}` | Admin xóa giao dịch lỗi/hủy → 204 | Phuoc |
+| GET `/api/admin/portfolios` | Admin tra cứu danh mục cổ phiếu của tất cả tài khoản → Page[PortfolioResponse] | Phuoc |
+| PUT `/api/admin/portfolios/{portfolio_id}` | Admin điều chỉnh khối lượng cổ phiếu (available/blocked), giá vốn bình quân | Phuoc |
+| DELETE `/api/admin/portfolios/{portfolio_id}` | Admin xóa mã cổ phiếu khỏi danh mục tài khoản → 204 | Phuoc |
+| GET `/api/admin/price-history` | Admin xem dữ liệu nến giá theo mã và khoảng thời gian | Phuoc |
+| POST `/api/admin/price-history` | Admin thêm nến OHLCV mới {stock_id, recorded_date, open, high, low, close, volume} → 201 | Phuoc |
+| PUT `/api/admin/price-history/{history_id}` | Admin sửa dữ liệu nến giá lịch sử → 200 | Phuoc |
+| DELETE `/api/admin/price-history/{history_id}` | Admin xóa phiên nến giá → 204 | Phuoc |
+| GET `/api/admin/notifications` | Admin xem danh sách thông báo toàn hệ thống | Phuoc |
+| POST `/api/admin/notifications` | Admin phát thông báo broadcast toàn hệ thống hoặc gửi đích danh khách hàng → 201 | Phuoc |
+| DELETE `/api/admin/notifications/{notification_id}` | Admin xóa thông báo → 204 | Phuoc |
+| GET `/api/admin/watchlists` | Admin tra cứu danh sách theo dõi của người dùng | Phuoc |
+| DELETE `/api/admin/watchlists/{watchlist_id}` | Admin xóa mã khỏi watchlist của người dùng → 204 | Phuoc |
 | GET `/api/accounts/{account_id}/portfolio` | PortfolioResponse[] | LB |
 | GET `/api/market/board` | exchange?, q?, page, page_size → Page[StockResponse] | LB |
 | GET `/api/stocks/{symbol}` | StockResponse | LB |

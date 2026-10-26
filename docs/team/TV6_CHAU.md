@@ -11,12 +11,14 @@
 7. Xây dựng Frontend Tab Quản trị ẩn (Admin Management Tab) trên Mobile App:
    - Trong `mobile/lib/features/home/screens/home_shell.dart`, kiểm tra quyền của người dùng đang đăng nhập (`user.role == 'ADMIN'`).
    - Nếu là ADMIN, tự động hiển thị thêm một Tab ẩn "Quản trị" trên thanh Bottom Navigation Bar (người dùng thường CUSTOMER sẽ không thấy tab này).
-   - Dựng các màn hình quản trị trong `mobile/lib/features/admin/`:
+   - Dựng các màn hình quản trị CRUD toàn diện trong `mobile/lib/features/admin/`:
      + Tổng quan quản trị (Admin Dashboard).
-     + Quản lý Khách hàng & Tài khoản: xem danh sách, tìm kiếm, khóa/mở khóa user.
-     + Quản lý Mã cổ phiếu: form thêm mã mới, sửa giá/thông tin doanh nghiệp, ẩn/hiện mã.
-     + Quản lý Lệnh & Giao dịch: tra cứu sổ lệnh toàn hệ thống, hủy lệnh can thiệp.
-     + Gửi Thông báo: soạn và phát thông báo broadcast toàn app.
+     + Quản lý Khách hàng & Tài khoản: xem danh sách, form tạo khách hàng mới, sửa thông tin, đặt lại mật khẩu, đổi role, đổi trạng thái (ACTIVE/LOCKED), và **nút xóa tài khoản khách hàng** (kèm hộp thoại xác nhận cảnh báo cascade).
+     + Quản lý Mã cổ phiếu: danh sách mã, form thêm mã mới, sửa giá trần/sàn/tham chiếu, đổi trạng thái (ACTIVE/SUSPENDED), xóa mã cổ phiếu.
+     + Quản lý Lệnh & Giao dịch: tra cứu sổ lệnh toàn hệ thống, can thiệp hủy lệnh chờ, xem lịch sử giao dịch.
+     + Quản lý Danh mục & Tài sản: điều chỉnh số lượng cổ phiếu/tiền khi cần can thiệp hỗ trợ.
+     + Quản lý Lịch sử giá & Biểu đồ: thêm/sửa/xóa nến OHLCV.
+     + Soạn & Gửi Thông báo: tạo thông báo broadcast toàn sàn hoặc gửi thông báo riêng cho từng khách hàng; xóa thông báo.
    - Kết nối với các API `/api/admin/...` do Phuoc cung cấp.
 
 **File phụ trách:** backend/tests/, mobile/test/, mobile/integration_test/, mobile/lib/features/admin/,

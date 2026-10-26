@@ -12,7 +12,7 @@
 | Thị trường | HOSE/HNX/UPCOM, tìm kiếm, chi tiết mã, OHLCV; giá DEMO là mặc định | LB + Me (TV3) |
 | Tài sản | Tiền khả dụng/phong tỏa, NAV, danh mục, giá vốn và lãi/lỗ | LB + Sơn |
 | Nạp tiền | Tạo yêu cầu nạp tiền, quét mã VietQR payOS tự động cộng số dư cash_balance qua Webhook | Phuoc + Sơn |
-| Quản trị hệ thống (Admin) | Phân quyền ADMIN/CUSTOMER; khi Admin đăng nhập xuất hiện Tab Quản trị ẩn trên mobile để thêm, sửa, xóa, quản lý tất cả các bảng (khách hàng, cổ phiếu, lệnh, thông báo...) | Phuoc (BE) + Châu (FE) |
+| Quản trị hệ thống (Admin) | Phân quyền ADMIN/CUSTOMER; khi Admin đăng nhập xuất hiện Tab Quản trị ẩn trên mobile; toàn quyền CRUD tất cả các bảng (xóa tài khoản khách hàng, đổi status, thêm/sửa/xóa mã cổ phiếu, sổ lệnh, giao dịch, thông báo...) | Phuoc (BE) + Châu (FE) |
 | Watchlist | Một danh sách mặc định; thêm/xóa mã, không có cảnh báo giá tự động | LB + Me (TV3) |
 | Giao dịch | BUY/SELL LO, bội số 100, khớp toàn bộ nếu đạt điều kiện; chờ hoặc hủy nếu chưa khớp | Tuệ + Me (TV3) |
 | Thanh toán | Cổ phiếu mua về sau 2 ngày làm việc mô phỏng; tiền bán cộng ngay | Tuệ + Phuoc |

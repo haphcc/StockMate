@@ -16,14 +16,16 @@ SQL trong data/postgres là prototype gốc; file mới hiện là TODO.
 8. Xây dựng Backend Quản trị hệ thống (Admin Portal API):
    - Thêm cột `role VARCHAR(20) NOT NULL DEFAULT 'CUSTOMER'` vào bảng `customers` (cho phép 'CUSTOMER', 'ADMIN'). Đặt `an.nguyen@gmail.com` làm tài khoản ADMIN mặc định.
    - Viết middleware/dependency `require_admin`: kiểm tra quyền Admin trong JWT token.
-   - Xây dựng cụm API Quản trị toàn diện `/api/admin/...` cho phép Admin thêm, sửa, xóa, quản lý tất cả các bảng:
-     + Khách hàng (`customers`): xem danh sách, cập nhật thông tin, đổi role, khóa/mở khóa tài khoản.
-     + Tài khoản đầu tư (`investment_accounts`): xem số dư, điều chỉnh tiền, đổi trạng thái.
-     + Cổ phiếu (`stocks`): thêm mới mã cổ phiếu, cập nhật thông tin/giá tham chiếu/trần/sàn, ẩn/hiện mã (`ACTIVE`/`SUSPENDED`), xóa mã.
-     + Sổ lệnh & Giao dịch (`stock_orders`, `transactions`): tra cứu toàn sàn, can thiệp hủy lệnh lỗi.
-     + Lịch sử giá (`stock_price_history`): thêm/sửa/xóa nến OHLCV.
-     + Thông báo (`notifications`): gửi thông báo broadcast toàn hệ thống hoặc gửi riêng cho từng khách hàng.
-   - Bàn giao API `/api/admin/...` cho Châu (TV6) kết nối màn hình Tab Quản trị trên Flutter.
+   - Xây dựng cụm API Quản trị toàn diện `/api/admin/...` cho phép Admin thực hiện đầy đủ quyền CRUD (Thêm, Sửa, Đổi trạng thái, Xóa) trên tất cả các bảng:
+     + Khách hàng (`customers`): xem danh sách, tạo mới, sửa thông tin, đặt lại mật khẩu, đổi role ('CUSTOMER'/'ADMIN'), đổi trạng thái ('ACTIVE'/'LOCKED'/'PENDING'/'CLOSED'), và **xóa hoàn toàn tài khoản khách hàng** (tự động cascade xóa sạch tài khoản, danh mục, lệnh, lịch sử liên quan).
+     + Tài khoản đầu tư (`investment_accounts`): xem, tạo thêm tài khoản, điều chỉnh số dư tiền mặt/margin, đổi trạng thái ('ACTIVE'/'SUSPENDED'/'CLOSED'), xóa tài khoản.
+     + Cổ phiếu (`stocks`): thêm mới mã, sửa thông tin doanh nghiệp, điều chỉnh giá tham chiếu/trần/sàn, đổi trạng thái ('ACTIVE'/'SUSPENDED'), xóa mã cổ phiếu.
+     + Sổ lệnh & Giao dịch (`stock_orders`, `transactions`): tra cứu toàn bộ lệnh/khớp lệnh của sàn, cập nhật trạng thái, can thiệp hủy/xóa lệnh chờ.
+     + Danh mục đầu tư (`portfolios`): tra cứu danh mục của mọi tài khoản, điều chỉnh số lượng và giá vốn bình quân.
+     + Lịch sử giá (`stock_price_history`): thêm mới, sửa, xóa nến OHLCV.
+     + Thông báo (`notifications`): tạo và phát thông báo broadcast toàn hệ thống hoặc gửi đích danh; sửa/xóa thông báo.
+     + Danh mục theo dõi (`watchlists`): tra cứu, thêm/xóa mã trong watchlist của bất kỳ khách hàng nào.
+   - Bàn giao trọn bộ API `/api/admin/...` cho Châu (TV6) kết nối màn hình Tab Quản trị trên Flutter.
 
 **File phụ trách:** data/postgres/, backend/alembic/, backend/scripts/seed_demo.py,
 backend/app/api/v1/endpoints/payments.py (payOS), backend/app/api/v1/endpoints/admin/, backend/Dockerfile, compose.yaml, .github/workflows/, mobile/android/ và ios/.

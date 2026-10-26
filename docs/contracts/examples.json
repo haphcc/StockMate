@@ -237,5 +237,21 @@
   "admin_update_customer_status": {
     "status": "LOCKED",
     "role": "CUSTOMER"
+  },
+  "admin_create_customer": {
+    "full_name": "Lê Văn Quản Trị",
+    "email": "admin2@stockmate.vn",
+    "phone_number": "0908888888",
+    "password": "Matkhau@123",
+    "role": "ADMIN",
+    "status": "ACTIVE"
+  },
+  "admin_update_customer_full": {
+    "full_name": "Nguyễn Văn An Cập Nhật",
+    "phone_number": "0901234999",
+    "address": "999 Hai Bà Trưng, Quận 1, TP.HCM",
+    "status": "ACTIVE",
+    "role": "CUSTOMER",
+    "new_password": "NewPassword@123"
   }
 }
