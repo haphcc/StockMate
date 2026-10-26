@@ -1,3 +1,46 @@
-# TODO(ENV-01) Owner: TV1 - Phuoc.
-# Tu khai bao PostgreSQL, API, healthcheck va persistent volume.
-# Day la file khung, chua chay duoc docker compose up.
+# Docker Compose StockMate - PostgreSQL & Backend API
+# Owner: TV1 - Phuoc
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: stockmate_postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-stock_exchange}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-h$c4122005}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-stock_exchange}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: stockmate_api
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-stock_exchange}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-h$c4122005}
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-h$$c4122005}@postgres:5432/${POSTGRES_DB:-stock_exchange}
+      SECRET_KEY: ${SECRET_KEY:-3oUJPMRBS-ma3JFIViu_6KMCTGXNnXRLKlr3crraKuAjFWJ1E_nQnBKbpN6hHrNb}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DEBUG: ${DEBUG:-true}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

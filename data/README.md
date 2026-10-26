@@ -5,23 +5,19 @@ Bộ script trong `data/postgres/` tạo đầy đủ schema và dữ liệu m�
 
 **Việc nhóm phải tự triển khai:** [SETUP](../docs/SETUP.md) và
 [DATABASE_WORKFLOW](../docs/DATABASE_WORKFLOW.md). Alembic/seed mới hiện chỉ là TODO.
-Các lệnh psql dưới đây là đường prototype; 00_run_all có DROP TABLE, chỉ dùng DB bỏ được.
+Các script SQL dưới đây là đường prototype; file 01_schema có DROP TABLE, chỉ dùng cho DB thử nghiệm.
 Engine còn phải hoàn thiện theo [BUSINESS_RULES](../docs/BUSINESS_RULES.md).
 
 ## 1. Chạy
 
+Khởi tạo cơ sở dữ liệu chuẩn cho dự án qua Alembic và Seed script:
 ```bash
-# Tạo database
-createdb -h localhost -U postgres stock_exchange
-# hoặc bằng Docker:
-# docker run -d --name pg-stock -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:16
-# docker exec -it pg-stock createdb -U postgres stock_exchange
-
-cd data/postgres
-psql -h localhost -U postgres -d stock_exchange -f 00_run_all.sql   # tạo + nạp dữ liệu
+cd backend
+alembic upgrade head
+python scripts/seed_demo.py
 ```
 
-`00_run_all.sql` chạy lần lượt 8 file; chạy lại được nhiều lần (file 01 có `DROP TABLE ... CASCADE`).
+Các file trong `data/postgres/` là prototype ban đầu theo thứ tự từ 01 đến 08 (file 01 có `DROP TABLE ... CASCADE`).
 
 ## 2. Các file
 
@@ -29,7 +25,7 @@ psql -h localhost -U postgres -d stock_exchange -f 00_run_all.sql   # tạo + n�
 |------|----------|
 | `01_schema.sql` | 9 bảng, khóa ngoại, CHECK constraint, index |
 | `02_functions_triggers.sql` | Bước giá, biên độ, trần/sàn; trigger khớp lệnh; định giá lại danh mục |
-| `03_seed_stocks.sql` | 83 mã: 64 HOSE, 13 HNX, 6 UPCOM (tên công ty, ngành, KLNY, giá) |
+| `03_seed_stocks.sql` | 90 mã: 71 HOSE, 13 HNX, 6 UPCOM (đầy đủ 30/30 mã rổ chỉ số VN30) |
 | `04_seed_customers.sql` | 10 khách hàng, 13 tài khoản đầu tư, 27 dòng watchlist |
 | `05_seed_trading.sql` | 58 lệnh đặt → sinh ra giao dịch khớp, danh mục và số dư |
 | `06_seed_price_history.sql` | ~131 phiên OHLCV cho mỗi mã (≈ 10.900 dòng) để vẽ biểu đồ nến |

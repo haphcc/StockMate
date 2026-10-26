@@ -1,5 +1,5 @@
 -- =====================================================================
--- File 03: DU LIEU MA CHUNG KHOAN (70 ma: HOSE / HNX / UPCOM)
+-- File 03: DU LIEU MA CHUNG KHOAN (90 ma: HOSE / HNX / UPCOM - Du 30/30 ma VN30)
 -- Gia tinh theo DONG (VND). Gia tran/san do trigger tu tinh.
 -- Muc gia mang tinh minh hoa cho moi truong DEV/DEMO.
 -- =====================================================================
@@ -21,6 +21,9 @@ INSERT INTO stocks (stock_symbol, company_name, exchange, industry,
 ('SHB','Ngân hàng TMCP Sài Gòn - Hà Nội','HOSE','Ngân hàng',4070000000,11850,12050,24310700),
 ('EIB','Ngân hàng TMCP Xuất Nhập khẩu Việt Nam','HOSE','Ngân hàng',1740000000,19400,19200,4230500),
 ('MSB','Ngân hàng TMCP Hàng Hải Việt Nam','HOSE','Ngân hàng',2450000000,12600,12750,7120300),
+('SSB','Ngân hàng TMCP Đông Nam Á','HOSE','Ngân hàng',2495000000,16800,17050,4520300),
+('LPB','Ngân hàng TMCP Lộc Phát Việt Nam','HOSE','Ngân hàng',2557000000,28500,29100,12450800),
+('OCB','Ngân hàng TMCP Phương Đông','HOSE','Ngân hàng',2054000000,12100,12250,5640200),
 -- ================= HOSE - Chung khoan =================
 ('SSI','CTCP Chứng khoán SSI','HOSE','Dịch vụ tài chính',1960000000,27350,28000,19870400),
 ('VND','CTCP Chứng khoán VNDIRECT','HOSE','Dịch vụ tài chính',1520000000,16250,16050,22140800),
@@ -35,6 +38,7 @@ INSERT INTO stocks (stock_symbol, company_name, exchange, industry,
 ('NVL','CTCP Tập đoàn Đầu tư Địa ốc No Va','HOSE','Bất động sản',1950000000,14950,14700,18320400),
 ('KDH','CTCP Đầu tư và Kinh doanh Nhà Khang Điền','HOSE','Bất động sản',1000000000,32400,32900,4560200),
 ('DXG','CTCP Tập đoàn Đất Xanh','HOSE','Bất động sản',866000000,18250,18000,12340800),
+('DIG','Tổng CTCP Đầu tư Phát triển Xây dựng','HOSE','Bất động sản',609000000,21400,21850,16520700),
 ('PDR','CTCP Phát triển Bất động sản Phát Đạt','HOSE','Bất động sản',872000000,19800,20150,9870600),
 ('NLG','CTCP Đầu tư Nam Long','HOSE','Bất động sản',385000000,39500,40100,3450200),
 ('BCM','Tổng Công ty Đầu tư và Phát triển Công nghiệp - CTCP','HOSE','Bất động sản KCN',1035000000,68200,67500,1230400),
@@ -57,6 +61,7 @@ INSERT INTO stocks (stock_symbol, company_name, exchange, industry,
 ('VNM','CTCP Sữa Việt Nam','HOSE','Thực phẩm và đồ uống',2090000000,60300,59800,4530200),
 ('MSN','CTCP Tập đoàn Masan','HOSE','Thực phẩm và đồ uống',1430000000,71800,72900,6120300),
 ('SAB','Tổng CTCP Bia - Rượu - Nước giải khát Sài Gòn','HOSE','Thực phẩm và đồ uống',1280000000,48500,48100,1230700),
+('KDC','CTCP Tập đoàn KIDO','HOSE','Thực phẩm và đồ uống',289000000,52300,52800,740200),
 ('VHC','CTCP Vĩnh Hoàn','HOSE','Thực phẩm và đồ uống',224000000,59700,60500,1870200),
 ('ANV','CTCP Nam Việt','HOSE','Thực phẩm và đồ uống',133000000,22150,22600,2340900),
 ('DBC','CTCP Tập đoàn Dabaco Việt Nam','HOSE','Thực phẩm và đồ uống',335000000,29400,29900,5120300),
@@ -64,7 +69,9 @@ INSERT INTO stocks (stock_symbol, company_name, exchange, industry,
 -- ================= HOSE - Dau khi, Dien, Hoa chat =================
 ('GAS','Tổng Công ty Khí Việt Nam - CTCP','HOSE','Dầu khí',1914000000,68400,67900,1560400),
 ('PLX','Tập đoàn Xăng dầu Việt Nam','HOSE','Dầu khí',1270000000,38200,38700,2340600),
+('PVD','Tổng CTCP Khoan và Dịch vụ Khoan Dầu khí','HOSE','Dầu khí',555000000,26800,27200,8450100),
 ('POW','Tổng Công ty Điện lực Dầu khí Việt Nam','HOSE','Điện, nước và xăng dầu khí đốt',2340000000,12850,13050,8760200),
+('PC1','CTCP Tập đoàn PC1','HOSE','Điện, nước và xăng dầu khí đốt',311000000,25600,25900,3210400),
 ('REE','CTCP Cơ Điện Lạnh','HOSE','Điện, nước và xăng dầu khí đốt',458000000,64800,65700,1230300),
 ('GEX','CTCP Tập đoàn GELEX','HOSE','Điện, nước và xăng dầu khí đốt',851000000,37900,38600,13450700),
 ('NT2','CTCP Điện lực Dầu khí Nhơn Trạch 2','HOSE','Điện, nước và xăng dầu khí đốt',288000000,19650,19400,1120500),

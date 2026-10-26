@@ -45,7 +45,7 @@ không mặc định đã tồn tại migration 0001 chạy được trong repo 
 
 ## Dữ liệu và kiểm thử
 
-- Không chạy data/postgres/00_run_all.sql lên DB đang dùng: script gốc có DROP.
+- Không chạy script prototype trong data/postgres/ lên DB đang dùng: script gốc có DROP.
 - Không tự xóa volume hoặc stamp head để bỏ qua khác biệt schema.
 - Hash mật khẩu trong seed gốc là mẫu; Phuoc phải sinh hash thật trước khi LB test login.
 - Nếu chạy SQL thô qua psycopg, chú ý ký tự % và toán tử modulo khi không có tham số.

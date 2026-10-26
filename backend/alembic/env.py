@@ -1,5 +1,67 @@
-"""TODO(ENV-01) Owner: TV1 - Phuoc.
+import os
+from logging.config import fileConfig
+from pathlib import Path
 
-Cau hinh Alembic voi connection va metadata sau khi nhom chot schema.
-Chi la file khung, chua co implementation.
-"""
+from dotenv import load_dotenv
+from sqlalchemy import engine_from_config, pool
+
+from alembic import context
+
+# Owner: TV1 - Phuoc
+# Load file .env tu backend/.env neu co
+BASE_DIR = Path(__file__).resolve().parents[1]
+dotenv_path = BASE_DIR / ".env"
+if dotenv_path.exists():
+    load_dotenv(dotenv_path)
+
+config = context.config
+
+# Uu tien DATABASE_URL tu bien moi truong
+db_url = os.environ.get("DATABASE_URL")
+if db_url:
+    # Alembic su dung % de escape trong config parser nen neu co %24 thi xu ly phu hop
+    config.set_main_option("sqlalchemy.url", db_url.replace("%", "%%"))
+
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
+
+# target_metadata = None (se tro toi Base.metadata sau khi TV4 - LB hoan thien models)
+target_metadata = None
+
+
+def run_migrations_offline() -> None:
+    """Run migrations in 'offline' mode."""
+    url = config.get_main_option("sqlalchemy.url")
+    context.configure(
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        dialect_opts={"paramstyle": "named"},
+    )
+
+    with context.begin_transaction():
+        context.run_migrations()
+
+
+def run_migrations_online() -> None:
+    """Run migrations in 'online' mode."""
+    connectable = engine_from_config(
+        config.get_section(config.config_ini_section, {}),
+        prefix="sqlalchemy.",
+        poolclass=pool.NullPool,
+    )
+
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    run_migrations_online()

@@ -46,7 +46,6 @@ Dòng 'TODO' trong source là file khung, chưa có tính năng.
 | [backend/scripts/seed_demo.py](../backend/scripts/seed_demo.py) |
 | [compose.yaml](../compose.yaml) |
 | [data/README.md](../data/README.md) |
-| [data/postgres/00_run_all.sql](../data/postgres/00_run_all.sql) |
 | [data/postgres/01_schema.sql](../data/postgres/01_schema.sql) |
 | [data/postgres/02_functions_triggers.sql](../data/postgres/02_functions_triggers.sql) |
 | [data/postgres/03_seed_stocks.sql](../data/postgres/03_seed_stocks.sql) |
