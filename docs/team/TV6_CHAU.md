@@ -8,8 +8,18 @@
 4. Cùng Tuệ test mua/bán/hủy, gửi trùng, cạnh tranh, phí/thuế và T+2.
 5. Ghi lỗi cho đúng chủ file, thử lại bản sửa rồi cập nhật tiến độ.
 6. Nhận APK từ Phuoc; chạy demo trên emulator/máy thật, ghép báo cáo/slide từ phần mỗi người gửi.
+7. Xây dựng Frontend Tab Quản trị ẩn (Admin Management Tab) trên Mobile App:
+   - Trong `mobile/lib/features/home/screens/home_shell.dart`, kiểm tra quyền của người dùng đang đăng nhập (`user.role == 'ADMIN'`).
+   - Nếu là ADMIN, tự động hiển thị thêm một Tab ẩn "Quản trị" trên thanh Bottom Navigation Bar (người dùng thường CUSTOMER sẽ không thấy tab này).
+   - Dựng các màn hình quản trị trong `mobile/lib/features/admin/`:
+     + Tổng quan quản trị (Admin Dashboard).
+     + Quản lý Khách hàng & Tài khoản: xem danh sách, tìm kiếm, khóa/mở khóa user.
+     + Quản lý Mã cổ phiếu: form thêm mã mới, sửa giá/thông tin doanh nghiệp, ẩn/hiện mã.
+     + Quản lý Lệnh & Giao dịch: tra cứu sổ lệnh toàn hệ thống, hủy lệnh can thiệp.
+     + Gửi Thông báo: soạn và phát thông báo broadcast toàn app.
+   - Kết nối với các API `/api/admin/...` do Phuoc cung cấp.
 
-**File phụ trách:** backend/tests/, mobile/test/, mobile/integration_test/,
+**File phụ trách:** backend/tests/, mobile/test/, mobile/integration_test/, mobile/lib/features/admin/,
 docs/qa/ và WORK_BOARD.md. Người viết tính năng vẫn phải tự kiểm tra phần mình.
 
 **Bàn giao đầu tiên:** kết quả setup và danh sách lỗi rõ cách tái hiện.

@@ -5,18 +5,18 @@
 -- =====================================================================
 
 INSERT INTO customers (full_name, email, phone_number, password_hash, date_of_birth,
-                       id_card_number, address, status) VALUES
+                       id_card_number, address, role, status) VALUES
 -- Tat ca 10 account deu su dung mat khau: Matkhau@123
-('Nguyễn Văn An',    'an.nguyen@gmail.com',    '0901234567','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1992-03-14','001092001234','123 Lê Lợi, Quận 1, TP.HCM','ACTIVE'),
-('Trần Thị Bích',    'bich.tran@gmail.com',    '0912345678','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1995-07-22','001195002345','45 Nguyễn Huệ, Quận 1, TP.HCM','ACTIVE'),
-('Lê Minh Cường',    'cuong.le@gmail.com',     '0923456789','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1988-11-05','001088003456','78 Trần Hưng Đạo, Hoàn Kiếm, Hà Nội','ACTIVE'),
-('Phạm Thu Dung',    'dung.pham@gmail.com',    '0934567890','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1997-01-30','001197004567','12 Bà Triệu, Hai Bà Trưng, Hà Nội','ACTIVE'),
-('Hoàng Đức Duy',    'duy.hoang@gmail.com',    '0945678901','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1990-09-18','001090005678','9 Hùng Vương, Hải Châu, Đà Nẵng','ACTIVE'),
-('Vũ Thị Hương',     'huong.vu@gmail.com',     '0956789012','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1993-05-09','001193006789','56 Nguyễn Trãi, Thanh Xuân, Hà Nội','ACTIVE'),
-('Đặng Quốc Khánh',  'khanh.dang@gmail.com',   '0967890123','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1985-12-25','001085007890','234 Cách Mạng Tháng 8, Quận 3, TP.HCM','ACTIVE'),
-('Bùi Thanh Lam',    'lam.bui@gmail.com',      '0978901234','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1999-04-02','001199008901','17 Lý Thường Kiệt, Ninh Kiều, Cần Thơ','ACTIVE'),
-('Ngô Hải Long',     'long.ngo@gmail.com',     '0989012345','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1991-08-16','001091009012','88 Hoàng Văn Thụ, Quận Tân Bình, TP.HCM','ACTIVE'),
-('Đỗ Thị Mai',       'mai.do@gmail.com',       '0990123456','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1996-06-11','001196000123','3 Trần Phú, Nha Trang, Khánh Hòa','PENDING');
+('Nguyễn Văn An',    'an.nguyen@gmail.com',    '0901234567','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1992-03-14','001092001234','123 Lê Lợi, Quận 1, TP.HCM','ADMIN','ACTIVE'),
+('Trần Thị Bích',    'bich.tran@gmail.com',    '0912345678','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1995-07-22','001195002345','45 Nguyễn Huệ, Quận 1, TP.HCM','CUSTOMER','ACTIVE'),
+('Lê Minh Cường',    'cuong.le@gmail.com',     '0923456789','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1988-11-05','001088003456','78 Trần Hưng Đạo, Hoàn Kiếm, Hà Nội','CUSTOMER','ACTIVE'),
+('Phạm Thu Dung',    'dung.pham@gmail.com',    '0934567890','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1997-01-30','001197004567','12 Bà Triệu, Hai Bà Trưng, Hà Nội','CUSTOMER','ACTIVE'),
+('Hoàng Đức Duy',    'duy.hoang@gmail.com',    '0945678901','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1990-09-18','001090005678','9 Hùng Vương, Hải Châu, Đà Nẵng','CUSTOMER','ACTIVE'),
+('Vũ Thị Hương',     'huong.vu@gmail.com',     '0956789012','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1993-05-09','001193006789','56 Nguyễn Trãi, Thanh Xuân, Hà Nội','CUSTOMER','ACTIVE'),
+('Đặng Quốc Khánh',  'khanh.dang@gmail.com',   '0967890123','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1985-12-25','001085007890','234 Cách Mạng Tháng 8, Quận 3, TP.HCM','CUSTOMER','ACTIVE'),
+('Bùi Thanh Lam',    'lam.bui@gmail.com',      '0978901234','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1999-04-02','001199008901','17 Lý Thường Kiệt, Ninh Kiều, Cần Thơ','CUSTOMER','ACTIVE'),
+('Ngô Hải Long',     'long.ngo@gmail.com',     '0989012345','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1991-08-16','001091009012','88 Hoàng Văn Thụ, Quận Tân Bình, TP.HCM','CUSTOMER','ACTIVE'),
+('Đỗ Thị Mai',       'mai.do@gmail.com',       '0990123456','$2b$12$xcHRLyVYpMRNCJ1qZJtkz.BW40CN.Xb9fDt50aqnJh5HY2i0Bjfsu','1996-06-11','001196000123','3 Trần Phú, Nha Trang, Khánh Hòa','CUSTOMER','PENDING');
 
 -- ---------------------------------------------------------------------
 -- Tai khoan dau tu.  cash_balance o day la SO TIEN NAP BAN DAU;

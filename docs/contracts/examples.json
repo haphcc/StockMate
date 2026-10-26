@@ -15,7 +15,8 @@
     "email": "an.nguyen@gmail.com",
     "phone_number": "0901234567",
     "avatar_url": null,
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "role": "ADMIN"
   },
   "account": {
     "account_id": 1,
@@ -220,5 +221,21 @@
       "paymentLinkId": "c64a514d79e54a8e98b77626..."
     },
     "signature": "f5d1e2..."
+  },
+  "admin_create_stock": {
+    "stock_symbol": "TCB",
+    "company_name": "Ngân hàng TMCP Kỹ thương Việt Nam",
+    "exchange": "HOSE",
+    "industry": "Ngân hàng",
+    "current_price": "24500.00",
+    "reference_price": "24500.00",
+    "ceiling_price": "26200.00",
+    "floor_price": "22800.00",
+    "total_volume": 15000000,
+    "status": "ACTIVE"
+  },
+  "admin_update_customer_status": {
+    "status": "LOCKED",
+    "role": "CUSTOMER"
   }
 }

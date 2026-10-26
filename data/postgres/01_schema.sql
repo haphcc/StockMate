@@ -28,6 +28,7 @@ CREATE TABLE customers (
     id_card_number  VARCHAR(20),                       -- so CCCD
     address         VARCHAR(255),
     avatar_url      VARCHAR(255),
+    role            VARCHAR(20)   NOT NULL DEFAULT 'CUSTOMER',
     status          VARCHAR(20)   NOT NULL DEFAULT 'ACTIVE',
     created_at      TIMESTAMPTZ   NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ   NOT NULL DEFAULT now(),
@@ -35,6 +36,7 @@ CREATE TABLE customers (
     CONSTRAINT uq_customers_email  UNIQUE (email),
     CONSTRAINT uq_customers_phone  UNIQUE (phone_number),
     CONSTRAINT uq_customers_idcard UNIQUE (id_card_number),
+    CONSTRAINT ck_customers_role   CHECK (role IN ('CUSTOMER', 'ADMIN')),
     CONSTRAINT ck_customers_status CHECK (status IN ('PENDING','ACTIVE','LOCKED','CLOSED'))
 );
 

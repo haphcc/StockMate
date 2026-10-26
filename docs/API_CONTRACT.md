@@ -37,6 +37,15 @@ Tất cả ngoài register/login/refresh và health cần JWT. MVP không có en
 | GET `/api/accounts/{account_id}/assets` | AssetResponse | LB |
 | POST `/api/accounts/{account_id}/deposit` | {amount} → DepositResponse (order_code, checkout_url, qr_code, status), 201 | Phuoc |
 | POST `/api/payments/payos/webhook` | PayOSWebhookRequest → 200 {success: true} (Xác thực chữ ký checksum và cộng cash_balance) | Phuoc |
+| GET `/api/admin/customers` | Admin query danh sách khách hàng, filter role, status → Page[CustomerDetailResponse] | Phuoc |
+| PUT `/api/admin/customers/{customer_id}` | Admin cập nhật thông tin, đổi role (CUSTOMER/ADMIN), đổi status (ACTIVE/LOCKED) | Phuoc |
+| GET `/api/admin/stocks` | Admin xem toàn bộ cổ phiếu cả active và suspended → StockResponse[] | Phuoc |
+| POST `/api/admin/stocks` | Admin thêm mã cổ phiếu mới {symbol, company_name, exchange, price...} → StockResponse, 201 | Phuoc |
+| PUT `/api/admin/stocks/{stock_id}` | Admin sửa thông tin doanh nghiệp, giá tham chiếu/trần/sàn → StockResponse, 200 | Phuoc |
+| DELETE `/api/admin/stocks/{stock_id}` | Admin xóa hoặc tạm dừng giao dịch mã cổ phiếu → 204 | Phuoc |
+| GET `/api/admin/orders` | Admin tra cứu toàn bộ sổ lệnh của tất cả tài khoản → Page[OrderResponse] | Phuoc |
+| DELETE `/api/admin/orders/{order_id}` | Admin can thiệp hủy lệnh chờ trên sàn → OrderResponse, 200 | Phuoc |
+| POST `/api/admin/notifications` | Admin phát thông báo broadcast toàn hệ thống hoặc gửi đích danh khách hàng | Phuoc |
 | GET `/api/accounts/{account_id}/portfolio` | PortfolioResponse[] | LB |
 | GET `/api/market/board` | exchange?, q?, page, page_size → Page[StockResponse] | LB |
 | GET `/api/stocks/{symbol}` | StockResponse | LB |

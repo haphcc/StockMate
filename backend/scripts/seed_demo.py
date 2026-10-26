@@ -91,6 +91,7 @@ def seed() -> int:
                         "1992-03-14",
                         "001092001234",
                         "123 Lê Lợi, Quận 1, TP.HCM",
+                        "ADMIN",
                         "ACTIVE",
                     ),
                     (
@@ -101,6 +102,7 @@ def seed() -> int:
                         "1995-07-22",
                         "001195002345",
                         "45 Nguyễn Huệ, Quận 1, TP.HCM",
+                        "CUSTOMER",
                         "ACTIVE",
                     ),
                     (
@@ -111,6 +113,7 @@ def seed() -> int:
                         "1988-11-05",
                         "001088003456",
                         "78 Trần Hưng Đạo, Hoàn Kiếm, HN",
+                        "CUSTOMER",
                         "ACTIVE",
                     ),
                     (
@@ -121,6 +124,7 @@ def seed() -> int:
                         "1997-01-30",
                         "001197004567",
                         "12 Bà Triệu, Hai Bà Trưng, HN",
+                        "CUSTOMER",
                         "ACTIVE",
                     ),
                     (
@@ -131,6 +135,7 @@ def seed() -> int:
                         "1990-09-18",
                         "001090005678",
                         "9 Hùng Vương, Hải Châu, ĐN",
+                        "CUSTOMER",
                         "ACTIVE",
                     ),
                     (
@@ -141,6 +146,7 @@ def seed() -> int:
                         "1993-05-09",
                         "001193006789",
                         "56 Nguyễn Trãi, Thanh Xuân, HN",
+                        "CUSTOMER",
                         "ACTIVE",
                     ),
                     (
@@ -151,6 +157,7 @@ def seed() -> int:
                         "1985-12-25",
                         "001085007890",
                         "234 Cách Mạng Tháng 8, Q3, HCM",
+                        "CUSTOMER",
                         "ACTIVE",
                     ),
                     (
@@ -161,6 +168,7 @@ def seed() -> int:
                         "1999-04-02",
                         "001199008901",
                         "17 Lý Thường Kiệt, Ninh Kiều, CT",
+                        "CUSTOMER",
                         "ACTIVE",
                     ),
                     (
@@ -171,6 +179,7 @@ def seed() -> int:
                         "1991-08-16",
                         "001091009012",
                         "88 Hoàng Văn Thụ, Tân Bình, HCM",
+                        "CUSTOMER",
                         "ACTIVE",
                     ),
                     (
@@ -181,6 +190,7 @@ def seed() -> int:
                         "1996-06-11",
                         "001196000123",
                         "3 Trần Phú, Nha Trang, KH",
+                        "CUSTOMER",
                         "PENDING",
                     ),
                 ]

@@ -13,9 +13,20 @@ SQL trong data/postgres là prototype gốc; file mới hiện là TODO.
    - Nạp tiền (Deposit): viết API POST /api/accounts/{id}/deposit tạo link thanh toán/mã VietQR; viết API Webhook POST /api/payments/payos/webhook xác thực chữ ký HMAC-SHA256 checksum của payOS và cộng tiền vào cash_balance của investment_accounts (xử lý idempotency chống cộng tiền trùng lặp).
    - Thêm migration lưu lịch sử giao dịch nạp tiền payment_transactions để đối soát.
    - Bàn giao API nạp tiền cho Sơn (TV2) kết nối giao diện Flutter.
+8. Xây dựng Backend Quản trị hệ thống (Admin Portal API):
+   - Thêm cột `role VARCHAR(20) NOT NULL DEFAULT 'CUSTOMER'` vào bảng `customers` (cho phép 'CUSTOMER', 'ADMIN'). Đặt `an.nguyen@gmail.com` làm tài khoản ADMIN mặc định.
+   - Viết middleware/dependency `require_admin`: kiểm tra quyền Admin trong JWT token.
+   - Xây dựng cụm API Quản trị toàn diện `/api/admin/...` cho phép Admin thêm, sửa, xóa, quản lý tất cả các bảng:
+     + Khách hàng (`customers`): xem danh sách, cập nhật thông tin, đổi role, khóa/mở khóa tài khoản.
+     + Tài khoản đầu tư (`investment_accounts`): xem số dư, điều chỉnh tiền, đổi trạng thái.
+     + Cổ phiếu (`stocks`): thêm mới mã cổ phiếu, cập nhật thông tin/giá tham chiếu/trần/sàn, ẩn/hiện mã (`ACTIVE`/`SUSPENDED`), xóa mã.
+     + Sổ lệnh & Giao dịch (`stock_orders`, `transactions`): tra cứu toàn sàn, can thiệp hủy lệnh lỗi.
+     + Lịch sử giá (`stock_price_history`): thêm/sửa/xóa nến OHLCV.
+     + Thông báo (`notifications`): gửi thông báo broadcast toàn hệ thống hoặc gửi riêng cho từng khách hàng.
+   - Bàn giao API `/api/admin/...` cho Châu (TV6) kết nối màn hình Tab Quản trị trên Flutter.
 
 **File phụ trách:** data/postgres/, backend/alembic/, backend/scripts/seed_demo.py,
-backend/app/api/v1/endpoints/payments.py (payOS), backend/Dockerfile, compose.yaml, .github/workflows/, mobile/android/ và ios/.
+backend/app/api/v1/endpoints/payments.py (payOS), backend/app/api/v1/endpoints/admin/, backend/Dockerfile, compose.yaml, .github/workflows/, mobile/android/ và ios/.
 
 **Bàn giao đầu tiên:** người khác dựng được DB mới và nạp dữ liệu bằng hướng dẫn của Phuoc.
 Không chạy script DROP/reset lên DB đang dùng. Chỉ đóng băng migration sau khi nhóm đã phát hành thật.
