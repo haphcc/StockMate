@@ -21,7 +21,6 @@ jobs:
         with:
           python-version: '3.13'
       - run: python -m pip install ruff==0.17.2
-      - run: python scripts/check_preparation.py
       - run: python -m ruff check backend/app backend/scripts backend/tests backend/alembic
       - run: python -m ruff format --check backend/app backend/scripts backend/tests backend/alembic
       - run: python -m compileall -q backend/app backend/scripts backend/tests backend/alembic

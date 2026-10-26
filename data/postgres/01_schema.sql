@@ -100,6 +100,7 @@ CREATE TABLE portfolios (
     stock_id           BIGINT        NOT NULL,
     quantity           INTEGER       NOT NULL DEFAULT 0,  -- tong so luong nam giu
     available_quantity INTEGER       NOT NULL DEFAULT 0,  -- so luong duoc ban (da ve TK, T+2)
+    blocked_quantity   INTEGER       NOT NULL DEFAULT 0,  -- so luong phong toa cho ban/khop
     average_price      NUMERIC(12,2) NOT NULL DEFAULT 0,  -- gia von binh quan
     current_value      NUMERIC(20,2) NOT NULL DEFAULT 0,  -- quantity * stocks.current_price
     profit_loss        NUMERIC(20,2) NOT NULL DEFAULT 0,  -- lai/lo tam tinh
@@ -110,7 +111,8 @@ CREATE TABLE portfolios (
         REFERENCES investment_accounts (account_id) ON DELETE CASCADE,
     CONSTRAINT fk_portfolio_stock FOREIGN KEY (stock_id) REFERENCES stocks (stock_id),
     CONSTRAINT ck_portfolio_qty CHECK (quantity >= 0 AND available_quantity >= 0
-                                       AND available_quantity <= quantity)
+                                       AND blocked_quantity >= 0
+                                       AND available_quantity + blocked_quantity <= quantity)
 );
 CREATE INDEX idx_portfolio_account ON portfolios (account_id);
 CREATE INDEX idx_portfolio_stock   ON portfolios (stock_id);
@@ -122,6 +124,7 @@ CREATE TABLE stock_orders (
     order_id        BIGINT        GENERATED ALWAYS AS IDENTITY,
     account_id      BIGINT        NOT NULL,
     stock_id        BIGINT        NOT NULL,
+    client_order_id UUID          NOT NULL DEFAULT gen_random_uuid(),
     order_type      VARCHAR(10)   NOT NULL,              -- BUY / SELL
     order_kind      VARCHAR(10)   NOT NULL DEFAULT 'LO', -- LO / MP / ATO / ATC
     quantity        INTEGER       NOT NULL,
@@ -132,6 +135,7 @@ CREATE TABLE stock_orders (
     status          VARCHAR(20)   NOT NULL DEFAULT 'PENDING',
     reject_reason   VARCHAR(255),
     CONSTRAINT pk_stock_orders PRIMARY KEY (order_id),
+    CONSTRAINT uq_orders_account_client_id UNIQUE (account_id, client_order_id),
     CONSTRAINT fk_order_account FOREIGN KEY (account_id)
         REFERENCES investment_accounts (account_id) ON DELETE CASCADE,
     CONSTRAINT fk_order_stock FOREIGN KEY (stock_id) REFERENCES stocks (stock_id),

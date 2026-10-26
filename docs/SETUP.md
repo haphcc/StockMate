@@ -39,7 +39,6 @@ Khi có API, Android emulator dùng http://10.0.2.2:8000; máy thật dùng IP m
 
 ## Kiểm tra trước bàn giao
 
-- Từ repo gốc: `python scripts/check_preparation.py`.
 - Từ mobile: `flutter analyze` và `flutter test`.
 - Từ backend: Ruff check/format; khi có test thật thì chạy pytest.
 

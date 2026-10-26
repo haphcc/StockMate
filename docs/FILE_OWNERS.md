@@ -22,8 +22,6 @@ Phuoc thêm username thật sau và cấu hình branch protection nếu nhóm d�
 
 ## Tra cứu nhanh
 
-`python scripts/check_preparation.py --owner TV2` để in file của Sơn.
-Sau khi tạo file: `python scripts/check_preparation.py --write-owners`.
 Dòng 'TODO' trong source là file khung, chưa có tính năng.
 
 ## TV1 — Phuoc — DB, DevOps, integration order
@@ -379,4 +377,3 @@ Dòng 'TODO' trong source là file khung, chưa có tính năng.
 | [mobile/integration_test/README.md](../mobile/integration_test/README.md) |
 | [mobile/test/unit/.gitkeep](../mobile/test/unit/.gitkeep) |
 | [mobile/test/widget/.gitkeep](../mobile/test/widget/.gitkeep) |
-| [scripts/check_preparation.py](../scripts/check_preparation.py) |
