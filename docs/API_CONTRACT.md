@@ -1,9 +1,11 @@
 # Hợp đồng API v1
 
 Chủ: TV4 — LB; phần orders/transactions/notifications: TV5 — Tuệ.
-Đây là đặc tả đích và JSON ví dụ để nhóm tự triển khai, chưa phải API chạy được.
-Các file backend/app/schemas chỉ là TODO. LB tự viết schema/routes, exporter và sinh backend/openapi.json;
-Swagger chỉ có sau khi app được triển khai.
+Đây là đặc tả đích cho toàn bộ API. CP1 của LB đã triển khai health,
+register/login/refresh/me và danh sách accounts; API Admin của Phuoc cũng đã có code.
+Các endpoint còn lại cần hoàn thiện theo chủ phần, không suy ra đã chạy được từ bảng dưới.
+Swagger tại `/docs`, schema thực tế tại `/api/openapi.json`; snapshot trong `backend/openapi.json`.
+Sinh/kiểm tra snapshot bằng `python scripts/export_openapi.py [--check]` từ backend/.
 
 ## Quy ước dùng chung
 
@@ -86,6 +88,12 @@ Chart 1M/3M/6M = tối đa 22/66/132 phiên gần nhất, trả tăng dần theo
 Seed gốc chưa có client_order_id: Phuoc/Tuệ tự thiết kế migration và cách backfill UUID cho lịch sử.
 
 ## Request mẫu
+
+CP1: access JWT mặc định 15 phút, refresh JWT 14 ngày; claim `sub`, `type`, `exp`, `iat`.
+`TokenResponse` gồm `access_token`, `refresh_token`, `token_type="bearer"`, `expires_in`
+(giây của access token) và `user` theo fixture. Refresh nhận `{ "refresh_token": "..." }`.
+`AccountResponse` của `/api/accounts` gồm đúng `account_id`, `account_number`, `account_type`,
+`status`; số dư sẽ lấy qua API assets chặng 2.
 
 ```json
 {

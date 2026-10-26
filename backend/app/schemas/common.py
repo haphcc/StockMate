@@ -1,5 +1,15 @@
-"""TODO(BE-01) Owner: TV4 - LB.
+"""Owner: TV4 - LB. Shared API error envelope."""
 
-Tu trien khai module nay theo API_CONTRACT, BUSINESS_RULES va huong dan ca nhan trong docs/team/.
-Chi la file khung, chua co implementation.
-"""
+from typing import Any
+
+from pydantic import BaseModel, Field
+
+
+class ErrorBody(BaseModel):
+    code: str
+    message: str
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
+class ErrorResponse(BaseModel):
+    error: ErrorBody

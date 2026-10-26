@@ -1,5 +1,12 @@
-"""TODO(BE-01) Owner: TV4 - LB.
+"""Owner: TV4 - LB. Account selector response for checkpoint 1."""
 
-Tu trien khai module nay theo API_CONTRACT, BUSINESS_RULES va huong dan ca nhan trong docs/team/.
-Chi la file khung, chua co implementation.
-"""
+from pydantic import BaseModel, ConfigDict
+
+
+class AccountResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    account_id: int
+    account_number: str
+    account_type: str
+    status: str

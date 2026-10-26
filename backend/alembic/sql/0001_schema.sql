@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS customers (
     CONSTRAINT uq_customers_email  UNIQUE (email),
     CONSTRAINT uq_customers_phone  UNIQUE (phone_number),
     CONSTRAINT uq_customers_idcard UNIQUE (id_card_number),
-    CONSTRAINT ck_customers_role   CHECK (role IN ('CUSTOMER', 'ADMIN')),
     CONSTRAINT ck_customers_status CHECK (status IN ('PENDING','ACTIVE','LOCKED','CLOSED'))
 );
 

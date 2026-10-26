@@ -5,10 +5,11 @@ Chủ: TV1 Phuoc; Tuệ phụ trách luật/routine giao dịch; LB phụ trách
 ## Hiện có gì
 
 - data/postgres giữ nguyên SQL prototype của nhóm trước bước chuẩn bị.
-- backend/alembic/sql/0001_*.sql chỉ còn comment TODO, không tạo bảng/function/view.
-- backend/alembic/versions/0001_baseline.py, env.py, alembic.ini và template chỉ là khung.
-- backend/scripts/seed_demo.py chưa có implementation. Chưa có baseline mới được áp dụng từ khung này.
-- Không có code kết nối DB hoặc health chạy được trong backend hiện tại.
+- backend/alembic/sql/0001_*.sql và migration 0001–0003 đã có implementation.
+- backend/scripts/seed_demo.py đã có seed demo với bcrypt thật và kiểm tra DB có dữ liệu.
+- TV4 CP1 đã có DB session và health thực thi. Migration/seed/auth đã được thử trên PostgreSQL
+  riêng; hướng dẫn hiện hành ở [backend README](../backend/README.md), bằng chứng
+  [TV4_CP1](qa/TV4_CP1.md). Nghiệp vụ trading vẫn cần Phuoc/Tuệ kiểm thử theo các chặng sau.
 
 Việc gỡ code khỏi repo không xóa database/volume đã tồn tại trên máy nào.
 
@@ -22,6 +23,7 @@ Việc gỡ code khỏi repo không xóa database/volume đã tồn tại trên 
 6. Châu viết test dựng từ DB trống, dữ liệu seed, seed lần hai bị từ chối và migrate lần hai không đổi.
 7. Thêm các lệnh kiểm tra này vào CI rồi bàn giao kết nối cho LB/Tuệ.
 
+Các mục ENV-01 bên trên là checklist trách nhiệm, không phải khẳng định mọi mục còn TODO.
 Không dùng Base.metadata.create_all thay cho migration trên môi trường nhóm.
 Chỉ bật autogenerate khi đã map đủ metadata và review SQL sinh ra.
 Sau khi nhóm phát hành baseline thật, giữ cố định migration đó và tạo revision mới cho thay đổi tiếp theo.
@@ -41,7 +43,7 @@ Sau khi nhóm phát hành baseline thật, giữ cố định migration đó và
 | Chỉ CASH/LO cho giao dịch mới; Margin/MP cũ chỉ đọc | LB + Tuệ |
 
 Nhóm có thể đưa invariant vào 0001 thật hoặc revision sau theo thiết kế đã review;
-không mặc định đã tồn tại migration 0001 chạy được trong repo hiện tại.
+không suy ra các invariant trading đã được đáp ứng chỉ từ việc migration chạy thành công.
 
 ## Dữ liệu và kiểm thử
 

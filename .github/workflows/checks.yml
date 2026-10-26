@@ -2,7 +2,7 @@ name: checks
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, traidep]
   workflow_dispatch:
     inputs:
       run_mobile_checks:
@@ -13,7 +13,7 @@ on:
 
 jobs:
   preparation:
-    name: Skeleton, documentation and ownership
+    name: Backend lint and format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,8 +24,42 @@ jobs:
       - run: python -m ruff check backend/app backend/scripts backend/tests backend/alembic
       - run: python -m ruff format --check backend/app backend/scripts backend/tests backend/alembic
       - run: python -m compileall -q backend/app backend/scripts backend/tests backend/alembic
-      # TODO(ENV-01/QA-01): add DB migration, seed, API tests and OpenAPI checks
-      # after the owners implement them. Green here verifies preparation only.
+  backend:
+    name: Backend tests (PostgreSQL 16)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: stockmate_ci
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d stockmate_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/stockmate_ci
+      TEST_DATABASE_URL: postgresql+psycopg://postgres:postgres@localhost:5432/postgres
+      SECRET_KEY: stockmate-ci-only-signing-key-not-for-deployment
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: backend/requirements.lock.txt
+      - run: python -m pip install -r requirements.lock.txt
+      - run: python -m alembic upgrade head
+      - run: python scripts/seed_demo.py
+      - run: python -m pytest -q --tb=short
+      - run: python scripts/export_openapi.py --check
   mobile:
     name: Original Flutter code (manual)
     if: github.event_name == 'workflow_dispatch' && inputs.run_mobile_checks

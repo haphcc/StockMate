@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
 from app.api.v1.endpoints import health
 from app.core.config import settings
+from app.core.errors import register_error_handlers
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -18,6 +19,7 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
 )
+register_error_handlers(app)
 
 # CORS configuration
 app.add_middleware(

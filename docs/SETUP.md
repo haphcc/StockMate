@@ -31,9 +31,10 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.lock.txt
 ```
 
-Chỉ copy .env.example thành .env nếu chưa có. Backend, Compose, migration và seed hiện là TODO.
-Phuoc viết phần DB/môi trường; LB viết app, cấu hình và API. Hai người cập nhật lệnh chạy tại đây
-sau khi đã chạy thử; hiện chưa chạy Uvicorn/Docker/migrate từ bộ khung này.
+Chỉ copy .env.example thành .env nếu chưa có, chỉnh DATABASE_URL/SECRET_KEY cho máy mình.
+Backend CP1 và migration/seed đã có implementation. Làm theo
+[backend README](../backend/README.md) để migrate, seed, chạy Uvicorn và thử API auth/accounts.
+Các API thị trường/tài sản/giao dịch còn theo tiến độ của chủ phần.
 
 Khi có API, Android emulator dùng http://10.0.2.2:8000; máy thật dùng IP máy chạy API cùng Wi-Fi.
 
@@ -42,6 +43,7 @@ Khi có API, Android emulator dùng http://10.0.2.2:8000; máy thật dùng IP m
 - Từ mobile: `flutter analyze` và `flutter test`.
 - Từ backend: Ruff check/format; khi có test thật thì chạy pytest.
 
-CI tự động hiện chỉ kiểm tra khung/tài liệu. Phuoc/Châu thêm kiểm tra DB/API khi có implementation.
+CI `checks` kiểm tra lint/format/compile và chạy migration, seed, pytest, OpenAPI trên
+PostgreSQL 16/Python 3.13 khi push `main`, `traidep` hoặc mở PR. Flutter checks bật thủ công.
 Chi tiết dựng DB nằm ở [DATABASE_WORKFLOW](DATABASE_WORKFLOW.md).
 Không chạy script reset prototype lên DB cần giữ dữ liệu; không commit .env/khóa ký.
