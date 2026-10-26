@@ -43,7 +43,12 @@ Dòng 'TODO' trong source là file khung, chưa có tính năng.
 | [backend/alembic/sql/0001_views.sql](../backend/alembic/sql/0001_views.sql) |
 | [backend/alembic/versions/.gitkeep](../backend/alembic/versions/.gitkeep) |
 | [backend/alembic/versions/0001_baseline.py](../backend/alembic/versions/0001_baseline.py) |
+| [backend/alembic/versions/0002_add_admin_role.py](../backend/alembic/versions/0002_add_admin_role.py) |
+| [backend/alembic/versions/0003_order_uuid_blocked_qty.py](../backend/alembic/versions/0003_order_uuid_blocked_qty.py) |
+| [backend/app/api/v1/endpoints/admin.py](../backend/app/api/v1/endpoints/admin.py) |
+| [backend/app/schemas/admin.py](../backend/app/schemas/admin.py) |
 | [backend/scripts/seed_demo.py](../backend/scripts/seed_demo.py) |
+| [backend/tests/unit/test_admin.py](../backend/tests/unit/test_admin.py) |
 | [compose.yaml](../compose.yaml) |
 | [data/README.md](../data/README.md) |
 | [data/postgres/01_schema.sql](../data/postgres/01_schema.sql) |

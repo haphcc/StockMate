@@ -1,5 +1,14 @@
-"""TODO(BE-01) Owner: TV4 - LB.
+"""Owner: TV4 - LB / TV1 - Phuoc.
 
-Tu trien khai module nay theo API_CONTRACT, BUSINESS_RULES va huong dan ca nhan trong docs/team/.
-Chi la file khung, chua co implementation.
+API v1 main router aggregating all sub-routers.
 """
+
+from fastapi import APIRouter
+
+from app.api.v1.endpoints import admin, auth, health
+
+api_router = APIRouter()
+
+api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
+api_router.include_router(health.router, prefix="/health", tags=["health"])

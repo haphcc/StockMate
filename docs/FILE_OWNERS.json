@@ -94,6 +94,22 @@
       "owner": "TV1"
     },
     {
+      "pattern": "backend/app/api/v1/endpoints/admin*",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "backend/app/schemas/admin*",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "backend/tests/unit/test_admin*",
+      "owner": "TV1"
+    },
+    {
+      "pattern": "mobile/lib/features/admin/*",
+      "owner": "TV6"
+    },
+    {
       "pattern": "backend/tests/unit/test_auth*",
       "owner": "TV4"
     },
@@ -326,4 +342,4 @@
       "owner": "TV1"
     }
   ]
-}
+}
