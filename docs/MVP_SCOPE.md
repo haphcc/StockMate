@@ -11,6 +11,7 @@
 | Tài khoản | Danh sách của chính khách hàng; chọn account theo `account_id`; chỉ CASH được giao dịch | LB + Sơn |
 | Thị trường | HOSE/HNX/UPCOM, tìm kiếm, chi tiết mã, OHLCV; giá DEMO là mặc định | LB + Me (TV3) |
 | Tài sản | Tiền khả dụng/phong tỏa, NAV, danh mục, giá vốn và lãi/lỗ | LB + Sơn |
+| Nạp tiền | Tạo yêu cầu nạp tiền, quét mã VietQR payOS tự động cộng số dư cash_balance qua Webhook | Phuoc + Sơn |
 | Watchlist | Một danh sách mặc định; thêm/xóa mã, không có cảnh báo giá tự động | LB + Me (TV3) |
 | Giao dịch | BUY/SELL LO, bội số 100, khớp toàn bộ nếu đạt điều kiện; chờ hoặc hủy nếu chưa khớp | Tuệ + Me (TV3) |
 | Thanh toán | Cổ phiếu mua về sau 2 ngày làm việc mô phỏng; tiền bán cộng ngay | Tuệ + Phuoc |
@@ -19,7 +20,7 @@
 
 ## Sau bản demo
 
-- Margin, vay/nợ/lãi, eKYC thật, nạp/rút tiền thật.
+- Margin, vay/nợ/lãi, eKYC thật.
 - MP/ATO/ATC, khớp một phần, đấu giá, ưu tiên sổ lệnh, tự hết hạn cuối phiên.
 - Google/Apple, OTP, sinh trắc học, khôi phục/đổi mật khẩu, sửa hồ sơ.
 - Push notification, tin tức, chỉ số VN-Index/VN30 trực tiếp, cảnh báo giá theo ngưỡng.

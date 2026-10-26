@@ -35,6 +35,8 @@ Tất cả ngoài register/login/refresh và health cần JWT. MVP không có en
 | GET `/api/auth/me` | UserResponse | LB |
 | GET `/api/accounts` | AccountResponse[] chỉ tài khoản của khách hiện tại | LB |
 | GET `/api/accounts/{account_id}/assets` | AssetResponse | LB |
+| POST `/api/accounts/{account_id}/deposit` | {amount} → DepositResponse (order_code, checkout_url, qr_code, status), 201 | Phuoc |
+| POST `/api/payments/payos/webhook` | PayOSWebhookRequest → 200 {success: true} (Xác thực chữ ký checksum và cộng cash_balance) | Phuoc |
 | GET `/api/accounts/{account_id}/portfolio` | PortfolioResponse[] | LB |
 | GET `/api/market/board` | exchange?, q?, page, page_size → Page[StockResponse] | LB |
 | GET `/api/stocks/{symbol}` | StockResponse | LB |

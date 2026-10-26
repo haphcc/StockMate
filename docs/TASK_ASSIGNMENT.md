@@ -5,8 +5,8 @@ Thứ tự làm chung nằm ở [PLAN](PLAN.md).
 
 | Người | Làm gì | File/thư mục chính | Bàn giao cho |
 |---|---|---|---|
-| Phuoc — TV1 | Database, migration/seed, Docker, CI, APK | data/postgres/, backend/alembic/, backend/scripts/seed_demo.py, backend/Dockerfile, compose.yaml, .github/workflows/, mobile/android/ và ios/ | LB/Tuệ nhận DB; Châu nhận cách dựng và APK |
-| Sơn — TV2 | Flutter chung; auth, dashboard, portfolio | mobile/lib/core/, providers/, features/auth/, home/, portfolio/; data/models/ và repositories/ phần auth/account/portfolio | Me nhận network/router/helper; Châu nhận luồng đăng nhập/tài sản |
+| Phuoc — TV1 | Database, migration/seed, Docker, CI, APK, backend nạp tiền payOS | data/postgres/, backend/alembic/, backend/scripts/seed_demo.py, backend/app/api/v1/endpoints/payments.py, backend/Dockerfile, compose.yaml, .github/workflows/, mobile/android/ và ios/ | LB/Tuệ nhận DB; Sơn nhận API nạp tiền payOS; Châu nhận cách dựng và APK |
+| Sơn — TV2 | Flutter chung; auth, dashboard, portfolio, nạp tiền payOS | mobile/lib/core/, providers/, features/auth/, home/, portfolio/; data/models/ và repositories/ phần auth/account/portfolio/deposit | Me nhận network/router/helper; Châu nhận luồng đăng nhập/tài sản |
 | Me — TV3 | Bảng giá/chi tiết/biểu đồ, watchlist, đặt lệnh, lịch sử, thông báo | mobile/lib/features/market/, watchlist/, order/, transaction/, notification/; models/datasources/repositories liên quan | Sơn nhận màn hình để gắn app; Châu nhận luồng thị trường/giao dịch |
 | LB — TV4 | FastAPI chung, auth, accounts, assets, market, watchlist | backend/app/main.py, core/, db/, api/, models/, schemas/, crud/, services/ phần mình | Sơn/Me nhận API; Tuệ nhận xác thực và DB session |
 | Tuệ — TV5 | Mua/bán, giữ tiền/cổ phiếu, khớp/hủy, T+2, thông báo | backend/app/ phần orders/transactions/notifications/settlement; backend/scripts/settle_shares.py; SQL phối hợp Phuoc | Me nhận API giao dịch; Châu nhận tình huống test |
@@ -29,8 +29,8 @@ Mỗi người viết phần đã làm; Châu ghép thành báo cáo và slide.
 
 | Người | Phần viết |
 |---|---|
-| Phuoc | ERD, thiết kế CSDL khái niệm, môi trường/triển khai và tối ưu DB |
-| Sơn | Cài Flutter, kiến trúc giao diện/state, hướng dẫn sử dụng |
+| Phuoc | ERD, thiết kế CSDL khái niệm, môi trường/triển khai, tối ưu DB, backend nạp tiền payOS |
+| Sơn | Cài Flutter, kiến trúc giao diện/state, nạp tiền VietQR payOS, hướng dẫn sử dụng |
 | Me (TV3) | Activity đăng ký/đăng nhập và mua/bán, UI thị trường, ảnh màn hình |
 | LB | CSDL logic, Class Diagram, kiến trúc/API backend; tài liệu vnstock khi làm mở rộng |
 | Tuệ | CSDL vật lý, Sequence auth/khớp lệnh, nghiệp vụ/routine và T+2 |

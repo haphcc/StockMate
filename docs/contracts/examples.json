@@ -195,5 +195,30 @@
     "ref_id": 47,
     "is_read": false,
     "created_at": "2026-10-23T07:30:00Z"
+  },
+  "deposit_request": {
+    "amount": 10000000
+  },
+  "deposit_response": {
+    "order_code": 1729938491,
+    "amount": 10000000,
+    "checkout_url": "https://pay.payos.vn/web/123456",
+    "qr_code": "00020101021238580010A00000072701260006970422...",
+    "status": "PENDING"
+  },
+  "payos_webhook_payload": {
+    "code": "00",
+    "desc": "success",
+    "data": {
+      "orderCode": 1729938491,
+      "amount": 10000000,
+      "description": "NAP TIEN 068C100001",
+      "accountNumber": "123456789",
+      "reference": "FT241026001",
+      "transactionDateTime": "2026-10-26 10:30:00",
+      "currency": "VND",
+      "paymentLinkId": "c64a514d79e54a8e98b77626..."
+    },
+    "signature": "f5d1e2..."
   }
 }

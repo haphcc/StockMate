@@ -9,9 +9,13 @@ SQL trong data/postgres là prototype gốc; file mới hiện là TODO.
 4. Cho LB/Tuệ thông tin kết nối; cùng Châu thử dựng lại từ đầu.
 5. Cùng Tuệ thêm schema/routine cho giữ tiền/cổ phiếu, khớp/hủy và T+2.
 6. Khi luồng app đã ổn, bật test cần thiết trong CI và build APK cho Châu demo.
+7. Tích hợp Backend nạp tiền payOS:
+   - Nạp tiền (Deposit): viết API POST /api/accounts/{id}/deposit tạo link thanh toán/mã VietQR; viết API Webhook POST /api/payments/payos/webhook xác thực chữ ký HMAC-SHA256 checksum của payOS và cộng tiền vào cash_balance của investment_accounts (xử lý idempotency chống cộng tiền trùng lặp).
+   - Thêm migration lưu lịch sử giao dịch nạp tiền payment_transactions để đối soát.
+   - Bàn giao API nạp tiền cho Sơn (TV2) kết nối giao diện Flutter.
 
 **File phụ trách:** data/postgres/, backend/alembic/, backend/scripts/seed_demo.py,
-backend/Dockerfile, compose.yaml, .github/workflows/, mobile/android/ và ios/.
+backend/app/api/v1/endpoints/payments.py (payOS), backend/Dockerfile, compose.yaml, .github/workflows/, mobile/android/ và ios/.
 
 **Bàn giao đầu tiên:** người khác dựng được DB mới và nạp dữ liệu bằng hướng dẫn của Phuoc.
 Không chạy script DROP/reset lên DB đang dùng. Chỉ đóng băng migration sau khi nhóm đã phát hành thật.
