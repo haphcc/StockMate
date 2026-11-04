@@ -32,7 +32,10 @@ dependencies:
 
   # Tien ich
   equatable: ^2.1.0
-  
+
+  # Thong bao tren thiet bi / may ao (Push Notification banner)
+  flutter_local_notifications: ^18.0.1
+
   # Fonts
   google_fonts: ^6.2.1
 
