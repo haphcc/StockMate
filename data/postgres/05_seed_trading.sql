@@ -110,6 +110,20 @@ BEGIN
                             THEN v_total + v_fee
                             ELSE v_total - v_fee - v_tax END;
 
+            -- Match the live engine: a fill consumes an existing cash/share hold.
+            -- Historical seed fills must reserve first as well (CASH-01/SHARE-01).
+            IF r.otype = 'BUY' THEN
+                UPDATE investment_accounts
+                   SET cash_balance = cash_balance - v_net,
+                       blocked_balance = blocked_balance + v_net
+                 WHERE account_id = r.account_id;
+            ELSE
+                UPDATE portfolios
+                   SET available_quantity = available_quantity - r.qty,
+                       blocked_quantity = blocked_quantity + r.qty
+                 WHERE account_id = r.account_id AND stock_id = r.stock_id;
+            END IF;
+
             INSERT INTO transactions (order_id, account_id, stock_id, transaction_type,
                                       quantity, price, total_amount, transaction_fee,
                                       tax_amount, net_amount, transaction_date, settlement_date)

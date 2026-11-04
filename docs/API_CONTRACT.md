@@ -1,9 +1,12 @@
 # Hợp đồng API v1
 
 Chủ: TV4 — LB; phần orders/transactions/notifications: TV5 — Tuệ.
-Đây là đặc tả đích và JSON ví dụ để nhóm tự triển khai, chưa phải API chạy được.
-Các file backend/app/schemas chỉ là TODO. LB tự viết schema/routes, exporter và sinh backend/openapi.json;
-Swagger chỉ có sau khi app được triển khai.
+Đây là đặc tả đích cho toàn bộ API. LB đã triển khai health, auth/accounts,
+assets/portfolio, market/stock/chart và watchlist; đã tích hợp API giao dịch/thông báo của Tuệ.
+API Admin của Phuoc cũng đã có code. Các đầu việc khác theo chủ phần,
+không suy ra đã chạy được từ bảng dưới (ví dụ payOS).
+Swagger tại `/docs`, schema thực tế tại `/api/openapi.json`; snapshot trong `backend/openapi.json`.
+Sinh/kiểm tra snapshot bằng `python scripts/export_openapi.py [--check]` từ backend/.
 
 ## Quy ước dùng chung
 
@@ -11,6 +14,8 @@ Swagger chỉ có sau khi app được triển khai.
 - JSON snake_case; `Content-Type: application/json`; xác thực `Authorization: Bearer <access_token>`.
 - Tiền/giá/giá vốn/phí/thuế là **string thập phân VND**, luôn 2 chữ số lẻ, ví dụ `"62800.00"`.
 - Phần trăm cũng string 2 số lẻ; `profit_loss_percent=null` khi mẫu số 0.
+- Quote có `change_percent=null` nếu reference_price=0. DEMO luôn is_stale=true;
+  quote cập nhật trả timestamp UTC. Board/chi tiết vẫn cho đọc mã HALTED/DELISTED.
 - ID, quantity, volume, count là JSON integer. Không parse tiền qua double rồi làm tròn lại.
 - Flutter dùng Decimal hoặc số nguyên đơn vị 0.01 đồng; chia 1000 chỉ ở bước hiển thị giá.
 - Datetime ISO 8601 có timezone, server trả UTC; `settlement_date`, OHLCV date là `YYYY-MM-DD`.
@@ -83,9 +88,30 @@ Tất cả ngoài register/login/refresh và health cần JWT. MVP không có en
 
 `q` tìm không phân biệt hoa/thường theo mã hoặc tên. MVP không bỏ dấu tiếng Việt.
 Chart 1M/3M/6M = tối đa 22/66/132 phiên gần nhất, trả tăng dần theo ngày.
-Seed gốc chưa có client_order_id: Phuoc/Tuệ tự thiết kế migration và cách backfill UUID cho lịch sử.
+Migration/schema của Phuoc/Tuệ đã có client_order_id UUID và ledger share_settlements;
+nghiệp vụ giao dịch được triển khai trong phần TV5 và kiểm thử riêng.
+
+## Tài sản và watchlist đã triển khai (LB CP2/3)
+
+- NAV tính trong một truy vấn SQL: cash_balance + blocked_balance + tổng quantity × current_price.
+- Danh mục chỉ trả quantity > 0; pending = quantity - available - blocked.
+- Giá vốn tổng = tổng quantity × average_price; lãi/lỗ = stock_value - giá vốn tổng.
+  Tỷ lệ tổng dùng giá vốn tổng làm mẫu số; không lấy trung bình các phần trăm riêng lẻ.
+- Dùng Decimal và ROUND_HALF_UP khi serialize; tiền/phần trăm luôn string 2 số lẻ.
+- Watchlist công khai một danh sách; hợp nhất tên danh sách legacy theo mã, chọn ID nhỏ nhất,
+  sort ID ASC. Add mã đã có trả cùng ID; delete xóa mọi tên danh sách của mã thuộc chính user.
+- POST/DELETE watchlist khóa theo customer; POST còn dùng unique key DB để chống thêm trùng.
+- GET assets/portfolio nhận account của user khác trả 404 NOT_FOUND như account không tồn tại.
+- Sau giao dịch, FE refresh assets/portfolio/orders/transactions/notifications theo account;
+  sau đổi user/account phải hủy cache cũ. Không có endpoint ghi NAV hoặc portfolio trực tiếp cho user.
 
 ## Request mẫu
+
+CP1: access JWT mặc định 15 phút, refresh JWT 14 ngày; claim `sub`, `type`, `exp`, `iat`.
+`TokenResponse` gồm `access_token`, `refresh_token`, `token_type="bearer"`, `expires_in`
+(giây của access token) và `user` theo fixture. Refresh nhận `{ "refresh_token": "..." }`.
+`AccountResponse` của `/api/accounts` gồm đúng `account_id`, `account_number`, `account_type`,
+`status`; số dư sẽ lấy qua API assets chặng 2.
 
 ```json
 {

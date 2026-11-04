@@ -93,7 +93,7 @@ def test_admin_access_unauthorized(client: TestClient) -> None:
     """Ensure unauthenticated access to admin endpoints is rejected with 401."""
     res = client.get("/api/admin/dashboard")
     assert res.status_code == 401
-    assert res.json()["detail"]["error"]["code"] == "UNAUTHORIZED"
+    assert res.json()["error"]["code"] == "UNAUTHORIZED"
 
 
 def test_admin_access_forbidden_for_customers(client: TestClient, customer_token: str) -> None:
@@ -103,7 +103,7 @@ def test_admin_access_forbidden_for_customers(client: TestClient, customer_token
         headers={"Authorization": f"Bearer {customer_token}"},
     )
     assert res.status_code == 403
-    assert res.json()["detail"]["error"]["code"] == "FORBIDDEN"
+    assert res.json()["error"]["code"] == "FORBIDDEN"
 
 
 # =====================================================================
@@ -166,7 +166,7 @@ def test_customers_crud_and_cascade(client: TestClient, admin_token: str) -> Non
     # 3. Duplicate check
     dup_res = client.post("/api/admin/customers", json=create_payload, headers=headers)
     assert dup_res.status_code == 409
-    assert dup_res.json()["detail"]["error"]["code"] == "DUPLICATE_EMAIL"
+    assert dup_res.json()["error"]["code"] == "DUPLICATE_EMAIL"
 
     # 4. Detail
     detail_res = client.get(f"/api/admin/customers/{cust_id}", headers=headers)
