@@ -9,7 +9,7 @@ Châu cập nhật khi người nhận đã thử bàn giao. Chọn một trạn
 | Sơn | Form auth, token và nối API đăng nhập | Chưa làm | Dùng JSON mẫu trước; nối API khi LB bàn giao |
 | Me (TV3) | Bảng giá/chi tiết với JSON mẫu | Chưa làm | Nhận helper/network/router từ Sơn |
 | LB | FastAPI, kết nối DB, health, auth và accounts | Chờ bàn giao | CP1 backend đã kiểm thử PostgreSQL thật; xem [TV4_CP1](qa/TV4_CP1.md). Sơn/Châu cần xác nhận luồng trên Flutter; chưa đánh dấu Xong |
-| Tuệ | Chốt luật và test giữ tiền/cổ phiếu cùng Phuoc | Chưa làm | Chuẩn bị trước khi viết API giao dịch |
+| Tuệ | Đặt/khớp/hủy lệnh, giữ tiền/CP, T+2, thông báo | Chờ bàn giao | Đã xong TR-01/02/03 + 9 unit test pass; sẵn sàng bàn giao cho Me (TV3) & Châu (TV6) |
 | Châu | Thử setup, soạn case và kiểm tra auth khi có API | Chưa làm | Ghi phần chưa chạy thay vì đánh dấu pass |
 
 | Chặng | Xong khi | Trạng thái |

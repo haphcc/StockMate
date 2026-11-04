@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS customers (
     id_card_number  VARCHAR(20),
     address         VARCHAR(255),
     avatar_url      VARCHAR(255),
+    role            VARCHAR(20)   NOT NULL DEFAULT 'CUSTOMER',
     status          VARCHAR(20)   NOT NULL DEFAULT 'ACTIVE',
     created_at      TIMESTAMPTZ   NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ   NOT NULL DEFAULT now(),
@@ -236,3 +237,31 @@ CREATE TABLE IF NOT EXISTS notifications (
 
 CREATE INDEX IF NOT EXISTS idx_notification_customer ON notifications (customer_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notification_unread   ON notifications (customer_id) WHERE is_read = FALSE;
+
+-- ---------------------------------------------------------------------
+-- 10. SHARE SETTLEMENTS
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS share_settlements (
+    settlement_id   BIGINT        GENERATED ALWAYS AS IDENTITY,
+    transaction_id  BIGINT        NOT NULL,
+    account_id      BIGINT        NOT NULL,
+    stock_id        BIGINT        NOT NULL,
+    quantity        INTEGER       NOT NULL,
+    settlement_date DATE          NOT NULL,
+    status          VARCHAR(20)   NOT NULL DEFAULT 'PENDING',
+    settled_at      TIMESTAMPTZ,
+    created_at      TIMESTAMPTZ   NOT NULL DEFAULT now(),
+    CONSTRAINT pk_share_settlements PRIMARY KEY (settlement_id),
+    CONSTRAINT uq_settlement_transaction UNIQUE (transaction_id),
+    CONSTRAINT fk_settlement_transaction FOREIGN KEY (transaction_id)
+        REFERENCES transactions (transaction_id) ON DELETE CASCADE,
+    CONSTRAINT fk_settlement_account FOREIGN KEY (account_id)
+        REFERENCES investment_accounts (account_id) ON DELETE CASCADE,
+    CONSTRAINT fk_settlement_stock FOREIGN KEY (stock_id)
+        REFERENCES stocks (stock_id) ON DELETE CASCADE,
+    CONSTRAINT ck_settlement_status CHECK (status IN ('PENDING', 'SETTLED')),
+    CONSTRAINT ck_settlement_qty CHECK (quantity > 0)
+);
+CREATE INDEX IF NOT EXISTS idx_settlement_account ON share_settlements (account_id);
+CREATE INDEX IF NOT EXISTS idx_settlement_date_status ON share_settlements (settlement_date, status);
+
