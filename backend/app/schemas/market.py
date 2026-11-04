@@ -24,7 +24,7 @@ class StockResponse(BaseModel):
     total_volume: int
     status: str
     updated_at: datetime
-    data_source: Literal["DEMO"] = "DEMO"
+    data_source: Literal["DEMO", "LIVE"] = "DEMO"
     is_stale: bool = True
 
     @field_serializer("updated_at")

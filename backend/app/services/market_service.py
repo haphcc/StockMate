@@ -1,6 +1,7 @@
 """Owner: TV4 - LB. Shared quote mapping for market and watchlist."""
 
 from decimal import Decimal
+from typing import Literal
 
 from sqlalchemy.orm import Session
 
@@ -17,7 +18,11 @@ def require_stock(db: Session, symbol: str) -> Stock:
     return stock
 
 
-def stock_response(stock: Stock) -> StockResponse:
+def stock_response(
+    stock: Stock,
+    data_source: Literal["DEMO", "LIVE"] = "DEMO",
+    is_stale: bool = True,
+) -> StockResponse:
     price, reference = stock.current_price, stock.reference_price
     if price == reference:
         state = "REFERENCE"
@@ -43,4 +48,6 @@ def stock_response(stock: Stock) -> StockResponse:
         total_volume=stock.total_volume,
         status=stock.status,
         updated_at=stock.updated_at,
+        data_source=data_source,
+        is_stale=is_stale,
     )

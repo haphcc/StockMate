@@ -2,11 +2,12 @@
 
 Phần backend demo của TV4 đã có API auth/accounts, bảng giá, chi tiết/chart, watchlist,
 tài sản và danh mục. Đã tích hợp API giao dịch của Tuệ để kiểm tra tài sản sau mua/bán/hủy/T+2.
+Đã hỗ trợ tích hợp dữ liệu chứng khoán theo thời gian thực (SSI iBoard & DNSE) và đồng bộ DB.
 Backend Admin của Phuoc được giữ và kiểm tra hồi quy. Flutter/APK vẫn do chủ phần bàn giao.
 
 ## Chuẩn bị
 
-Từ thư mục backend trên PowerShell:
+Khởi tạo môi trường ảo Python 3.13 và cài đặt dependency đã khóa:
 
 ```powershell
 python -m venv .venv
@@ -32,49 +33,46 @@ Từ `backend/`, với PostgreSQL đang chạy:
 ```powershell
 .\.venv\Scripts\python.exe -m alembic upgrade head
 .\.venv\Scripts\python.exe scripts/seed_demo.py
-.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+.\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
-Seed là tùy chọn cho đăng ký mới. Seed demo cung cấp 90 stocks, 10 customers, 13 accounts;
-đăng nhập bằng `an.nguyen@gmail.com` (ADMIN) hoặc `bich.tran@gmail.com` (CUSTOMER),
-mật khẩu demo `Matkhau@123`. Seed từ chối ghi lại khi đã có khách hàng.
-Không chạy SQL reset prototype lên database cần giữ dữ liệu.
+## Khởi tạo và kiểm tra bước 1 (LB CP1)
 
-Swagger: http://localhost:8000/docs; OpenAPI: http://localhost:8000/api/openapi.json.
-Android emulator gọi `http://10.0.2.2:8000`; máy thật dùng IP LAN của máy backend.
+Đăng ký user mới tự động tạo tài khoản CASH và nạp 1.000.000.000 VNĐ giả lập:
 
-## Bàn giao checkpoint 1
+```powershell
+$reg = Invoke-RestMethod -Method Post -Uri http://localhost:8000/api/auth/register `
+  -ContentType 'application/json' `
+  -Body '{"full_name":"Test User","email":"test@example.com","phone_number":"0901234567","password":"Password@123"}'
+$access = $reg.access_token
 
-| Method | URL | Kết quả |
-|---|---|---|
-| GET | `/health/live` | 200 process sống |
-| GET | `/health/ready` | 200 DB kết nối; 503 nếu lỗi DB |
-| POST | `/api/auth/register` | 201 user + CASH account + 1 tỷ tiền giả lập, access/refresh JWT |
-| POST | `/api/auth/login` | 200 cặp JWT và user |
-| POST | `/api/auth/refresh` | 200 cặp JWT và user, body `{refresh_token}` |
-| GET | `/api/auth/me` | User của access JWT |
-| GET | `/api/accounts` | Array tài khoản của chính user, sort account_id ASC |
+Invoke-RestMethod -Uri http://localhost:8000/api/accounts `
+  -Headers @{ Authorization = "Bearer $access" }
+```
 
-Register nhận đủ `full_name`, `email`, `phone_number`, `password` theo
-[API_CONTRACT](../docs/API_CONTRACT.md). Các route `me/accounts` dùng
-`Authorization: Bearer <access_token>`; refresh token không được dùng thay access.
-Mọi lỗi dùng `{ "error": { "code": "...", "message": "...", "details": {} } }`.
+JSON lỗi chuẩn:
 
-`AccountResponse` có `account_id`, `account_number`, `account_type`, `status`, theo contract.
-API tài sản bên dưới trả tiền string; `/api/accounts` không trả số dư.
-App Flutter vẫn dùng mock; Sơn cần nối datasource/token flow và cập nhật model theo contract.
-Chưa coi chặng 1 toàn nhóm hoàn tất trước khi Sơn/Châu thử trên app.
+```json
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Chi tiết lỗi",
+    "details": {}
+  }
+}
+```
 
-## Bàn giao checkpoint 2 và 3 của LB
+## API bước 2 (LB CP2)
 
 Tất cả endpoint dưới đây cần access JWT. JSON ví dụ nằm trong
 `docs/contracts/examples.json`; schema thực thi trong OpenAPI.
 
 | Method | URL | Kết quả |
 |---|---|---|
-| GET | `/api/market/board?exchange=HOSE&q=FPT&page=1&page_size=20` | Page cổ phiếu, sort volume DESC/symbol ASC |
-| GET | `/api/stocks/FPT` | Giá, thay đổi/phần trăm, price_state, nguồn DEMO |
-| GET | `/api/stocks/FPT/chart?range=1M` | Tối đa 22 nến mới nhất, ngày ASC; 3M/6M là 66/132 phiên |
+| GET | `/api/market/board?exchange=HOSE&q=FPT&page=1&page_size=20` | Page cổ phiếu, sort volume DESC/symbol ASC (`?live=true` để lấy giá trực tiếp) |
+| GET | `/api/stocks/FPT` | Giá, thay đổi/phần trăm, price_state (`?live=true` để lấy giá thời gian thực từ sàn) |
+| GET | `/api/stocks/FPT/chart?range=1M` | Tối đa 22 nến mới nhất, ngày ASC; 3M/6M là 66/132 phiên (`?live=true` nến thực tế) |
+| POST | `/api/market/sync-live` | Đồng bộ giá thời gian thực từ sàn chứng khoán vào database (`{"symbols": ["SSI", "VNM"]}`) |
 | GET | `/api/watchlist` | Array watchlist với object stock lồng |
 | POST | `/api/watchlist` | Body `{ "stock_symbol": "FPT" }`; 201; thêm lại giữ cùng ID |
 | DELETE | `/api/watchlist/FPT` | 204 không body; xóa lại vẫn 204 |
@@ -87,19 +85,26 @@ Các cột NAV/current_value đã lưu không được dùng thay cho định gi
 Tài khoản người khác và tài khoản không tồn tại đều trả 404 như nhau.
 
 Mã/sàn đang HALTED/DELISTED vẫn có thể xem để đọc lịch sử; API đặt lệnh của Tuệ kiểm tra
-trạng thái giao dịch. Giá mặc định DEMO, is_stale=true; không quảng bá là giá trực tiếp.
-Watchlist API hợp nhất các tên danh sách seed cũ, chỉ hiện một mục mỗi mã; xóa mã sẽ xóa
-các mục cũ của mã đó trong chính user. Thao tác đồng thời được tuần tự theo user.
+trạng thái giao dịch. Khi không truyền `?live=true`, giá mặc định lấy từ DB với `data_source="DEMO"`,
+`is_stale=true`. Khi truyền `?live=true`, hệ thống lấy dữ liệu trực tiếp từ sàn qua SSI iBoard / DNSE
+với `data_source="LIVE"`, `is_stale=false` và tự động cập nhật giá vào DB.
 
-Sau đặt/khớp/hủy hoặc chạy settlement, FE gọi lại assets và portfolio của account tương ứng.
-Khi đổi account/logout/login phải hủy cache/request của account/user cũ. Backend không giữ
-cache NAV trong process. Hướng dẫn và phần báo cáo LB:
-[TV4_LB_BACKEND](../docs/reports/TV4_LB_BACKEND.md).
+### Đồng bộ dữ liệu chứng khoán thời gian thực qua CLI
+
+Có thể đồng bộ dữ liệu thời gian thực từ sàn vào PostgreSQL qua script:
+
+```powershell
+# Đồng bộ danh sách mã cụ thể:
+.\.venv\Scripts\python.exe scripts/sync_realtime_quotes.py --symbols SSI,VNM,HPG,FPT,TCB
+
+# Hoặc đồng bộ tất cả mã ACTIVE trong database:
+.\.venv\Scripts\python.exe scripts/sync_realtime_quotes.py
+```
 
 ## Kiểm tra
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest tests/unit/test_auth_checkpoint.py -q
+.\.venv\Scripts\python.exe -m pytest tests/unit -q
 .\.venv\Scripts\python.exe -m ruff check app scripts tests alembic
 .\.venv\Scripts\python.exe -m ruff format --check app scripts tests alembic
 .\.venv\Scripts\python.exe scripts/export_openapi.py --check
@@ -113,15 +118,4 @@ Integration của LB dùng PostgreSQL thật. Đặt `TEST_DATABASE_URL` tới s
 ```
 
 Suite tự tạo/xóa database ngẫu nhiên `stockmate_cp1_test_*`/`stockmate_lb_test_*`,
-không ghi lên database trong URL gốc. Nếu thiếu biến, integration sẽ SKIP;
-không coi SKIP là đã kiểm thử DB.
-Để chạy toàn bộ `pytest`, `DATABASE_URL` còn phải trỏ tới DB DEV đã migrate/seed riêng cho
-bộ test Admin/trading hiện có (các bộ này thay đổi dữ liệu demo và cần DB test được seed từ đầu).
-Khi đổi API: chạy `python scripts/export_openapi.py` để cập nhật `backend/openapi.json`.
-
-Kết quả và giới hạn kiểm thử: [TV4_CP1](../docs/qa/TV4_CP1.md),
-[TV4_CP2_CP3](../docs/qa/TV4_CP2_CP3.md).
-
-Tra [START_HERE](../docs/START_HERE.md), [SETUP](../docs/SETUP.md),
-[API_CONTRACT](../docs/API_CONTRACT.md), [DATABASE_WORKFLOW](../docs/DATABASE_WORKFLOW.md),
-[TV4 — LB](../docs/team/TV4_LB.md), [TV5 — Tuệ](../docs/team/TV5_TUE.md).
+chạy migration Alembic, nạp seed và dọn dẹp sau khi chạy.
