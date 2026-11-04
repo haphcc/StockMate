@@ -3,8 +3,13 @@
 **Bắt đầu tại:** backend/app/main.py, core/, db/, schemas/ và api/.
 **Checkpoint 1:** backend đã triển khai và kiểm thử đăng ký/đăng nhập/refresh/me/accounts,
 health và lỗi thống nhất; đang chờ Sơn/Châu thử bàn giao trên app.
+**Checkpoint 2:** đã triển khai market/stock/chart/watchlist/assets/portfolio và kiểm thử DB thật.
+**Checkpoint 3 (phần LB):** đã kiểm thử tài sản sau mua/bán/hủy, đổi giá, T+2 với API của Tuệ;
+đã có tài liệu bàn giao và phần báo cáo. Flutter/APK do chủ phần xác nhận riêng.
 Hướng dẫn chạy, URL và token: [backend README](../../backend/README.md).
 Bằng chứng: [TV4_CP1](../qa/TV4_CP1.md).
+Chi tiết CP2/3: [TV4_CP2_CP3](../qa/TV4_CP2_CP3.md).
+Báo cáo CSDL logic/Class Diagram/kiến trúc/API: [TV4_LB_BACKEND](../reports/TV4_LB_BACKEND.md).
 
 1. Viết FastAPI app, cấu hình, DB session, lỗi thống nhất và health; phối hợp Phuoc về kết nối DB.
 2. Viết model/schema, API đăng ký/đăng nhập/refresh/me và danh sách tài khoản.
@@ -21,7 +26,8 @@ backend/scripts/export_openapi.py.
 Đăng ký tạo user + CASH account + tiền giả lập trong một transaction; tiền dùng Decimal.
 
 Mã TODO tương ứng: BE-01, BE-02, BE-03. BE-04/vnstock làm sau bản demo.
-Sau CP1 còn API thị trường, chart, watchlist, assets/portfolio (chặng 2), hỗ trợ tích hợp
-giao dịch (chặng 3) và phần báo cáo. Chưa có xác nhận Flutter chạy trọn luồng với backend.
+Các đầu việc backend và tài liệu demo của LB đã có implementation/test.
+Chưa có xác nhận Flutter chạy trọn luồng với backend; chờ Sơn/Me/Châu nghiệm thu bàn giao.
+BE-04/vnstock vẫn thuộc phần mở rộng sau demo theo MVP_SCOPE, chưa bật nguồn LIVE.
 Tra [API_CONTRACT](../API_CONTRACT.md), [BUSINESS_RULES](../BUSINESS_RULES.md);
 cập nhật [WORK_BOARD](../WORK_BOARD.md).

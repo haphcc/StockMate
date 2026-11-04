@@ -1,8 +1,8 @@
 # StockMate — Backend
 
-Checkpoint 1 của TV4 đã có API thực thi: health, đăng ký, đăng nhập, refresh JWT,
-thông tin người dùng và danh sách tài khoản. Các API thị trường/tài sản/watchlist và nghiệp vụ
-giao dịch còn thuộc các chặng sau. Backend Admin của Phuoc được giữ và kiểm tra hồi quy.
+Phần backend demo của TV4 đã có API auth/accounts, bảng giá, chi tiết/chart, watchlist,
+tài sản và danh mục. Đã tích hợp API giao dịch của Tuệ để kiểm tra tài sản sau mua/bán/hủy/T+2.
+Backend Admin của Phuoc được giữ và kiểm tra hồi quy. Flutter/APK vẫn do chủ phần bàn giao.
 
 ## Chuẩn bị
 
@@ -61,9 +61,40 @@ Register nhận đủ `full_name`, `email`, `phone_number`, `password` theo
 Mọi lỗi dùng `{ "error": { "code": "...", "message": "...", "details": {} } }`.
 
 `AccountResponse` có `account_id`, `account_number`, `account_type`, `status`, theo contract.
-API tài sản trả tiền string là việc chặng 2; `/api/accounts` không trả số dư.
+API tài sản bên dưới trả tiền string; `/api/accounts` không trả số dư.
 App Flutter vẫn dùng mock; Sơn cần nối datasource/token flow và cập nhật model theo contract.
 Chưa coi chặng 1 toàn nhóm hoàn tất trước khi Sơn/Châu thử trên app.
+
+## Bàn giao checkpoint 2 và 3 của LB
+
+Tất cả endpoint dưới đây cần access JWT. JSON ví dụ nằm trong
+`docs/contracts/examples.json`; schema thực thi trong OpenAPI.
+
+| Method | URL | Kết quả |
+|---|---|---|
+| GET | `/api/market/board?exchange=HOSE&q=FPT&page=1&page_size=20` | Page cổ phiếu, sort volume DESC/symbol ASC |
+| GET | `/api/stocks/FPT` | Giá, thay đổi/phần trăm, price_state, nguồn DEMO |
+| GET | `/api/stocks/FPT/chart?range=1M` | Tối đa 22 nến mới nhất, ngày ASC; 3M/6M là 66/132 phiên |
+| GET | `/api/watchlist` | Array watchlist với object stock lồng |
+| POST | `/api/watchlist` | Body `{ "stock_symbol": "FPT" }`; 201; thêm lại giữ cùng ID |
+| DELETE | `/api/watchlist/FPT` | 204 không body; xóa lại vẫn 204 |
+| GET | `/api/accounts/{account_id}/assets` | Cash/blocked/stock_value/NAV/lãi lỗ tính từ giá DB hiện tại |
+| GET | `/api/accounts/{account_id}/portfolio` | Array danh mục phẳng, available/blocked/pending và giá vốn |
+
+Tiền/giá/phần trăm là string 2 số lẻ, Decimal HALF_UP. Phần trăm lãi lỗ null khi giá vốn 0;
+change_percent null khi giá tham chiếu 0. NAV = cash + blocked + tổng quantity × market_price.
+Các cột NAV/current_value đã lưu không được dùng thay cho định giá hiện tại khi đọc API.
+Tài khoản người khác và tài khoản không tồn tại đều trả 404 như nhau.
+
+Mã/sàn đang HALTED/DELISTED vẫn có thể xem để đọc lịch sử; API đặt lệnh của Tuệ kiểm tra
+trạng thái giao dịch. Giá mặc định DEMO, is_stale=true; không quảng bá là giá trực tiếp.
+Watchlist API hợp nhất các tên danh sách seed cũ, chỉ hiện một mục mỗi mã; xóa mã sẽ xóa
+các mục cũ của mã đó trong chính user. Thao tác đồng thời được tuần tự theo user.
+
+Sau đặt/khớp/hủy hoặc chạy settlement, FE gọi lại assets và portfolio của account tương ứng.
+Khi đổi account/logout/login phải hủy cache/request của account/user cũ. Backend không giữ
+cache NAV trong process. Hướng dẫn và phần báo cáo LB:
+[TV4_LB_BACKEND](../docs/reports/TV4_LB_BACKEND.md).
 
 ## Kiểm tra
 
@@ -74,20 +105,22 @@ Chưa coi chặng 1 toàn nhóm hoàn tất trước khi Sơn/Châu thử trên 
 .\.venv\Scripts\python.exe scripts/export_openapi.py --check
 ```
 
-Integration CP1 dùng PostgreSQL thật. Đặt `TEST_DATABASE_URL` tới server DEV với user có quyền
+Integration của LB dùng PostgreSQL thật. Đặt `TEST_DATABASE_URL` tới server DEV với user có quyền
 `CREATEDB` (ví dụ URL `postgresql+psycopg://postgres:<password>@localhost:5432/postgres`), rồi chạy:
 
 ```powershell
-.\.venv\Scripts\python.exe -m pytest tests/integration/test_auth_checkpoint_postgres.py -q
+.\.venv\Scripts\python.exe -m pytest tests/integration -q
 ```
 
-Suite tự tạo/xóa database ngẫu nhiên `stockmate_cp1_test_*`, không ghi lên database trong URL gốc.
-Nếu thiếu biến, integration CP1 sẽ SKIP; không coi SKIP là đã kiểm thử DB.
+Suite tự tạo/xóa database ngẫu nhiên `stockmate_cp1_test_*`/`stockmate_lb_test_*`,
+không ghi lên database trong URL gốc. Nếu thiếu biến, integration sẽ SKIP;
+không coi SKIP là đã kiểm thử DB.
 Để chạy toàn bộ `pytest`, `DATABASE_URL` còn phải trỏ tới DB DEV đã migrate/seed riêng cho
-bộ test Admin hiện có (bộ này thay đổi dữ liệu demo).
+bộ test Admin/trading hiện có (các bộ này thay đổi dữ liệu demo và cần DB test được seed từ đầu).
 Khi đổi API: chạy `python scripts/export_openapi.py` để cập nhật `backend/openapi.json`.
 
-Kết quả và giới hạn kiểm thử: [TV4_CP1](../docs/qa/TV4_CP1.md).
+Kết quả và giới hạn kiểm thử: [TV4_CP1](../docs/qa/TV4_CP1.md),
+[TV4_CP2_CP3](../docs/qa/TV4_CP2_CP3.md).
 
 Tra [START_HERE](../docs/START_HERE.md), [SETUP](../docs/SETUP.md),
 [API_CONTRACT](../docs/API_CONTRACT.md), [DATABASE_WORKFLOW](../docs/DATABASE_WORKFLOW.md),

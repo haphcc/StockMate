@@ -34,7 +34,8 @@ python -m venv .venv
 Chỉ copy .env.example thành .env nếu chưa có, chỉnh DATABASE_URL/SECRET_KEY cho máy mình.
 Backend CP1 và migration/seed đã có implementation. Làm theo
 [backend README](../backend/README.md) để migrate, seed, chạy Uvicorn và thử API auth/accounts.
-Các API thị trường/tài sản/giao dịch còn theo tiến độ của chủ phần.
+Các API thị trường/tài sản/watchlist của LB đã có implementation và test PostgreSQL;
+API giao dịch của Tuệ đã được tích hợp. Cách gọi API ở backend README và Swagger.
 
 Khi có API, Android emulator dùng http://10.0.2.2:8000; máy thật dùng IP máy chạy API cùng Wi-Fi.
 

@@ -8,7 +8,7 @@ Châu cập nhật khi người nhận đã thử bàn giao. Chọn một trạn
 | Phuoc | Dựng DB, migration, seed và môi trường | Chưa làm | Bàn giao kết nối/cách dựng cho LB, Tuệ, Châu |
 | Sơn | Form auth, token và nối API đăng nhập | Chưa làm | Dùng JSON mẫu trước; nối API khi LB bàn giao |
 | Me (TV3) | Bảng giá/chi tiết với JSON mẫu | Chưa làm | Nhận helper/network/router từ Sơn |
-| LB | FastAPI, kết nối DB, health, auth và accounts | Chờ bàn giao | CP1 backend đã kiểm thử PostgreSQL thật; xem [TV4_CP1](qa/TV4_CP1.md). Sơn/Châu cần xác nhận luồng trên Flutter; chưa đánh dấu Xong |
+| LB | CP1 auth/accounts; CP2 market/chart/watchlist/assets/portfolio; CP3 tích hợp tài sản và báo cáo | Chờ bàn giao | Backend đã kiểm thử PostgreSQL 16; [bằng chứng CP2/3](qa/TV4_CP2_CP3.md), [báo cáo LB](reports/TV4_LB_BACKEND.md). Chờ Sơn/Me/Châu xác nhận trên Flutter |
 | Tuệ | Đặt/khớp/hủy lệnh, giữ tiền/CP, T+2, thông báo | Chờ bàn giao | Đã xong TR-01/02/03 + 9 unit test pass; sẵn sàng bàn giao cho Me (TV3) & Châu (TV6) |
 | Châu | Thử setup, soạn case và kiểm tra auth khi có API | Chưa làm | Ghi phần chưa chạy thay vì đánh dấu pass |
 
