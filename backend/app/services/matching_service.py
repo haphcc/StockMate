@@ -43,11 +43,7 @@ def recalc_account_asset(db: Session, account_id: int) -> None:
     if not account:
         return
 
-    portfolios = (
-        db.query(Portfolio)
-        .filter(Portfolio.account_id == account_id)
-        .all()
-    )
+    portfolios = db.query(Portfolio).filter(Portfolio.account_id == account_id).all()
     portfolio_value = sum((p.current_value for p in portfolios), Decimal("0.00"))
     account.total_asset_value = account.cash_balance + account.blocked_balance + portfolio_value
 
@@ -79,12 +75,7 @@ def match_order(
         return None
 
     # 2. Lock Stock
-    stock = (
-        db.query(Stock)
-        .filter(Stock.stock_id == order.stock_id)
-        .with_for_update()
-        .first()
-    )
+    stock = db.query(Stock).filter(Stock.stock_id == order.stock_id).with_for_update().first()
     if not stock or stock.status != "ACTIVE":
         return None
 

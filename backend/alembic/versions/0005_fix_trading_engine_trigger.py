@@ -9,6 +9,7 @@ Owner: TV5 - Tuệ / TV1 - Phuoc
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -39,22 +40,31 @@ def upgrade() -> None:
             BEGIN
                 IF NEW.transaction_type = 'BUY' THEN
                     -- Co phieu mua ve chi kha dung sau ngay thanh toan T+2
-                    v_avail_delta := CASE WHEN COALESCE(NEW.settlement_date, CURRENT_DATE) <= CURRENT_DATE
-                                          THEN NEW.quantity ELSE 0 END;
+                    v_avail_delta := CASE
+                        WHEN COALESCE(NEW.settlement_date, CURRENT_DATE) <= CURRENT_DATE
+                        THEN NEW.quantity ELSE 0 END;
 
-                    INSERT INTO portfolios (account_id, stock_id, quantity, available_quantity, blocked_quantity,
-                                            average_price, updated_at)
-                    VALUES (NEW.account_id, NEW.stock_id, NEW.quantity, v_avail_delta, 0, NEW.price, now())
+                    INSERT INTO portfolios (
+                        account_id, stock_id, quantity, available_quantity, blocked_quantity,
+                        average_price, updated_at
+                    )
+                    VALUES (
+                        NEW.account_id, NEW.stock_id, NEW.quantity,
+                        v_avail_delta, 0, NEW.price, now()
+                    )
                     ON CONFLICT (account_id, stock_id) DO UPDATE
-                       SET average_price      = ROUND((portfolios.quantity * portfolios.average_price
-                                                       + EXCLUDED.quantity * EXCLUDED.average_price)
-                                                      / NULLIF(portfolios.quantity + EXCLUDED.quantity, 0), 2),
+                       SET average_price      = ROUND(
+                           (portfolios.quantity * portfolios.average_price
+                            + EXCLUDED.quantity * EXCLUDED.average_price)
+                           / NULLIF(portfolios.quantity + EXCLUDED.quantity, 0), 2),
                            quantity           = portfolios.quantity + EXCLUDED.quantity,
-                           available_quantity = portfolios.available_quantity + EXCLUDED.available_quantity,
+                           available_quantity = portfolios.available_quantity
+                                                + EXCLUDED.available_quantity,
                            updated_at         = now();
 
                     -- Giai toa blocked_balance va hoan lai chenh lech gia khop (CASH-01)
-                    SELECT order_price INTO v_order_price FROM stock_orders WHERE order_id = NEW.order_id;
+                    SELECT order_price INTO v_order_price
+                      FROM stock_orders WHERE order_id = NEW.order_id;
                     IF v_order_price IS NOT NULL THEN
                         v_order_gross := NEW.quantity * v_order_price;
                         v_order_fee   := ROUND(v_order_gross * 0.0015, 2);
@@ -115,4 +125,3 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     pass
-

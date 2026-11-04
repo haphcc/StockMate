@@ -9,6 +9,7 @@ Owner: TV5 - Tuệ
 from typing import Sequence, Union
 
 import sqlalchemy as sa
+
 from alembic import op
 
 # revision identifiers, used by Alembic.
@@ -72,14 +73,17 @@ def upgrade() -> None:
             ),
         )
         op.create_index("idx_settlement_account", "share_settlements", ["account_id"])
-        op.create_index("idx_settlement_date_status", "share_settlements", ["settlement_date", "status"])
+        op.create_index(
+            "idx_settlement_date_status", "share_settlements", ["settlement_date", "status"]
+        )
 
         # Backfill existing BUY transactions
         bind.execute(
             sa.text(
                 """
                 INSERT INTO share_settlements (
-                    transaction_id, account_id, stock_id, quantity, settlement_date, status, settled_at
+                    transaction_id, account_id, stock_id,
+                    quantity, settlement_date, status, settled_at
                 )
                 SELECT
                     t.transaction_id,
@@ -87,8 +91,10 @@ def upgrade() -> None:
                     t.stock_id,
                     t.quantity,
                     COALESCE(t.settlement_date, CURRENT_DATE),
-                    CASE WHEN COALESCE(t.settlement_date, CURRENT_DATE) <= CURRENT_DATE THEN 'SETTLED' ELSE 'PENDING' END,
-                    CASE WHEN COALESCE(t.settlement_date, CURRENT_DATE) <= CURRENT_DATE THEN t.transaction_date ELSE NULL END
+                    CASE WHEN COALESCE(t.settlement_date, CURRENT_DATE) <= CURRENT_DATE
+                         THEN 'SETTLED' ELSE 'PENDING' END,
+                    CASE WHEN COALESCE(t.settlement_date, CURRENT_DATE) <= CURRENT_DATE
+                         THEN t.transaction_date ELSE NULL END
                 FROM transactions t
                 WHERE t.transaction_type = 'BUY'
                 ON CONFLICT (transaction_id) DO NOTHING;
@@ -99,4 +105,3 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     op.drop_table("share_settlements")
-

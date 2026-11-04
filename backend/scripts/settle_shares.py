@@ -14,8 +14,8 @@ backend_dir = Path(__file__).resolve().parents[1]
 if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
-from app.db.session import SessionLocal
-from app.services.settlement_service import process_share_settlements
+from app.db.session import SessionLocal  # noqa: E402
+from app.services.settlement_service import process_share_settlements  # noqa: E402
 
 
 def main() -> None:
@@ -24,7 +24,7 @@ def main() -> None:
         "--as-of-date",
         type=str,
         default=None,
-        help="Target date for settlement in YYYY-MM-DD format (defaults to current date in Vietnam)",
+        help="Target date for settlement in YYYY-MM-DD format (defaults to Vietnam date)",
     )
     args = parser.parse_args()
 
