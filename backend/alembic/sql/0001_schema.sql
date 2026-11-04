@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS customers (
     id_card_number  VARCHAR(20),
     address         VARCHAR(255),
     avatar_url      VARCHAR(255),
+    role            VARCHAR(20)   NOT NULL DEFAULT 'CUSTOMER',
     status          VARCHAR(20)   NOT NULL DEFAULT 'ACTIVE',
     created_at      TIMESTAMPTZ   NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ   NOT NULL DEFAULT now(),

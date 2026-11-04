@@ -198,8 +198,8 @@ def seed() -> int:
                     """
                     INSERT INTO customers (
                         full_name, email, phone_number, password_hash, date_of_birth,
-                        id_card_number, address, status
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+                        id_card_number, address, role, status
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
                     """,
                     customers_data,
                 )
