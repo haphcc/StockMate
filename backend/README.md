@@ -78,6 +78,8 @@ Tất cả endpoint dưới đây cần access JWT. JSON ví dụ nằm trong
 | DELETE | `/api/watchlist/FPT` | 204 không body; xóa lại vẫn 204 |
 | GET | `/api/accounts/{account_id}/assets` | Cash/blocked/stock_value/NAV/lãi lỗ tính từ giá DB hiện tại |
 | GET | `/api/accounts/{account_id}/portfolio` | Array danh mục phẳng, available/blocked/pending và giá vốn |
+| POST | `/api/accounts/{account_id}/deposit` | Tạo link VietQR qua payOS (`{"amount": 50000}`) trả về `checkout_url`, `qr_code`, 201 |
+| POST | `/api/payments/payos/webhook` | Webhook nhận thông báo từ payOS, xác thực chữ ký và tự động cộng tiền |
 
 Tiền/giá/phần trăm là string 2 số lẻ, Decimal HALF_UP. Phần trăm lãi lỗ null khi giá vốn 0;
 change_percent null khi giá tham chiếu 0. NAV = cash + blocked + tổng quantity × market_price.

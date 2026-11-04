@@ -13,6 +13,7 @@ from app.api.v1.endpoints import (
     market,
     notifications,
     orders,
+    payments,
     transactions,
     watchlist,
 )
@@ -31,3 +32,4 @@ api_router.include_router(health.router, prefix="/health", tags=["health"])
 api_router.include_router(orders.router, tags=["orders"])
 api_router.include_router(transactions.router, tags=["transactions"])
 api_router.include_router(notifications.router, tags=["notifications"])
+api_router.include_router(payments.router, prefix="/payments", tags=["payments"])

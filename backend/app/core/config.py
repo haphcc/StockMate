@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     SELL_TAX_RATE: float = 0.001
     SETTLEMENT_DAYS: int = 2
 
+    # PayOS Payment Gateway
+    PAYOS_CLIENT_ID: str = "449a7c67-bd90-4c82-b548-ad247cc70bce"
+    PAYOS_API_KEY: str = "a1099b4d-fb74-4805-9bf8-e151c57d3a35"
+    PAYOS_CHECKSUM_KEY: str = "08dbbf6c5216806d59c8ec575b521b225d7e51bb9035c4ccfc72c87d458b208a"
+
     model_config = SettingsConfigDict(
         env_file=str(ENV_FILE) if ENV_FILE.exists() else str(FALLBACK_ENV),
         env_file_encoding="utf-8",
