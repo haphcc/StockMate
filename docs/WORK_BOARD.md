@@ -10,7 +10,7 @@ Châu cập nhật khi người nhận đã thử bàn giao. Chọn một trạn
 | Me (TV3) | Bảng giá/chi tiết với JSON mẫu | Chưa làm | Nhận helper/network/router từ Sơn |
 | LB | CP1 auth/accounts; CP2 market/chart/watchlist/assets/portfolio; CP3 tích hợp tài sản và báo cáo | Chờ bàn giao | Backend đã kiểm thử PostgreSQL 16; [bằng chứng CP2/3](qa/TV4_CP2_CP3.md), [báo cáo LB](reports/TV4_LB_BACKEND.md). Chờ Sơn/Me/Châu xác nhận trên Flutter |
 | Tuệ | Đặt/khớp/hủy lệnh, giữ tiền/CP, T+2, thông báo | Chờ bàn giao | Đã xong TR-01/02/03 + 9 unit test pass; sẵn sàng bàn giao cho Me (TV3) & Châu (TV6) |
-| Châu | Thử setup, soạn case và kiểm tra auth khi có API | Chưa làm | Ghi phần chưa chạy thay vì đánh dấu pass |
+| Châu | Thử setup, soạn case và kiểm tra auth khi có API | Đang làm | Đã dựng lại DB/seed/API, đăng nhập admin được ([environment](qa/environment.md)); bug ghi ở [bugs](qa/bugs.md). Chờ Phuoc xử lý khóa payOS và mật khẩu compose. Chưa chạy: flutter build apk (mạng tải Gradle chậm), flutter test, phần Admin trên mobile; nếu build lỗi sẽ báo Sơn/Me |
 
 | Chặng | Xong khi | Trạng thái |
 |---|---|---|
