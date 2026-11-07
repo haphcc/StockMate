@@ -1,0 +1,175 @@
+import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
+import '../data/admin_constants.dart';
+
+/// Thẻ nền tối có viền, bấm được (có hiệu ứng gợn sóng).
+class AdminCard extends StatelessWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+  final EdgeInsetsGeometry padding;
+
+  const AdminCard({
+    super.key,
+    required this.child,
+    this.onTap,
+    this.padding = const EdgeInsets.all(14),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.darkCard,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: AppColors.darkCardBorder),
+      ),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(padding: padding, child: child),
+      ),
+    );
+  }
+}
+
+/// Nhãn màu theo trạng thái hoặc vai trò (ACTIVE, LOCKED, PENDING, ADMIN...).
+class AdminStatusBadge extends StatelessWidget {
+  final String code;
+
+  const AdminStatusBadge({super.key, required this.code});
+
+  Color get _color {
+    switch (code) {
+      case 'ACTIVE':
+        return AppColors.priceUp;
+      case 'LOCKED':
+      case 'SUSPENDED':
+        return AppColors.priceDown;
+      case 'PENDING':
+        return AppColors.priceRef;
+      case 'ADMIN':
+        return AppColors.accent;
+      default:
+        return AppColors.darkTextSecondary;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: _color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        AdminConstants.label(code),
+        style: TextStyle(
+          color: _color,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+/// Một dòng "nhãn: giá trị" trong khung thông tin.
+class AdminInfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const AdminInfoRow({super.key, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.darkTextSecondary,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Hộp thoại xác nhận. Trả về true nếu người dùng bấm xác nhận.
+Future<bool> showAdminConfirm(
+  BuildContext context, {
+  required String title,
+  required String message,
+  String confirmText = 'Xác nhận',
+  bool danger = false,
+}) async {
+  final result = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      backgroundColor: AppColors.darkSurface,
+      title: Text(title, style: const TextStyle(color: Colors.white)),
+      content: Text(
+        message,
+        style: const TextStyle(color: AppColors.darkTextSecondary),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, false),
+          child: const Text('Hủy'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(dialogContext, true),
+          child: Text(
+            confirmText,
+            style: TextStyle(
+              color: danger ? AppColors.priceDown : AppColors.primary,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+  return result ?? false;
+}
+
+void showAdminSnack(BuildContext context, String message, {bool error = false}) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(
+      content: Text(message),
+      backgroundColor: error ? AppColors.priceDown : AppColors.primaryDark,
+    ),
+  );
+}
+
+/// Định dạng tiền VND từ chuỗi, ví dụ "50000000.00" thành "50.000.000 ₫".
+/// Không chuyển qua double nên không mất độ chính xác.
+String formatVnd(String raw) {
+  final intPart = raw.split('.').first;
+  final negative = intPart.startsWith('-');
+  final digits = negative ? intPart.substring(1) : intPart;
+  final buffer = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) buffer.write('.');
+    buffer.write(digits[i]);
+  }
+  return '${negative ? '-' : ''}$buffer ₫';
+}
