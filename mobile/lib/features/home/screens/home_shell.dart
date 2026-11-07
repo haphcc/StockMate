@@ -3,13 +3,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../auth/providers/auth_provider.dart';
 
-class HomeShell extends StatelessWidget {
+class HomeShell extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
 
   const HomeShell({super.key, required this.navigationShell});
 
-  static const List<_NavDestination> _destinations = [
+  static const List<_NavDestination> _customerDestinations = [
     _NavDestination(
       icon: Icons.trending_up_rounded,
       activeIcon: Icons.trending_up_rounded,
@@ -32,8 +34,19 @@ class HomeShell extends StatelessWidget {
     ),
   ];
 
+  static const _NavDestination _adminDestination = _NavDestination(
+    icon: Icons.admin_panel_settings_outlined,
+    activeIcon: Icons.admin_panel_settings_rounded,
+    label: 'Quản trị',
+  );
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAdmin = ref.watch(authProvider).value?.isAdmin ?? false;
+    final destinations = [
+      ..._customerDestinations,
+      if (isAdmin) _adminDestination,
+    ];
     final currentIndex = navigationShell.currentIndex;
 
     return Scaffold(
@@ -76,7 +89,7 @@ class HomeShell extends StatelessWidget {
                   ),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      final itemWidth = constraints.maxWidth / _destinations.length;
+                      final itemWidth = constraints.maxWidth / destinations.length;
                       const indicatorSize = 38.0;
 
                       return Stack(
@@ -115,8 +128,8 @@ class HomeShell extends StatelessWidget {
 
                           // Tab items
                           Row(
-                            children: List.generate(_destinations.length, (index) {
-                              final item = _destinations[index];
+                            children: List.generate(destinations.length, (index) {
+                              final item = destinations[index];
                               final isSelected = index == currentIndex;
 
                               return Expanded(
