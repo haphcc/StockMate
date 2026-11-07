@@ -7,12 +7,14 @@ class MockAuthRepository implements AuthRepository {
   @override
   Future<UserModel> login(String emailOrPhone, String password) async {
     await Future.delayed(const Duration(milliseconds: 600));
-    _currentUser = const UserModel(
-      id: 1,
-      fullName: 'NGUYEN VAN A',
-      email: 'investor@stockmate.vn',
+    final isAdmin = emailOrPhone.trim().toLowerCase() == 'an.nguyen@gmail.com';
+    _currentUser = UserModel(
+      id: isAdmin ? 100 : 1,
+      fullName: isAdmin ? 'NGUYEN AN' : 'NGUYEN VAN A',
+      email: isAdmin ? 'an.nguyen@gmail.com' : 'investor@stockmate.vn',
       phoneNumber: '0912345678',
       status: 'ACTIVE',
+      role: isAdmin ? 'ADMIN' : 'CUSTOMER',
     );
     return _currentUser!;
   }

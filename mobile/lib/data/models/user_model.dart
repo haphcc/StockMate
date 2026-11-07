@@ -7,6 +7,7 @@ class UserModel extends Equatable {
   final String phoneNumber;
   final String? avatarUrl;
   final String status;
+  final String role;
 
   const UserModel({
     required this.id,
@@ -15,7 +16,10 @@ class UserModel extends Equatable {
     required this.phoneNumber,
     this.avatarUrl,
     required this.status,
+    this.role = 'CUSTOMER',
   });
+
+  bool get isAdmin => role == 'ADMIN';
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
@@ -25,6 +29,7 @@ class UserModel extends Equatable {
       phoneNumber: json['phone_number'] ?? '',
       avatarUrl: json['avatar_url'],
       status: json['status'] ?? 'ACTIVE',
+      role: json['role'] ?? 'CUSTOMER',
     );
   }
 
@@ -36,9 +41,11 @@ class UserModel extends Equatable {
       'phone_number': phoneNumber,
       'avatar_url': avatarUrl,
       'status': status,
+      'role': role,
     };
   }
 
   @override
-  List<Object?> get props => [id, fullName, email, phoneNumber, avatarUrl, status];
+  List<Object?> get props =>
+      [id, fullName, email, phoneNumber, avatarUrl, status, role];
 }
