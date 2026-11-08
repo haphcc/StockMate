@@ -1,6 +1,7 @@
 import 'models/admin_account_model.dart';
 import 'models/admin_customer_model.dart';
 import 'models/admin_page.dart';
+import 'models/admin_dashboard_model.dart';
 
 abstract class AdminRepository {
   // Khách hàng
@@ -34,4 +35,7 @@ abstract class AdminRepository {
     Map<String, dynamic> data,
   );
   Future<void> deleteAccount(int accountId);
+
+  Future<AdminDashboardModel> getDashboard();
+
 }

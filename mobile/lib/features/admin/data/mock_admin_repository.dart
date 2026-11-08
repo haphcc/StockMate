@@ -3,6 +3,7 @@ import 'admin_repository.dart';
 import 'models/admin_account_model.dart';
 import 'models/admin_customer_model.dart';
 import 'models/admin_page.dart';
+import 'models/admin_dashboard_model.dart';
 
 String _money(Object? value) {
   if (value == null) return '0.00';
@@ -70,7 +71,7 @@ class MockAdminRepository implements AdminRepository {
       customerId: 100,
       customerName: 'NGUYEN AN',
       customerEmail: 'an.nguyen@gmail.com',
-      accountNumber: '086C000001',
+      accountNumber: '068C000001',
       accountType: 'CASH',
       cashBalance: '50000000.00',
       totalAssetValue: '50000000.00',
@@ -81,7 +82,7 @@ class MockAdminRepository implements AdminRepository {
       customerId: 1,
       customerName: 'TRAN THI BICH',
       customerEmail: 'bich.tran@gmail.com',
-      accountNumber: '086C000002',
+      accountNumber: '068C000002',
       accountType: 'CASH',
       cashBalance: '120000000.00',
       totalAssetValue: '185000000.00',
@@ -92,7 +93,7 @@ class MockAdminRepository implements AdminRepository {
       customerId: 1,
       customerName: 'TRAN THI BICH',
       customerEmail: 'bich.tran@gmail.com',
-      accountNumber: '086C000003',
+      accountNumber: '068C000003',
       accountType: 'MARGIN',
       cashBalance: '30000000.00',
       totalAssetValue: '30000000.00',
@@ -104,7 +105,7 @@ class MockAdminRepository implements AdminRepository {
       customerId: 2,
       customerName: 'LE MINH CUONG',
       customerEmail: 'cuong.le@gmail.com',
-      accountNumber: '086C000004',
+      accountNumber: '068C000004',
       accountType: 'CASH',
       cashBalance: '75000000.00',
       totalAssetValue: '92000000.00',
@@ -115,7 +116,7 @@ class MockAdminRepository implements AdminRepository {
       customerId: 3,
       customerName: 'PHAM THU DUNG',
       customerEmail: 'dung.pham@gmail.com',
-      accountNumber: '086C000005',
+      accountNumber: '068C000005',
       accountType: 'CASH',
       cashBalance: '10000000.00',
       totalAssetValue: '10000000.00',
@@ -126,7 +127,7 @@ class MockAdminRepository implements AdminRepository {
       customerId: 5,
       customerName: 'VU THI PHUONG',
       customerEmail: 'phuong.vu@gmail.com',
-      accountNumber: '086C000006',
+      accountNumber: '068C000006',
       accountType: 'CASH',
       cashBalance: '200000000.00',
       totalAssetValue: '260000000.00',
@@ -246,7 +247,7 @@ class MockAdminRepository implements AdminRepository {
         customerId: customer.customerId,
         customerName: customer.fullName,
         customerEmail: customer.email,
-        accountNumber: '086C${accountId.toString().padLeft(6, '0')}',
+        accountNumber: '068C${accountId.toString().padLeft(6, '0')}',
         accountType: 'CASH',
         cashBalance: cash,
         totalAssetValue: cash,
@@ -333,7 +334,7 @@ class MockAdminRepository implements AdminRepository {
     return _paginate(filtered, page, pageSize);
   }
 
-  @override
+    @override
   Future<AdminAccountModel> createAccount(Map<String, dynamic> data) async {
     await _delay();
     final customerId = data['customer_id'] as int?;
@@ -341,21 +342,37 @@ class MockAdminRepository implements AdminRepository {
         _customers.indexWhere((c) => c.customerId == customerId);
     if (customerIndex < 0) {
       throw const AdminException(
-        'Không tìm thấy khách hàng.',
+        'Không tìm thấy khách hàng để mở tài khoản.',
         code: 'NOT_FOUND',
       );
     }
     final customer = _customers[customerIndex];
+
+    final type = data['account_type'] as String? ?? 'CASH';
+    final requested = (data['account_number'] as String?)?.trim();
+    if (requested != null &&
+        requested.isNotEmpty &&
+        _accounts.any((a) => a.accountNumber == requested)) {
+      throw const AdminException(
+        'Số tài khoản đã tồn tại.',
+        code: 'DUPLICATE_ACCOUNT_NUMBER',
+      );
+    }
+
     final accountId = _nextAccountId++;
+    final prefix = type == 'MARGIN' ? '068M' : '068C';
+    final accountNumber = (requested != null && requested.isNotEmpty)
+        ? requested
+        : '$prefix${accountId.toString().padLeft(6, '0')}';
     final cash = _money(data['cash_balance']);
+
     final account = AdminAccountModel(
       accountId: accountId,
       customerId: customer.customerId,
       customerName: customer.fullName,
       customerEmail: customer.email,
-      accountNumber: data['account_number'] as String? ??
-          '086C${accountId.toString().padLeft(6, '0')}',
-      accountType: data['account_type'] as String? ?? 'CASH',
+      accountNumber: accountNumber,
+      accountType: type,
       cashBalance: cash,
       totalAssetValue: cash,
       marginLimit: _money(data['margin_limit']),
@@ -388,5 +405,41 @@ class MockAdminRepository implements AdminRepository {
   Future<void> deleteAccount(int accountId) async {
     await _delay();
     _accounts.removeAt(_accountIndex(accountId));
+  }
+
+    // ---------------- Dashboard ----------------
+
+  @override
+  Future<AdminDashboardModel> getDashboard() async {
+    await _delay();
+    // Chỉ dùng cho mock: cộng bằng num là đủ, API thật sẽ trả sẵn chuỗi.
+    num sum(Iterable<String> values) =>
+        values.fold<num>(0, (s, v) => s + (num.tryParse(v) ?? 0));
+
+    return AdminDashboardModel(
+      totalCustomers: _customers.length,
+      activeCustomers: _customers.where((c) => c.status == 'ACTIVE').length,
+      lockedCustomers: _customers.where((c) => c.status == 'LOCKED').length,
+      adminCount: _customers.where((c) => c.isAdmin).length,
+      totalAccounts: _accounts.length,
+      activeAccounts: _accounts.where((a) => a.status == 'ACTIVE').length,
+      suspendedAccounts:
+          _accounts.where((a) => a.status == 'SUSPENDED').length,
+      totalCashBalance:
+          sum(_accounts.map((a) => a.cashBalance)).toStringAsFixed(2),
+      totalAssetValue:
+          sum(_accounts.map((a) => a.totalAssetValue)).toStringAsFixed(2),
+      // Các số dưới đây là dữ liệu mẫu (mock chưa có cổ phiếu, lệnh, giao dịch).
+      totalStocks: 90,
+      activeStocks: 88,
+      haltedStocks: 2,
+      totalOrdersToday: 12,
+      pendingOrders: 3,
+      completedOrders: 8,
+      cancelledOrders: 1,
+      totalTransactionsToday: 8,
+      totalTradingVolumeToday: 15400,
+      totalTradingValueToday: '2350000000.00',
+    );
   }
 }

@@ -6,6 +6,7 @@ import '../data/mock_admin_repository.dart';
 import '../data/models/admin_account_model.dart';
 import '../data/models/admin_customer_model.dart';
 import '../data/models/admin_page.dart';
+import '../data/models/admin_dashboard_model.dart';
 
 final adminRepositoryProvider = Provider<AdminRepository>((ref) {
   if (AppConfig.useMock) {
@@ -77,4 +78,9 @@ final adminAccountsProvider = FutureProvider.autoDispose
         status: query.status,
         page: query.page,
       );
+});
+
+final adminDashboardProvider =
+    FutureProvider.autoDispose<AdminDashboardModel>((ref) {
+  return ref.watch(adminRepositoryProvider).getDashboard();
 });
