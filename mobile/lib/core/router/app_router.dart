@@ -10,6 +10,7 @@ import '../../features/home/screens/dashboard_screen.dart';
 import '../../features/order/screens/order_book_screen.dart';
 import '../../features/order/screens/place_order_screen.dart';
 import '../../features/portfolio/screens/portfolio_screen.dart';
+import '../../features/admin/screens/admin_home_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authProvider);
@@ -34,6 +35,11 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (isAuth && isLoggingIn) {
         return '/home/overview'; // Đã đăng nhập nhưng vào login -> về home
+      }
+
+            final isAdmin = authState.value?.isAdmin ?? false;
+      if (state.uri.path.startsWith('/home/admin') && !isAdmin) {
+        return '/home/overview';
       }
 
       return null;
@@ -89,6 +95,15 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/home/portfolio',
                 builder: (context, state) => const PortfolioScreen(),
+              ),
+            ],
+          ),
+          // Tab 4: Quản trị (Admin)
+           StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home/admin',
+                builder: (context, state) => const AdminHomeScreen(),
               ),
             ],
           ),
