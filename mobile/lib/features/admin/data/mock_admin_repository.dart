@@ -6,6 +6,8 @@ import 'models/admin_page.dart';
 import 'models/admin_dashboard_model.dart';
 import 'models/admin_stock_model.dart';
 import 'models/admin_notification_model.dart';
+import 'models/admin_order_model.dart';
+import 'models/admin_transaction_model.dart';
 
 String _money(Object? value) {
   if (value == null) return '0.00';
@@ -62,6 +64,40 @@ AdminStockModel _makeStock({
     changePercent: _price2(percent),
     totalVolume: volume,
     status: status,
+  );
+}
+
+AdminTransactionModel _makeTx({
+  required int id,
+  required int orderId,
+  required int accountId,
+  required String accountNumber,
+  required String symbol,
+  required String type,
+  required int quantity,
+  required num price,
+  required String date,
+  required String settlement,
+}) {
+  final total = quantity * price;
+  final fee = total * 0.0015;
+  final tax = type == 'SELL' ? total * 0.001 : 0;
+  final net = type == 'BUY' ? total + fee : total - fee - tax;
+  return AdminTransactionModel(
+    transactionId: id,
+    orderId: orderId,
+    accountId: accountId,
+    accountNumber: accountNumber,
+    stockSymbol: symbol,
+    transactionType: type,
+    quantity: quantity,
+    price: _price2(price),
+    totalAmount: _price2(total),
+    transactionFee: _price2(fee),
+    taxAmount: _price2(tax),
+    netAmount: _price2(net),
+    transactionDate: date,
+    settlementDate: settlement,
   );
 }
 
@@ -345,6 +381,214 @@ class MockAdminRepository implements AdminRepository {
       content: 'Giao dịch mua ACB đã hoàn tất thanh toán T+2.',
       notificationType: 'TRANSACTION',
       createdAt: '2026-11-01T04:00:00Z',
+    ),
+  ];
+
+    final List<AdminOrderModel> _orders = [
+    const AdminOrderModel(
+      orderId: 101,
+      accountId: 2,
+      accountNumber: '068C000002',
+      customerName: 'TRAN THI BICH',
+      stockSymbol: 'ACB',
+      clientOrderId: 'mock-101',
+      orderType: 'BUY',
+      quantity: 1000,
+      filledQuantity: 1000,
+      orderPrice: '25000.00',
+      orderDate: '2026-11-10T01:00:00Z',
+      matchedAt: '2026-11-10T02:00:00Z',
+      status: 'COMPLETED',
+    ),
+    const AdminOrderModel(
+      orderId: 102,
+      accountId: 2,
+      accountNumber: '068C000002',
+      customerName: 'TRAN THI BICH',
+      stockSymbol: 'FPT',
+      clientOrderId: 'mock-102',
+      orderType: 'SELL',
+      quantity: 200,
+      filledQuantity: 200,
+      orderPrice: '127000.00',
+      orderDate: '2026-11-10T02:00:00Z',
+      matchedAt: '2026-11-10T03:00:00Z',
+      status: 'COMPLETED',
+    ),
+    const AdminOrderModel(
+      orderId: 103,
+      accountId: 4,
+      accountNumber: '068C000004',
+      customerName: 'LE MINH CUONG',
+      stockSymbol: 'VCB',
+      clientOrderId: 'mock-103',
+      orderType: 'BUY',
+      orderKind: 'MP',
+      quantity: 1000,
+      orderPrice: '0.00',
+      orderDate: '2026-11-10T03:00:00Z',
+      status: 'PENDING',
+    ),
+    const AdminOrderModel(
+      orderId: 104,
+      accountId: 4,
+      accountNumber: '068C000004',
+      customerName: 'LE MINH CUONG',
+      stockSymbol: 'HPG',
+      clientOrderId: 'mock-104',
+      orderType: 'BUY',
+      quantity: 5000,
+      filledQuantity: 2000,
+      orderPrice: '26500.00',
+      orderDate: '2026-11-10T04:00:00Z',
+      status: 'PARTIAL',
+    ),
+    const AdminOrderModel(
+      orderId: 105,
+      accountId: 6,
+      accountNumber: '068C000006',
+      customerName: 'VU THI PHUONG',
+      stockSymbol: 'BVS',
+      clientOrderId: 'mock-105',
+      orderType: 'SELL',
+      quantity: 300,
+      orderPrice: '34000.00',
+      orderDate: '2026-11-10T05:00:00Z',
+      status: 'PENDING',
+    ),
+    const AdminOrderModel(
+      orderId: 106,
+      accountId: 6,
+      accountNumber: '068C000006',
+      customerName: 'VU THI PHUONG',
+      stockSymbol: 'ACV',
+      clientOrderId: 'mock-106',
+      orderType: 'BUY',
+      quantity: 100,
+      orderPrice: '95000.00',
+      orderDate: '2026-11-10T06:00:00Z',
+      status: 'CANCELLED',
+      rejectReason: 'Khách hàng hủy lệnh',
+    ),
+    const AdminOrderModel(
+      orderId: 107,
+      accountId: 1,
+      accountNumber: '068C000001',
+      customerName: 'NGUYEN AN',
+      stockSymbol: 'BSR',
+      clientOrderId: 'mock-107',
+      orderType: 'BUY',
+      quantity: 2000,
+      orderPrice: '19000.00',
+      orderDate: '2026-11-10T07:00:00Z',
+      status: 'REJECTED',
+      rejectReason: 'Không đủ số dư',
+    ),
+    const AdminOrderModel(
+      orderId: 108,
+      accountId: 5,
+      accountNumber: '068C000005',
+      customerName: 'PHAM THU DUNG',
+      stockSymbol: 'ACB',
+      clientOrderId: 'mock-108',
+      orderType: 'BUY',
+      quantity: 1500,
+      filledQuantity: 1500,
+      orderPrice: '25100.00',
+      orderDate: '2026-11-10T08:00:00Z',
+      matchedAt: '2026-11-10T09:00:00Z',
+      status: 'COMPLETED',
+    ),
+    const AdminOrderModel(
+      orderId: 109,
+      accountId: 2,
+      accountNumber: '068C000002',
+      customerName: 'TRAN THI BICH',
+      stockSymbol: 'BVS',
+      clientOrderId: 'mock-109',
+      orderType: 'BUY',
+      quantity: 500,
+      orderPrice: '33000.00',
+      orderDate: '2026-11-10T09:00:00Z',
+      status: 'PENDING',
+    ),
+    const AdminOrderModel(
+      orderId: 110,
+      accountId: 4,
+      accountNumber: '068C000004',
+      customerName: 'LE MINH CUONG',
+      stockSymbol: 'VCB',
+      clientOrderId: 'mock-110',
+      orderType: 'SELL',
+      quantity: 100,
+      filledQuantity: 100,
+      orderPrice: '92000.00',
+      orderDate: '2026-11-10T10:00:00Z',
+      matchedAt: '2026-11-10T10:30:00Z',
+      status: 'COMPLETED',
+    ),
+  ];
+
+  final List<AdminTransactionModel> _transactions = [
+    _makeTx(
+      id: 1,
+      orderId: 101,
+      accountId: 2,
+      accountNumber: '068C000002',
+      symbol: 'ACB',
+      type: 'BUY',
+      quantity: 1000,
+      price: 25000,
+      date: '2026-11-10T02:00:00Z',
+      settlement: '2026-11-12',
+    ),
+    _makeTx(
+      id: 2,
+      orderId: 102,
+      accountId: 2,
+      accountNumber: '068C000002',
+      symbol: 'FPT',
+      type: 'SELL',
+      quantity: 200,
+      price: 127000,
+      date: '2026-11-10T03:00:00Z',
+      settlement: '2026-11-12',
+    ),
+    _makeTx(
+      id: 3,
+      orderId: 104,
+      accountId: 4,
+      accountNumber: '068C000004',
+      symbol: 'HPG',
+      type: 'BUY',
+      quantity: 2000,
+      price: 26500,
+      date: '2026-11-10T05:00:00Z',
+      settlement: '2026-11-12',
+    ),
+    _makeTx(
+      id: 4,
+      orderId: 108,
+      accountId: 5,
+      accountNumber: '068C000005',
+      symbol: 'ACB',
+      type: 'BUY',
+      quantity: 1500,
+      price: 25100,
+      date: '2026-11-10T09:00:00Z',
+      settlement: '2026-11-12',
+    ),
+    _makeTx(
+      id: 5,
+      orderId: 110,
+      accountId: 4,
+      accountNumber: '068C000004',
+      symbol: 'VCB',
+      type: 'SELL',
+      quantity: 100,
+      price: 92000,
+      date: '2026-11-10T10:30:00Z',
+      settlement: '2026-11-12',
     ),
   ];
 
@@ -835,6 +1079,100 @@ class MockAdminRepository implements AdminRepository {
       );
     }
     _notifications.removeAt(index);
+  }
+
+    // ---------------- Lệnh đặt ----------------
+
+  @override
+  Future<AdminPage<AdminOrderModel>> listOrders({
+    int? accountId,
+    String? stockSymbol,
+    String? status,
+    String? orderType,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    await _delay();
+    final symbol = (stockSymbol ?? '').trim().toUpperCase();
+    final filtered = _orders.where((o) {
+      if (accountId != null && o.accountId != accountId) return false;
+      if (symbol.isNotEmpty && o.stockSymbol != symbol) return false;
+      if (status != null && o.status != status) return false;
+      if (orderType != null && o.orderType != orderType) return false;
+      return true;
+    }).toList()
+      ..sort((a, b) => b.orderDate.compareTo(a.orderDate));
+    return _paginate(filtered, page, pageSize);
+  }
+
+  @override
+  Future<AdminOrderModel> updateOrder(
+    int orderId,
+    Map<String, dynamic> data,
+  ) async {
+    await _delay();
+    final index = _orders.indexWhere((o) => o.orderId == orderId);
+    if (index < 0) {
+      throw const AdminException(
+        'Không tìm thấy lệnh đặt.',
+        code: 'NOT_FOUND',
+      );
+    }
+    final status = data['status'] as String?;
+    final old = _orders[index];
+    final updated = old.copyWith(
+      status: status,
+      filledQuantity: data['filled_quantity'] as int?,
+      rejectReason: data['reject_reason'] as String?,
+      matchedAt: status == 'COMPLETED' && old.matchedAt == null
+          ? DateTime.now().toUtc().toIso8601String()
+          : null,
+    );
+    _orders[index] = updated;
+    return updated;
+  }
+
+  @override
+  Future<void> deleteOrder(int orderId) async {
+    await _delay();
+    final index = _orders.indexWhere((o) => o.orderId == orderId);
+    if (index < 0) {
+      throw const AdminException(
+        'Không tìm thấy lệnh cần xóa.',
+        code: 'NOT_FOUND',
+      );
+    }
+    if (_transactions.any((t) => t.orderId == orderId)) {
+      throw const AdminException(
+        'Lệnh đã có giao dịch khớp nên không thể xóa.',
+        code: 'ORDER_HAS_TRANSACTIONS',
+      );
+    }
+    _orders.removeAt(index);
+  }
+
+  // ---------------- Giao dịch ----------------
+
+  @override
+  Future<AdminPage<AdminTransactionModel>> listTransactions({
+    int? accountId,
+    String? stockSymbol,
+    String? transactionType,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    await _delay();
+    final symbol = (stockSymbol ?? '').trim().toUpperCase();
+    final filtered = _transactions.where((t) {
+      if (accountId != null && t.accountId != accountId) return false;
+      if (symbol.isNotEmpty && t.stockSymbol != symbol) return false;
+      if (transactionType != null && t.transactionType != transactionType) {
+        return false;
+      }
+      return true;
+    }).toList()
+      ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
+    return _paginate(filtered, page, pageSize);
   }
 
     // ---------------- Dashboard ----------------

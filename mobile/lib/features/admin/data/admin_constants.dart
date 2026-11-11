@@ -18,6 +18,14 @@ class AdminConstants {
     'PRICE_ALERT',
     'CASH',
   ];
+static const List<String> orderStatuses = [
+  'PENDING',
+  'PARTIAL',
+  'COMPLETED',
+  'CANCELLED',
+  'REJECTED',
+];
+static const List<String> orderTypes = ['BUY', 'SELL'];
 
   static const Map<String, String> _labels = {
     'CUSTOMER': 'Khách hàng',
@@ -36,6 +44,14 @@ class AdminConstants {
     'ORDER': 'Lệnh',
     'TRANSACTION': 'Giao dịch',
     'PRICE_ALERT': 'Cảnh báo giá',
+    'BUY': 'Mua',
+    'SELL': 'Bán',
+    'PARTIAL': 'Khớp một phần',
+    'COMPLETED': 'Đã khớp',
+    'CANCELLED': 'Đã hủy',
+    'REJECTED': 'Bị từ chối',
+    'LO': 'Lệnh giới hạn',
+    'MP': 'Lệnh thị trường',
   };
 
   /// Trả về nhãn tiếng Việt; không có thì trả lại đúng mã gốc.
