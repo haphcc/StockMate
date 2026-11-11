@@ -7,6 +7,7 @@ import '../providers/admin_providers.dart';
 import '../widgets/admin_widgets.dart';
 import 'admin_accounts_screen.dart';
 import 'admin_customers_screen.dart';
+import 'admin_stocks_screen.dart';
 
 class AdminHomeScreen extends ConsumerWidget {
   const AdminHomeScreen({super.key});
@@ -97,10 +98,11 @@ class AdminHomeScreen extends ConsumerWidget {
                 onTap: () => _open(context, ref, const AdminAccountsScreen()),
               ),
               const SizedBox(height: 12),
-              const _MenuTile(
+              _MenuTile(
                 icon: Icons.candlestick_chart_rounded,
                 title: 'Mã cổ phiếu',
-                subtitle: 'Sắp có',
+                subtitle: 'Thêm, sửa giá trần/sàn, đổi trạng thái, xóa',
+                onTap: () => _open(context, ref, AdminStocksScreen()),
               ),
               const SizedBox(height: 12),
               const _MenuTile(

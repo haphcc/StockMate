@@ -6,6 +6,7 @@ import 'models/admin_account_model.dart';
 import 'models/admin_customer_model.dart';
 import 'models/admin_dashboard_model.dart';
 import 'models/admin_page.dart';
+import 'models/admin_stock_model.dart';
 
 class ApiAdminRepository implements AdminRepository {
   final Dio _dio;
@@ -206,6 +207,57 @@ class ApiAdminRepository implements AdminRepository {
     await _request('DELETE', '/api/admin/accounts/$accountId');
   }
 
+    // ---------------- Cổ phiếu ----------------
+
+  @override
+  Future<AdminPage<AdminStockModel>> listStocks({
+    String? q,
+    String? exchange,
+    String? status,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final data = await _request(
+      'GET',
+      '/api/admin/stocks',
+      query: {
+        if (q != null && q.isNotEmpty) 'q': q,
+        'exchange': ?exchange,
+        'status': ?status,
+        'page': page,
+        'page_size': pageSize,
+      },
+    );
+    return AdminPage<AdminStockModel>.fromJson(
+      _asMap(data),
+      AdminStockModel.fromJson,
+    );
+  }
+
+  @override
+  Future<AdminStockModel> createStock(Map<String, dynamic> data) async {
+    final result = await _request('POST', '/api/admin/stocks', body: data);
+    return AdminStockModel.fromJson(_asMap(result));
+  }
+
+  @override
+  Future<AdminStockModel> updateStock(
+    int stockId,
+    Map<String, dynamic> data,
+  ) async {
+    final result = await _request(
+      'PUT',
+      '/api/admin/stocks/$stockId',
+      body: data,
+    );
+    return AdminStockModel.fromJson(_asMap(result));
+  }
+
+  @override
+  Future<void> deleteStock(int stockId) async {
+    await _request('DELETE', '/api/admin/stocks/$stockId');
+  }
+  
   // ---------------- Dashboard ----------------
 
   @override

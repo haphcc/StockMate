@@ -2,6 +2,7 @@ import 'models/admin_account_model.dart';
 import 'models/admin_customer_model.dart';
 import 'models/admin_page.dart';
 import 'models/admin_dashboard_model.dart';
+import 'models/admin_stock_model.dart';
 
 abstract class AdminRepository {
   // Khách hàng
@@ -38,4 +39,15 @@ abstract class AdminRepository {
 
   Future<AdminDashboardModel> getDashboard();
 
+    // Cổ phiếu
+  Future<AdminPage<AdminStockModel>> listStocks({
+    String? q,
+    String? exchange,
+    String? status,
+    int page = 1,
+    int pageSize = 20,
+  });
+  Future<AdminStockModel> createStock(Map<String, dynamic> data);
+  Future<AdminStockModel> updateStock(int stockId, Map<String, dynamic> data);
+  Future<void> deleteStock(int stockId);
 }

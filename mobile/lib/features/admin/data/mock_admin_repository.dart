@@ -4,6 +4,7 @@ import 'models/admin_account_model.dart';
 import 'models/admin_customer_model.dart';
 import 'models/admin_page.dart';
 import 'models/admin_dashboard_model.dart';
+import 'models/admin_stock_model.dart';
 
 String _money(Object? value) {
   if (value == null) return '0.00';
@@ -12,6 +13,56 @@ String _money(Object? value) {
 }
 
 String? _moneyOrNull(Object? value) => value == null ? null : _money(value);
+double _bandOf(String exchange) {
+  switch (exchange) {
+    case 'HNX':
+      return 0.10;
+    case 'UPCOM':
+      return 0.15;
+    default:
+      return 0.07;
+  }
+}
+
+String _price2(num value) => value.toStringAsFixed(2);
+
+// Làm tròn bước giá 50 đồng, khớp kết quả backend.
+num _roundTo50(num value) => (value / 50).round() * 50;
+
+AdminStockModel _makeStock({
+  required int id,
+  required String symbol,
+  required String name,
+  required String exchange,
+  String? industry,
+  required int shares,
+  required num reference,
+  required num current,
+  num? ceiling,
+  num? floor,
+  int volume = 0,
+  String status = 'ACTIVE',
+}) {
+  final band = _bandOf(exchange);
+  final change = current - reference;
+  final percent = reference == 0 ? 0 : change / reference * 100;
+  return AdminStockModel(
+    stockId: id,
+    stockSymbol: symbol,
+    companyName: name,
+    exchange: exchange,
+    industry: industry,
+    listedShares: shares,
+    currentPrice: _price2(current),
+    referencePrice: _price2(reference),
+    ceilingPrice: _price2(ceiling ?? _roundTo50(reference * (1 + band))),
+    floorPrice: _price2(floor ?? _roundTo50(reference * (1 - band))),
+    priceChange: _price2(change),
+    changePercent: _price2(percent),
+    totalVolume: volume,
+    status: status,
+  );
+}
 
 class MockAdminRepository implements AdminRepository {
   final List<AdminCustomerModel> _customers = [
@@ -137,6 +188,102 @@ class MockAdminRepository implements AdminRepository {
 
   int _nextCustomerId = 200;
   int _nextAccountId = 200;
+  int _nextStockId = 200;
+
+  // Mã giả lập đang có lệnh chờ khớp: xóa sẽ bị từ chối.
+  final Set<String> _stocksWithActiveOrders = {'VCB'};
+
+  final List<AdminStockModel> _stocks = [
+    _makeStock(
+      id: 1,
+      symbol: 'VCB',
+      name: 'Ngân hàng TMCP Ngoại thương Việt Nam',
+      exchange: 'HOSE',
+      industry: 'Ngân hàng',
+      shares: 8355675094,
+      reference: 91500,
+      current: 92300,
+      volume: 1850200,
+    ),
+    _makeStock(
+      id: 2,
+      symbol: 'ACB',
+      name: 'Ngân hàng TMCP Á Châu',
+      exchange: 'HOSE',
+      industry: 'Ngân hàng',
+      shares: 4460000000,
+      reference: 25100,
+      current: 25350,
+      volume: 3206800,
+    ),
+    _makeStock(
+      id: 3,
+      symbol: 'FPT',
+      name: 'CTCP FPT',
+      exchange: 'HOSE',
+      industry: 'Công nghệ thông tin',
+      shares: 1700000000,
+      reference: 128000,
+      current: 126500,
+      volume: 2105300,
+    ),
+    _makeStock(
+      id: 4,
+      symbol: 'HPG',
+      name: 'CTCP Tập đoàn Hòa Phát',
+      exchange: 'HOSE',
+      industry: 'Thép',
+      shares: 6400000000,
+      reference: 27000,
+      current: 27000,
+      volume: 9876500,
+    ),
+    _makeStock(
+      id: 5,
+      symbol: 'VNM',
+      name: 'CTCP Sữa Việt Nam',
+      exchange: 'HOSE',
+      industry: 'Thực phẩm',
+      shares: 2090000000,
+      reference: 61200,
+      current: 60800,
+      volume: 0,
+      status: 'HALTED',
+    ),
+    _makeStock(
+      id: 6,
+      symbol: 'BVS',
+      name: 'CTCP Chứng khoán Bảo Việt',
+      exchange: 'HNX',
+      industry: 'Dịch vụ tài chính',
+      shares: 108000000,
+      reference: 33000,
+      current: 33400,
+      volume: 412300,
+    ),
+    _makeStock(
+      id: 7,
+      symbol: 'ACV',
+      name: 'Tổng Công ty Cảng hàng không Việt Nam - CTCP',
+      exchange: 'UPCOM',
+      industry: 'Vận tải và Kho bãi',
+      shares: 2177000000,
+      reference: 94500,
+      current: 95800,
+      volume: 156900,
+    ),
+    _makeStock(
+      id: 8,
+      symbol: 'BSR',
+      name: 'CTCP Lọc hóa dầu Bình Sơn',
+      exchange: 'UPCOM',
+      industry: 'Năng lượng',
+      shares: 3100000000,
+      reference: 19800,
+      current: 19400,
+      volume: 884000,
+    ),
+  ];
 
   Future<void> _delay() => Future.delayed(const Duration(milliseconds: 300));
 
@@ -407,6 +554,125 @@ class MockAdminRepository implements AdminRepository {
     _accounts.removeAt(_accountIndex(accountId));
   }
 
+    // ---------------- Cổ phiếu ----------------
+
+  int _stockIndex(int id) {
+    final index = _stocks.indexWhere((s) => s.stockId == id);
+    if (index < 0) {
+      throw const AdminException(
+        'Không tìm thấy mã cổ phiếu.',
+        code: 'NOT_FOUND',
+      );
+    }
+    return index;
+  }
+
+  @override
+  Future<AdminPage<AdminStockModel>> listStocks({
+    String? q,
+    String? exchange,
+    String? status,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    await _delay();
+    final keyword = (q ?? '').trim().toLowerCase();
+    final filtered = _stocks.where((s) {
+      if (exchange != null && s.exchange != exchange) return false;
+      if (status != null && s.status != status) return false;
+      if (keyword.isEmpty) return true;
+      return s.stockSymbol.toLowerCase().contains(keyword) ||
+          s.companyName.toLowerCase().contains(keyword);
+    }).toList()
+      ..sort((a, b) => a.stockSymbol.compareTo(b.stockSymbol));
+    return _paginate(filtered, page, pageSize);
+  }
+
+  @override
+  Future<AdminStockModel> createStock(Map<String, dynamic> data) async {
+    await _delay();
+    final symbol = (data['stock_symbol'] as String? ?? '').trim().toUpperCase();
+    if (_stocks.any((s) => s.stockSymbol == symbol)) {
+      throw AdminException(
+        'Mã cổ phiếu $symbol đã tồn tại trên sàn.',
+        code: 'DUPLICATE_STOCK_SYMBOL',
+      );
+    }
+    final reference = num.tryParse('${data['reference_price']}') ?? 0;
+    final stock = _makeStock(
+      id: _nextStockId++,
+      symbol: symbol,
+      name: data['company_name'] as String? ?? '',
+      exchange: data['exchange'] as String? ?? 'HOSE',
+      industry: data['industry'] as String?,
+      shares: data['listed_shares'] as int? ?? 0,
+      reference: reference,
+      current: num.tryParse('${data['current_price']}') ?? reference,
+      ceiling: num.tryParse('${data['ceiling_price'] ?? ''}'),
+      floor: num.tryParse('${data['floor_price'] ?? ''}'),
+      status: data['status'] as String? ?? 'ACTIVE',
+    );
+    _stocks.add(stock);
+    return stock;
+  }
+
+  @override
+  Future<AdminStockModel> updateStock(
+    int stockId,
+    Map<String, dynamic> data,
+  ) async {
+    await _delay();
+    final index = _stockIndex(stockId);
+    final old = _stocks[index];
+    num? numOf(String key) =>
+        data.containsKey(key) ? num.tryParse('${data[key]}') : null;
+
+    final exchange = data['exchange'] as String? ?? old.exchange;
+    final reference = numOf('reference_price') ?? num.parse(old.referencePrice);
+    final current = numOf('current_price') ?? num.parse(old.currentPrice);
+    var ceiling = numOf('ceiling_price');
+    var floor = numOf('floor_price');
+    // Giống backend: đổi giá tham chiếu mà không gửi trần/sàn thì tính lại.
+    if (data.containsKey('reference_price') &&
+        ceiling == null &&
+        floor == null) {
+      final band = _bandOf(exchange);
+      ceiling = _roundTo50(reference * (1 + band));
+      floor = _roundTo50(reference * (1 - band));
+    }
+    final change = current - reference;
+    final percent = reference == 0 ? 0 : change / reference * 100;
+    final updated = old.copyWith(
+      companyName: data['company_name'] as String?,
+      exchange: data['exchange'] as String?,
+      industry: data['industry'] as String?,
+      listedShares: data['listed_shares'] as int?,
+      currentPrice: _price2(current),
+      referencePrice: _price2(reference),
+      ceilingPrice: ceiling == null ? null : _price2(ceiling),
+      floorPrice: floor == null ? null : _price2(floor),
+      priceChange: _price2(change),
+      changePercent: _price2(percent),
+      status: data['status'] as String?,
+    );
+    _stocks[index] = updated;
+    return updated;
+  }
+
+  @override
+  Future<void> deleteStock(int stockId) async {
+    await _delay();
+    final index = _stockIndex(stockId);
+    if (_stocksWithActiveOrders.contains(_stocks[index].stockSymbol)) {
+      throw const AdminException(
+        'Không thể xóa cổ phiếu đang có lệnh chờ khớp trên sàn. '
+        'Vui lòng hủy các lệnh trước.',
+        code: 'STOCK_HAS_ACTIVE_ORDERS',
+      );
+    }
+    _stocks.removeAt(index);
+  }
+
     // ---------------- Dashboard ----------------
 
   @override
@@ -430,9 +696,9 @@ class MockAdminRepository implements AdminRepository {
       totalAssetValue:
           sum(_accounts.map((a) => a.totalAssetValue)).toStringAsFixed(2),
       // Các số dưới đây là dữ liệu mẫu (mock chưa có cổ phiếu, lệnh, giao dịch).
-      totalStocks: 90,
-      activeStocks: 88,
-      haltedStocks: 2,
+      totalStocks: _stocks.length,
+      activeStocks: _stocks.where((s) => s.status == 'ACTIVE').length,
+      haltedStocks: _stocks.where((s) => s.status == 'HALTED').length,
       totalOrdersToday: 12,
       pendingOrders: 3,
       completedOrders: 8,

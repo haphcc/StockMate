@@ -45,6 +45,7 @@ class AdminStatusBadge extends StatelessWidget {
       case 'LOCKED':
       case 'SUSPENDED':
         return AppColors.priceDown;
+      case 'HALTED':
       case 'PENDING':
         return AppColors.priceRef;
       case 'ADMIN':
@@ -224,4 +225,17 @@ class AdminFilterChips extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Định dạng số từ chuỗi, ví dụ "25350.00" thành "25.350". Không qua double.
+String formatNumber(String raw) {
+  final intPart = raw.split('.').first;
+  final negative = intPart.startsWith('-');
+  final digits = negative ? intPart.substring(1) : intPart;
+  final buffer = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) buffer.write('.');
+    buffer.write(digits[i]);
+  }
+  return '${negative ? '-' : ''}$buffer';
 }
