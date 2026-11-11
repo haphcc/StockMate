@@ -11,6 +11,7 @@ import 'models/admin_notification_model.dart';
 import 'models/admin_order_model.dart';
 import 'models/admin_transaction_model.dart';
 import 'models/admin_portfolio_model.dart';
+import 'models/admin_candle_model.dart';
 
 class ApiAdminRepository implements AdminRepository {
   final Dio _dio;
@@ -427,6 +428,58 @@ class ApiAdminRepository implements AdminRepository {
   @override
   Future<void> deletePortfolio(int portfolioId) async {
     await _request('DELETE', '/api/admin/portfolios/$portfolioId');
+  }
+
+    // ---------------- Lịch sử giá (nến) ----------------
+
+  @override
+  Future<AdminPage<AdminCandleModel>> listCandles({
+    String? stockSymbol,
+    int page = 1,
+    int pageSize = 30,
+  }) async {
+    final data = await _request(
+      'GET',
+      '/api/admin/price-history',
+      query: {
+        if (stockSymbol != null && stockSymbol.isNotEmpty)
+          'stock_symbol': stockSymbol,
+        'page': page,
+        'page_size': pageSize,
+      },
+    );
+    return AdminPage<AdminCandleModel>.fromJson(
+      _asMap(data),
+      AdminCandleModel.fromJson,
+    );
+  }
+
+  @override
+  Future<AdminCandleModel> createCandle(Map<String, dynamic> data) async {
+    final result = await _request(
+      'POST',
+      '/api/admin/price-history',
+      body: data,
+    );
+    return AdminCandleModel.fromJson(_asMap(result));
+  }
+
+  @override
+  Future<AdminCandleModel> updateCandle(
+    int candleId,
+    Map<String, dynamic> data,
+  ) async {
+    final result = await _request(
+      'PUT',
+      '/api/admin/price-history/$candleId',
+      body: data,
+    );
+    return AdminCandleModel.fromJson(_asMap(result));
+  }
+
+  @override
+  Future<void> deleteCandle(int candleId) async {
+    await _request('DELETE', '/api/admin/price-history/$candleId');
   }
 
   // ---------------- Dashboard ----------------

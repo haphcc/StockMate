@@ -10,6 +10,7 @@ import 'models/admin_notification_model.dart';
 import 'models/admin_order_model.dart';
 import 'models/admin_transaction_model.dart';
 import 'models/admin_portfolio_model.dart';
+import 'models/admin_candle_model.dart';
 
 String _money(Object? value) {
   if (value == null) return '0.00';
@@ -101,6 +102,14 @@ AdminPortfolioModel _valued(AdminPortfolioModel p, num currentPrice) {
     profitLossPercent: _price2(percent),
   );
 }
+
+String _dateStr(DateTime d) =>
+    '${d.year}-${d.month.toString().padLeft(2, '0')}-'
+    '${d.day.toString().padLeft(2, '0')}';
+
+num _maxNum(num a, num b) => a > b ? a : b;
+
+num _minNum(num a, num b) => a < b ? a : b;
 
 class MockAdminRepository implements AdminRepository {
   final List<AdminCustomerModel> _customers = [
@@ -676,6 +685,61 @@ class MockAdminRepository implements AdminRepository {
       averagePrice: '20000.00',
     ),
   ];
+
+    int _nextCandleId = 10000;
+
+  // Sinh lần đầu khi truy cập; dữ liệu cố định theo mã cổ phiếu.
+  late final List<AdminCandleModel> _candles = _generateCandles();
+
+  List<AdminCandleModel> _generateCandles() {
+    final result = <AdminCandleModel>[];
+    var id = 1;
+    for (final stock in _stocks) {
+      var seed = stock.stockSymbol.codeUnits
+          .fold<int>(7, (a, b) => (a * 31 + b) & 0x7fffffff);
+      double next() {
+        seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+        return seed / 0x7fffffff;
+      }
+
+      // 60 ngày làm việc gần nhất tính đến 10/11/2026.
+      final dates = <DateTime>[];
+      var d = DateTime.utc(2026, 11, 10);
+      while (dates.length < 60) {
+        if (d.weekday <= 5) dates.add(d);
+        d = d.subtract(const Duration(days: 1));
+      }
+
+      var price = (num.tryParse(stock.referencePrice) ?? 10000).toDouble();
+      for (final date in dates.reversed) {
+        final open = price;
+        final close = open * (1 + (next() - 0.5) * 0.05);
+        final high = (open > close ? open : close) * (1 + next() * 0.01);
+        final low = (open < close ? open : close) * (1 - next() * 0.01);
+        final o = _roundTo50(open);
+        final c = _roundTo50(close);
+        final h = _maxNum(_roundTo50(high), _maxNum(o, c));
+        final l = _minNum(_roundTo50(low), _minNum(o, c));
+        final volume = 100000 + (next() * 1900000).round();
+        result.add(
+          AdminCandleModel(
+            candleId: id++,
+            stockId: stock.stockId,
+            stockSymbol: stock.stockSymbol,
+            recordedDate: _dateStr(date),
+            openPrice: _price2(o),
+            closePrice: _price2(c),
+            highestPrice: _price2(h),
+            lowestPrice: _price2(l),
+            tradingVolume: volume,
+            tradingValue: _price2(volume * c),
+          ),
+        );
+        price = close;
+      }
+    }
+    return result;
+  }
 
   Future<void> _delay() => Future.delayed(const Duration(milliseconds: 300));
 
@@ -1483,6 +1547,111 @@ class MockAdminRepository implements AdminRepository {
       );
     }
     _portfolios.removeAt(index);
+  }
+
+    // ---------------- Lịch sử giá (nến) ----------------
+
+  int _candleIndex(int id) {
+    final index = _candles.indexWhere((c) => c.candleId == id);
+    if (index < 0) {
+      throw const AdminException(
+        'Không tìm thấy phiên giá lịch sử.',
+        code: 'NOT_FOUND',
+      );
+    }
+    return index;
+  }
+
+  // Giống backend: cao nhất nhỏ hơn thấp nhất bị báo nhầm là lỗi cơ sở dữ liệu.
+  void _checkCandle(String high, String low) {
+    final h = num.tryParse(high) ?? 0;
+    final l = num.tryParse(low) ?? 0;
+    if (h < l) {
+      throw const AdminException(
+        'Không thể truy cập cơ sở dữ liệu.',
+        code: 'DATABASE_UNAVAILABLE',
+      );
+    }
+  }
+
+  @override
+  Future<AdminPage<AdminCandleModel>> listCandles({
+    String? stockSymbol,
+    int page = 1,
+    int pageSize = 30,
+  }) async {
+    await _delay();
+    final symbol = (stockSymbol ?? '').trim().toUpperCase();
+    final filtered = _candles
+        .where((c) => symbol.isEmpty || c.stockSymbol == symbol)
+        .toList()
+      ..sort((a, b) => b.recordedDate.compareTo(a.recordedDate));
+    return _paginate(filtered, page, pageSize);
+  }
+
+  @override
+  Future<AdminCandleModel> createCandle(Map<String, dynamic> data) async {
+    await _delay();
+    final symbol = (data['stock_symbol'] as String? ?? '').trim().toUpperCase();
+    final stockIndex = _stocks.indexWhere((s) => s.stockSymbol == symbol);
+    if (stockIndex < 0) {
+      throw const AdminException(
+        'Không tìm thấy mã cổ phiếu hợp lệ.',
+        code: 'NOT_FOUND',
+      );
+    }
+    final date = data['recorded_date'] as String? ?? '';
+    final exists =
+        _candles.any((c) => c.stockSymbol == symbol && c.recordedDate == date);
+    if (exists) {
+      throw AdminException(
+        'Phiên giao dịch ngày $date của $symbol đã tồn tại.',
+        code: 'CANDLE_EXISTS',
+      );
+    }
+    final high = _money(data['highest_price']);
+    final low = _money(data['lowest_price']);
+    _checkCandle(high, low);
+    final candle = AdminCandleModel(
+      candleId: _nextCandleId++,
+      stockId: _stocks[stockIndex].stockId,
+      stockSymbol: symbol,
+      recordedDate: date,
+      openPrice: _money(data['open_price']),
+      closePrice: _money(data['close_price']),
+      highestPrice: high,
+      lowestPrice: low,
+      tradingVolume: data['trading_volume'] as int? ?? 0,
+      tradingValue: _money(data['trading_value']),
+    );
+    _candles.add(candle);
+    return candle;
+  }
+
+  @override
+  Future<AdminCandleModel> updateCandle(
+    int candleId,
+    Map<String, dynamic> data,
+  ) async {
+    await _delay();
+    final index = _candleIndex(candleId);
+    final updated = _candles[index].copyWith(
+      openPrice: _moneyOrNull(data['open_price']),
+      closePrice: _moneyOrNull(data['close_price']),
+      highestPrice: _moneyOrNull(data['highest_price']),
+      lowestPrice: _moneyOrNull(data['lowest_price']),
+      tradingVolume: data['trading_volume'] as int?,
+      tradingValue: _moneyOrNull(data['trading_value']),
+    );
+    _checkCandle(updated.highestPrice, updated.lowestPrice);
+    _candles[index] = updated;
+    return updated;
+  }
+
+  @override
+  Future<void> deleteCandle(int candleId) async {
+    await _delay();
+    _candles.removeAt(_candleIndex(candleId));
   }
 
     // ---------------- Dashboard ----------------
