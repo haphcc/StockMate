@@ -9,6 +9,7 @@ import 'models/admin_stock_model.dart';
 import 'models/admin_notification_model.dart';
 import 'models/admin_order_model.dart';
 import 'models/admin_transaction_model.dart';
+import 'models/admin_portfolio_model.dart';
 
 String _money(Object? value) {
   if (value == null) return '0.00';
@@ -85,6 +86,19 @@ AdminTransactionModel _makeTx({
     netAmount: _price2(net),
     transactionDate: date,
     settlementDate: settlement,
+  );
+}
+
+AdminPortfolioModel _valued(AdminPortfolioModel p, num currentPrice) {
+  final avg = num.tryParse(p.averagePrice) ?? 0;
+  final value = p.quantity * currentPrice;
+  final cost = p.quantity * avg;
+  final pl = value - cost;
+  final percent = cost == 0 ? 0 : pl / cost * 100;
+  return p.copyWith(
+    currentValue: _price2(value),
+    profitLoss: _price2(pl),
+    profitLossPercent: _price2(percent),
   );
 }
 
@@ -576,6 +590,90 @@ class MockAdminRepository implements AdminRepository {
       price: 92000,
       date: '2026-11-10T10:30:00Z',
       settlement: '2026-11-12',
+    ),
+  ];
+
+  int _nextPortfolioId = 300;
+
+  final List<AdminPortfolioModel> _portfolios = [
+    const AdminPortfolioModel(
+      portfolioId: 1,
+      accountId: 2,
+      accountNumber: '068C000002',
+      customerName: 'TRAN THI BICH',
+      stockSymbol: 'ACB',
+      companyName: 'Ngân hàng TMCP Á Châu',
+      quantity: 3000,
+      availableQuantity: 3000,
+      averagePrice: '24000.00',
+    ),
+    const AdminPortfolioModel(
+      portfolioId: 2,
+      accountId: 2,
+      accountNumber: '068C000002',
+      customerName: 'TRAN THI BICH',
+      stockSymbol: 'FPT',
+      companyName: 'CTCP FPT',
+      quantity: 500,
+      availableQuantity: 300,
+      blockedQuantity: 200,
+      averagePrice: '120000.00',
+    ),
+    const AdminPortfolioModel(
+      portfolioId: 3,
+      accountId: 4,
+      accountNumber: '068C000004',
+      customerName: 'LE MINH CUONG',
+      stockSymbol: 'HPG',
+      companyName: 'CTCP Tập đoàn Hòa Phát',
+      quantity: 2000,
+      availableQuantity: 2000,
+      averagePrice: '26500.00',
+    ),
+    const AdminPortfolioModel(
+      portfolioId: 4,
+      accountId: 4,
+      accountNumber: '068C000004',
+      customerName: 'LE MINH CUONG',
+      stockSymbol: 'VCB',
+      companyName: 'Ngân hàng TMCP Ngoại thương Việt Nam',
+      quantity: 400,
+      availableQuantity: 400,
+      averagePrice: '90000.00',
+    ),
+    const AdminPortfolioModel(
+      portfolioId: 5,
+      accountId: 6,
+      accountNumber: '068C000006',
+      customerName: 'VU THI PHUONG',
+      stockSymbol: 'BVS',
+      companyName: 'CTCP Chứng khoán Bảo Việt',
+      quantity: 1000,
+      availableQuantity: 700,
+      blockedQuantity: 300,
+      averagePrice: '32000.00',
+    ),
+    const AdminPortfolioModel(
+      portfolioId: 6,
+      accountId: 5,
+      accountNumber: '068C000005',
+      customerName: 'PHAM THU DUNG',
+      stockSymbol: 'ACB',
+      companyName: 'Ngân hàng TMCP Á Châu',
+      quantity: 1500,
+      availableQuantity: 1500,
+      averagePrice: '25100.00',
+    ),
+    const AdminPortfolioModel(
+      portfolioId: 7,
+      accountId: 1,
+      accountNumber: '068C000001',
+      customerName: 'NGUYEN AN',
+      stockSymbol: 'BSR',
+      companyName: 'CTCP Lọc hóa dầu Bình Sơn',
+      quantity: 2000,
+      availableQuantity: 2000,
+      averagePrice: '20000.00',
     ),
   ];
 
@@ -1256,6 +1354,135 @@ class MockAdminRepository implements AdminRepository {
     }).toList()
       ..sort((a, b) => b.transactionDate.compareTo(a.transactionDate));
     return _paginate(filtered, page, pageSize);
+  }
+
+    // ---------------- Danh mục nắm giữ ----------------
+
+  AdminPortfolioModel _portfolioView(AdminPortfolioModel p) {
+    final stockIndex = _stocks.indexWhere((s) => s.stockSymbol == p.stockSymbol);
+    final price = stockIndex < 0
+        ? 0
+        : (num.tryParse(_stocks[stockIndex].currentPrice) ?? 0);
+    return _valued(p, price);
+  }
+
+  // Giống backend: ràng buộc DB bị vi phạm sẽ bị báo nhầm là lỗi cơ sở dữ liệu.
+  void _checkHolding(int quantity, int available, int blocked) {
+    if (available + blocked > quantity) {
+      throw const AdminException(
+        'Không thể truy cập cơ sở dữ liệu.',
+        code: 'DATABASE_UNAVAILABLE',
+      );
+    }
+  }
+
+  @override
+  Future<AdminPage<AdminPortfolioModel>> listPortfolios({
+    int? accountId,
+    String? stockSymbol,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    await _delay();
+    final symbol = (stockSymbol ?? '').trim().toUpperCase();
+    final filtered = _portfolios.where((p) {
+      if (accountId != null && p.accountId != accountId) return false;
+      if (symbol.isNotEmpty && p.stockSymbol != symbol) return false;
+      return true;
+    }).map(_portfolioView).toList()
+      ..sort((a, b) => a.portfolioId.compareTo(b.portfolioId));
+    return _paginate(filtered, page, pageSize);
+  }
+
+  @override
+  Future<AdminPortfolioModel> createPortfolio(Map<String, dynamic> data) async {
+    await _delay();
+    final accountId = data['account_id'] as int?;
+    final accountIndex = _accounts.indexWhere((a) => a.accountId == accountId);
+    if (accountIndex < 0) {
+      throw const AdminException(
+        'Không tìm thấy tài khoản đầu tư.',
+        code: 'NOT_FOUND',
+      );
+    }
+    final symbol = (data['stock_symbol'] as String? ?? '').trim().toUpperCase();
+    final stockIndex = _stocks.indexWhere((s) => s.stockSymbol == symbol);
+    if (stockIndex < 0) {
+      throw AdminException(
+        'Không tìm thấy mã cổ phiếu $symbol.',
+        code: 'NOT_FOUND',
+      );
+    }
+    final exists = _portfolios.any(
+      (p) => p.accountId == accountId && p.stockSymbol == symbol,
+    );
+    if (exists) {
+      throw AdminException(
+        'Tài khoản đã nắm giữ mã $symbol. Hãy sửa dòng đã có.',
+        code: 'PORTFOLIO_EXISTS',
+      );
+    }
+    final quantity = data['quantity'] as int? ?? 0;
+    final available = data['available_quantity'] as int? ?? 0;
+    final blocked = data['blocked_quantity'] as int? ?? 0;
+    _checkHolding(quantity, available, blocked);
+
+    final account = _accounts[accountIndex];
+    final holding = AdminPortfolioModel(
+      portfolioId: _nextPortfolioId++,
+      accountId: account.accountId,
+      accountNumber: account.accountNumber,
+      customerName: account.customerName,
+      stockSymbol: symbol,
+      companyName: _stocks[stockIndex].companyName,
+      quantity: quantity,
+      availableQuantity: available,
+      blockedQuantity: blocked,
+      averagePrice: _money(data['average_price']),
+    );
+    _portfolios.add(holding);
+    return _portfolioView(holding);
+  }
+
+  @override
+  Future<AdminPortfolioModel> updatePortfolio(
+    int portfolioId,
+    Map<String, dynamic> data,
+  ) async {
+    await _delay();
+    final index = _portfolios.indexWhere((p) => p.portfolioId == portfolioId);
+    if (index < 0) {
+      throw const AdminException(
+        'Không tìm thấy dòng nắm giữ.',
+        code: 'NOT_FOUND',
+      );
+    }
+    final old = _portfolios[index];
+    final quantity = data['quantity'] as int? ?? old.quantity;
+    final available = data['available_quantity'] as int? ?? old.availableQuantity;
+    final blocked = data['blocked_quantity'] as int? ?? old.blockedQuantity;
+    _checkHolding(quantity, available, blocked);
+    final updated = old.copyWith(
+      quantity: quantity,
+      availableQuantity: available,
+      blockedQuantity: blocked,
+      averagePrice: _moneyOrNull(data['average_price']),
+    );
+    _portfolios[index] = updated;
+    return _portfolioView(updated);
+  }
+
+  @override
+  Future<void> deletePortfolio(int portfolioId) async {
+    await _delay();
+    final index = _portfolios.indexWhere((p) => p.portfolioId == portfolioId);
+    if (index < 0) {
+      throw const AdminException(
+        'Không tìm thấy dòng nắm giữ.',
+        code: 'NOT_FOUND',
+      );
+    }
+    _portfolios.removeAt(index);
   }
 
     // ---------------- Dashboard ----------------
