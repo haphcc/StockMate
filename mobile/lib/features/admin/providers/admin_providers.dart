@@ -7,13 +7,30 @@ import '../data/models/admin_account_model.dart';
 import '../data/models/admin_customer_model.dart';
 import '../data/models/admin_page.dart';
 import '../data/models/admin_dashboard_model.dart';
+import '../data/admin_token_source.dart';
+import '../data/api_admin_repository.dart';
+
+// Bật bằng cờ lúc chạy, không ghi mật khẩu vào code:
+// --dart-define=ADMIN_USE_API=true --dart-define=ADMIN_DEV_EMAIL=... --dart-define=ADMIN_DEV_PASSWORD=...
+const _adminUseApi = bool.fromEnvironment('ADMIN_USE_API');
+const _devEmail = String.fromEnvironment('ADMIN_DEV_EMAIL');
+const _devPassword = String.fromEnvironment('ADMIN_DEV_PASSWORD');
 
 final adminRepositoryProvider = Provider<AdminRepository>((ref) {
-  if (AppConfig.useMock) {
-    return MockAdminRepository();
+  if (_adminUseApi || !AppConfig.useMock) {
+    final AdminTokenSource tokenSource = _devEmail.isNotEmpty
+        ? DevLoginTokenSource(
+            baseUrl: AppConfig.apiBaseUrl,
+            email: _devEmail,
+            password: _devPassword,
+          )
+        : StoredTokenSource();
+    return ApiAdminRepository(
+      baseUrl: AppConfig.apiBaseUrl,
+      tokenSource: tokenSource,
+    );
   }
-  // TODO(Bước 7): trả về ApiAdminRepository khi nối API thật.
-  throw UnimplementedError('API admin repository chưa được triển khai');
+  return MockAdminRepository();
 });
 
 /// Bộ lọc danh sách khách hàng (tìm kiếm, lọc, trang).

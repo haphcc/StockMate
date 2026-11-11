@@ -222,7 +222,7 @@ class _AdminCustomerDetailScreenState
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(adminCustomerDetailProvider(widget.customerId));
-    final selfId = ref.watch(authProvider).value?.id;
+    final selfEmail = ref.watch(authProvider).value?.email.toLowerCase();
 
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
@@ -238,7 +238,7 @@ class _AdminCustomerDetailScreenState
           message: e.toString(),
           onRetry: _refresh,
         ),
-        data: (c) => _buildBody(c, c.customerId == selfId),
+        data: (c) => _buildBody(c, c.email.toLowerCase() == selfEmail),
       ),
     );
   }
