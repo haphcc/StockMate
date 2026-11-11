@@ -10,6 +10,7 @@ import 'models/admin_stock_model.dart';
 import 'models/admin_notification_model.dart';
 import 'models/admin_order_model.dart';
 import 'models/admin_transaction_model.dart';
+import 'models/admin_portfolio_model.dart';
 
 class ApiAdminRepository implements AdminRepository {
   final Dio _dio;
@@ -373,6 +374,56 @@ class ApiAdminRepository implements AdminRepository {
       _asMap(data),
       AdminTransactionModel.fromJson,
     );
+  }
+
+    // ---------------- Danh mục nắm giữ ----------------
+
+  @override
+  Future<AdminPage<AdminPortfolioModel>> listPortfolios({
+    int? accountId,
+    String? stockSymbol,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final data = await _request(
+      'GET',
+      '/api/admin/portfolios',
+      query: {
+        'account_id': ?accountId,
+        if (stockSymbol != null && stockSymbol.isNotEmpty)
+          'stock_symbol': stockSymbol,
+        'page': page,
+        'page_size': pageSize,
+      },
+    );
+    return AdminPage<AdminPortfolioModel>.fromJson(
+      _asMap(data),
+      AdminPortfolioModel.fromJson,
+    );
+  }
+
+  @override
+  Future<AdminPortfolioModel> createPortfolio(Map<String, dynamic> data) async {
+    final result = await _request('POST', '/api/admin/portfolios', body: data);
+    return AdminPortfolioModel.fromJson(_asMap(result));
+  }
+
+  @override
+  Future<AdminPortfolioModel> updatePortfolio(
+    int portfolioId,
+    Map<String, dynamic> data,
+  ) async {
+    final result = await _request(
+      'PUT',
+      '/api/admin/portfolios/$portfolioId',
+      body: data,
+    );
+    return AdminPortfolioModel.fromJson(_asMap(result));
+  }
+
+  @override
+  Future<void> deletePortfolio(int portfolioId) async {
+    await _request('DELETE', '/api/admin/portfolios/$portfolioId');
   }
 
   // ---------------- Dashboard ----------------

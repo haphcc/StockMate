@@ -11,6 +11,7 @@ import 'admin_stocks_screen.dart';
 import 'admin_notifications_screen.dart';
 import 'admin_orders_screen.dart';
 import 'admin_transactions_screen.dart';
+import 'admin_portfolios_screen.dart';
 
 class AdminHomeScreen extends ConsumerWidget {
   const AdminHomeScreen({super.key});
@@ -121,6 +122,13 @@ class AdminHomeScreen extends ConsumerWidget {
                 subtitle: 'Lịch sử khớp lệnh toàn hệ thống',
                 onTap: () =>
                     _open(context, ref, const AdminTransactionsScreen()),
+              ),
+              const SizedBox(height: 12),
+              _MenuTile(
+                icon: Icons.pie_chart_rounded,
+                title: 'Danh mục nắm giữ',
+                subtitle: 'Điều chỉnh số lượng cổ phiếu và giá vốn',
+                onTap: () => _open(context, ref, const AdminPortfoliosScreen()),
               ),
               const SizedBox(height: 12),
               _MenuTile(

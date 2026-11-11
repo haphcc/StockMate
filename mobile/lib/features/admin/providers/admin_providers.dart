@@ -13,6 +13,7 @@ import '../data/models/admin_stock_model.dart';
 import '../data/models/admin_notification_model.dart';
 import '../data/models/admin_order_model.dart';
 import '../data/models/admin_transaction_model.dart';
+import '../data/models/admin_portfolio_model.dart';
 
 // Bật bằng cờ lúc chạy, không ghi mật khẩu vào code:
 // --dart-define=ADMIN_USE_API=true --dart-define=ADMIN_DEV_EMAIL=... --dart-define=ADMIN_DEV_PASSWORD=...
@@ -204,6 +205,25 @@ final adminTransactionsProvider = FutureProvider.autoDispose
   return ref.watch(adminRepositoryProvider).listTransactions(
         stockSymbol: query.stockSymbol.isEmpty ? null : query.stockSymbol,
         transactionType: query.transactionType,
+        page: query.page,
+      );
+});
+
+/// Bộ lọc danh mục nắm giữ.
+class AdminPortfolioQuery extends Equatable {
+  final String stockSymbol;
+  final int page;
+
+  const AdminPortfolioQuery({this.stockSymbol = '', this.page = 1});
+
+  @override
+  List<Object?> get props => [stockSymbol, page];
+}
+
+final adminPortfoliosProvider = FutureProvider.autoDispose
+    .family<AdminPage<AdminPortfolioModel>, AdminPortfolioQuery>((ref, query) {
+  return ref.watch(adminRepositoryProvider).listPortfolios(
+        stockSymbol: query.stockSymbol.isEmpty ? null : query.stockSymbol,
         page: query.page,
       );
 });

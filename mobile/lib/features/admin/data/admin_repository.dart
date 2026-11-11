@@ -6,6 +6,7 @@ import 'models/admin_stock_model.dart';
 import 'models/admin_notification_model.dart';
 import 'models/admin_order_model.dart';
 import 'models/admin_transaction_model.dart';
+import 'models/admin_portfolio_model.dart';
 
 abstract class AdminRepository {
   // Khách hàng
@@ -66,7 +67,7 @@ abstract class AdminRepository {
   Future<AdminNotificationModel> sendNotification(Map<String, dynamic> data);
   Future<void> deleteNotification(int notificationId);
 
-    // Lệnh đặt
+  // Lệnh đặt
   Future<AdminPage<AdminOrderModel>> listOrders({
     int? accountId,
     String? stockSymbol,
@@ -86,4 +87,18 @@ abstract class AdminRepository {
     int page = 1,
     int pageSize = 20,
   });
+
+  // Danh mục nắm giữ
+  Future<AdminPage<AdminPortfolioModel>> listPortfolios({
+    int? accountId,
+    String? stockSymbol,
+    int page = 1,
+    int pageSize = 20,
+  });
+  Future<AdminPortfolioModel> createPortfolio(Map<String, dynamic> data);
+  Future<AdminPortfolioModel> updatePortfolio(
+    int portfolioId,
+    Map<String, dynamic> data,
+  );
+  Future<void> deletePortfolio(int portfolioId);
 }
