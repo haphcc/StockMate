@@ -7,6 +7,7 @@ import 'models/admin_customer_model.dart';
 import 'models/admin_dashboard_model.dart';
 import 'models/admin_page.dart';
 import 'models/admin_stock_model.dart';
+import 'models/admin_notification_model.dart';
 
 class ApiAdminRepository implements AdminRepository {
   final Dio _dio;
@@ -256,6 +257,44 @@ class ApiAdminRepository implements AdminRepository {
   @override
   Future<void> deleteStock(int stockId) async {
     await _request('DELETE', '/api/admin/stocks/$stockId');
+  }
+  
+    // ---------------- Thông báo ----------------
+
+  @override
+  Future<AdminPage<AdminNotificationModel>> listNotifications({
+    int? customerId,
+    String? notificationType,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final data = await _request(
+      'GET',
+      '/api/admin/notifications',
+      query: {
+        'customer_id': ?customerId,
+        'notification_type': ?notificationType,
+        'page': page,
+        'page_size': pageSize,
+      },
+    );
+    return AdminPage<AdminNotificationModel>.fromJson(
+      _asMap(data),
+      AdminNotificationModel.fromJson,
+    );
+  }
+
+  @override
+  Future<AdminNotificationModel> sendNotification(
+    Map<String, dynamic> data,
+  ) async {
+    final result = await _request('POST', '/api/admin/notifications', body: data);
+    return AdminNotificationModel.fromJson(_asMap(result));
+  }
+
+  @override
+  Future<void> deleteNotification(int notificationId) async {
+    await _request('DELETE', '/api/admin/notifications/$notificationId');
   }
   
   // ---------------- Dashboard ----------------

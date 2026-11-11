@@ -11,7 +11,6 @@ import '../data/models/admin_stock_model.dart';
 import '../providers/admin_providers.dart';
 import '../widgets/admin_widgets.dart';
 import 'admin_stock_form_screen.dart';
-import 'admin_stocks_screen.dart';
 
 class AdminStocksScreen extends ConsumerStatefulWidget {
   const AdminStocksScreen({super.key});

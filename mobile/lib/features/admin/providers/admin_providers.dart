@@ -10,6 +10,7 @@ import '../data/models/admin_dashboard_model.dart';
 import '../data/admin_token_source.dart';
 import '../data/api_admin_repository.dart';
 import '../data/models/admin_stock_model.dart';
+import '../data/models/admin_notification_model.dart';
 
 // Bật bằng cờ lúc chạy, không ghi mật khẩu vào code:
 // --dart-define=ADMIN_USE_API=true --dart-define=ADMIN_DEV_EMAIL=... --dart-define=ADMIN_DEV_PASSWORD=...
@@ -127,6 +128,26 @@ final adminStocksProvider = FutureProvider.autoDispose
         q: query.q.isEmpty ? null : query.q,
         exchange: query.exchange,
         status: query.status,
+        page: query.page,
+      );
+});
+
+/// Bộ lọc danh sách thông báo.
+class AdminNotificationQuery extends Equatable {
+  final String? notificationType;
+  final int page;
+
+  const AdminNotificationQuery({this.notificationType, this.page = 1});
+
+  @override
+  List<Object?> get props => [notificationType, page];
+}
+
+final adminNotificationsProvider = FutureProvider.autoDispose
+    .family<AdminPage<AdminNotificationModel>, AdminNotificationQuery>(
+        (ref, query) {
+  return ref.watch(adminRepositoryProvider).listNotifications(
+        notificationType: query.notificationType,
         page: query.page,
       );
 });

@@ -10,6 +10,14 @@ class AdminConstants {
   static const List<String> accountStatuses = ['ACTIVE', 'SUSPENDED', 'CLOSED'];
   static const List<String> exchanges = ['HOSE', 'HNX', 'UPCOM'];
   static const List<String> stockStatuses = ['ACTIVE', 'HALTED', 'DELISTED'];
+  static const List<String> notificationTypes = [
+    'SYSTEM',
+    'NEWS',
+    'ORDER',
+    'TRANSACTION',
+    'PRICE_ALERT',
+    'CASH',
+  ];
 
   static const Map<String, String> _labels = {
     'CUSTOMER': 'Khách hàng',
@@ -23,6 +31,11 @@ class AdminConstants {
     'MARGIN': 'Ký quỹ',
     'HALTED': 'Tạm dừng',
     'DELISTED': 'Hủy niêm yết',
+    'SYSTEM': 'Hệ thống',
+    'NEWS': 'Tin tức',
+    'ORDER': 'Lệnh',
+    'TRANSACTION': 'Giao dịch',
+    'PRICE_ALERT': 'Cảnh báo giá',
   };
 
   /// Trả về nhãn tiếng Việt; không có thì trả lại đúng mã gốc.
