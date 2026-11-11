@@ -10,6 +10,7 @@ import '../providers/admin_providers.dart';
 import '../widgets/admin_widgets.dart';
 import 'admin_customer_form_screen.dart';
 import 'admin_account_form_screen.dart';
+import 'admin_notification_compose_screen.dart';
 
 class AdminCustomerDetailScreen extends ConsumerStatefulWidget {
   final int customerId;
@@ -201,6 +202,14 @@ class _AdminCustomerDetailScreenState
     }
   }
 
+    Future<void> _notify(AdminCustomerModel c) async {
+    await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => AdminNotificationComposeScreen(presetCustomer: c),
+      ),
+    );
+  }
+
     Future<void> _openAccount(AdminCustomerModel c) async {
     final created = await Navigator.of(context).push<bool>(
       MaterialPageRoute<bool>(
@@ -344,6 +353,11 @@ class _AdminCustomerDetailScreenState
           icon: Icons.add_card_rounded,
           label: 'Mở tài khoản đầu tư',
           onTap: () => _openAccount(c),
+        ),
+        _actionTile(
+          icon: Icons.notifications_active_rounded,
+          label: 'Gửi thông báo',
+          onTap: () => _notify(c),
         ),
         _actionTile(
           icon: Icons.lock_reset_rounded,

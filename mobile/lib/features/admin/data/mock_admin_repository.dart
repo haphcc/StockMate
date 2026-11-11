@@ -5,6 +5,7 @@ import 'models/admin_customer_model.dart';
 import 'models/admin_page.dart';
 import 'models/admin_dashboard_model.dart';
 import 'models/admin_stock_model.dart';
+import 'models/admin_notification_model.dart';
 
 String _money(Object? value) {
   if (value == null) return '0.00';
@@ -282,6 +283,68 @@ class MockAdminRepository implements AdminRepository {
       reference: 19800,
       current: 19400,
       volume: 884000,
+    ),
+  ];
+
+  int _nextNotificationId = 500;
+
+  final List<AdminNotificationModel> _notifications = [
+    const AdminNotificationModel(
+      notificationId: 1,
+      customerId: 1,
+      customerName: 'TRAN THI BICH',
+      title: 'Lệnh VCB đã khớp',
+      content: 'Lệnh mua 1.000 VCB đã khớp hoàn toàn.',
+      notificationType: 'ORDER',
+      refId: 57,
+      createdAt: '2026-11-05T03:15:00Z',
+    ),
+    const AdminNotificationModel(
+      notificationId: 2,
+      customerId: 1,
+      customerName: 'TRAN THI BICH',
+      title: 'Nạp tiền thành công',
+      content: 'Tài khoản 068C000002 đã được nạp 5.000.000 đ.',
+      notificationType: 'CASH',
+      isRead: true,
+      createdAt: '2026-11-04T08:00:00Z',
+    ),
+    const AdminNotificationModel(
+      notificationId: 3,
+      customerId: 2,
+      customerName: 'LE MINH CUONG',
+      title: 'Cảnh báo giá FPT',
+      content: 'Cổ phiếu FPT đã chạm mức giá 126.500.',
+      notificationType: 'PRICE_ALERT',
+      createdAt: '2026-11-03T02:30:00Z',
+    ),
+    const AdminNotificationModel(
+      notificationId: 4,
+      customerId: 5,
+      customerName: 'VU THI PHUONG',
+      title: 'Chào mừng đến StockMate',
+      content: 'Tài khoản của bạn đã sẵn sàng giao dịch.',
+      notificationType: 'SYSTEM',
+      isRead: true,
+      createdAt: '2026-11-02T01:00:00Z',
+    ),
+    const AdminNotificationModel(
+      notificationId: 5,
+      customerId: 100,
+      customerName: 'NGUYEN AN',
+      title: 'Bảo trì hệ thống',
+      content: 'Hệ thống bảo trì lúc 22:00 tối nay.',
+      notificationType: 'NEWS',
+      createdAt: '2026-11-01T09:00:00Z',
+    ),
+    const AdminNotificationModel(
+      notificationId: 6,
+      customerId: 3,
+      customerName: 'PHAM THU DUNG',
+      title: 'Giao dịch đã thanh toán',
+      content: 'Giao dịch mua ACB đã hoàn tất thanh toán T+2.',
+      notificationType: 'TRANSACTION',
+      createdAt: '2026-11-01T04:00:00Z',
     ),
   ];
 
@@ -671,6 +734,107 @@ class MockAdminRepository implements AdminRepository {
       );
     }
     _stocks.removeAt(index);
+  }
+
+    // ---------------- Thông báo ----------------
+
+  @override
+  Future<AdminPage<AdminNotificationModel>> listNotifications({
+    int? customerId,
+    String? notificationType,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    await _delay();
+    final filtered = _notifications.where((n) {
+      if (customerId != null && n.customerId != customerId) return false;
+      if (notificationType != null && n.notificationType != notificationType) {
+        return false;
+      }
+      return true;
+    }).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    return _paginate(filtered, page, pageSize);
+  }
+
+  @override
+  Future<AdminNotificationModel> sendNotification(
+    Map<String, dynamic> data,
+  ) async {
+    await _delay();
+    final title = data['title'] as String? ?? '';
+    final content = data['content'] as String? ?? '';
+    final type = data['notification_type'] as String? ?? 'SYSTEM';
+    final refId = data['ref_id'] as int?;
+    final now = DateTime.now().toUtc().toIso8601String();
+    final customerId = data['customer_id'] as int?;
+
+    if (customerId != null) {
+      final index = _customers.indexWhere((c) => c.customerId == customerId);
+      if (index < 0) {
+        throw const AdminException(
+          'Không tìm thấy khách hàng để gửi thông báo.',
+          code: 'NOT_FOUND',
+        );
+      }
+      final notification = AdminNotificationModel(
+        notificationId: _nextNotificationId++,
+        customerId: customerId,
+        customerName: _customers[index].fullName,
+        title: title,
+        content: content,
+        notificationType: type,
+        refId: refId,
+        createdAt: now,
+      );
+      _notifications.add(notification);
+      return notification;
+    }
+
+    // Broadcast: mỗi khách hàng đang hoạt động nhận một bản riêng (giống backend).
+    final recipients = _customers.where((c) => c.status == 'ACTIVE').toList();
+    int? firstId;
+    for (final c in recipients) {
+      final id = _nextNotificationId++;
+      firstId ??= id;
+      _notifications.add(
+        AdminNotificationModel(
+          notificationId: id,
+          customerId: c.customerId,
+          customerName: c.fullName,
+          title: title,
+          content: content,
+          notificationType: type,
+          refId: refId,
+          createdAt: now,
+        ),
+      );
+    }
+    // Phản hồi là bản tóm tắt, giống backend.
+    return AdminNotificationModel(
+      notificationId: firstId ?? 0,
+      customerId: 0,
+      customerName: '[TOÀN BỘ KHÁCH HÀNG]',
+      title: title,
+      content: '[Broadcast đến ${recipients.length} khách hàng] $content',
+      notificationType: type,
+      refId: refId,
+      createdAt: now,
+    );
+  }
+
+  @override
+  Future<void> deleteNotification(int notificationId) async {
+    await _delay();
+    final index =
+        _notifications.indexWhere((n) => n.notificationId == notificationId);
+    if (index < 0) {
+      throw const AdminException(
+        'Không tìm thấy thông báo cần xóa.',
+        code: 'NOT_FOUND',
+      );
+    }
+    _notifications.removeAt(index);
   }
 
     // ---------------- Dashboard ----------------

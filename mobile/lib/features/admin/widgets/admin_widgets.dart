@@ -239,3 +239,13 @@ String formatNumber(String raw) {
   }
   return '${negative ? '-' : ''}$buffer';
 }
+
+/// Đổi thời gian ISO (thường là UTC) sang giờ máy: "dd/MM/yyyy HH:mm".
+String formatDateTime(String iso) {
+  final parsed = DateTime.tryParse(iso);
+  if (parsed == null) return iso;
+  final t = parsed.toLocal();
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${two(t.day)}/${two(t.month)}/${t.year} '
+      '${two(t.hour)}:${two(t.minute)}';
+}
