@@ -14,6 +14,7 @@ import '../data/models/admin_notification_model.dart';
 import '../data/models/admin_order_model.dart';
 import '../data/models/admin_transaction_model.dart';
 import '../data/models/admin_portfolio_model.dart';
+import '../data/models/admin_candle_model.dart';
 
 // Bật bằng cờ lúc chạy, không ghi mật khẩu vào code:
 // --dart-define=ADMIN_USE_API=true --dart-define=ADMIN_DEV_EMAIL=... --dart-define=ADMIN_DEV_PASSWORD=...
@@ -224,6 +225,25 @@ final adminPortfoliosProvider = FutureProvider.autoDispose
     .family<AdminPage<AdminPortfolioModel>, AdminPortfolioQuery>((ref, query) {
   return ref.watch(adminRepositoryProvider).listPortfolios(
         stockSymbol: query.stockSymbol.isEmpty ? null : query.stockSymbol,
+        page: query.page,
+      );
+});
+
+/// Bộ lọc lịch sử giá: một mã cổ phiếu và số trang.
+class AdminCandleQuery extends Equatable {
+  final String stockSymbol;
+  final int page;
+
+  const AdminCandleQuery({required this.stockSymbol, this.page = 1});
+
+  @override
+  List<Object?> get props => [stockSymbol, page];
+}
+
+final adminCandlesProvider = FutureProvider.autoDispose
+    .family<AdminPage<AdminCandleModel>, AdminCandleQuery>((ref, query) {
+  return ref.watch(adminRepositoryProvider).listCandles(
+        stockSymbol: query.stockSymbol,
         page: query.page,
       );
 });

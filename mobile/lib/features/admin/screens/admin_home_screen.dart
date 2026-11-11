@@ -12,6 +12,7 @@ import 'admin_notifications_screen.dart';
 import 'admin_orders_screen.dart';
 import 'admin_transactions_screen.dart';
 import 'admin_portfolios_screen.dart';
+import 'admin_price_history_screen.dart';
 
 class AdminHomeScreen extends ConsumerWidget {
   const AdminHomeScreen({super.key});
@@ -129,6 +130,14 @@ class AdminHomeScreen extends ConsumerWidget {
                 title: 'Danh mục nắm giữ',
                 subtitle: 'Điều chỉnh số lượng cổ phiếu và giá vốn',
                 onTap: () => _open(context, ref, const AdminPortfoliosScreen()),
+              ),
+              const SizedBox(height: 12),
+              _MenuTile(
+                icon: Icons.show_chart_rounded,
+                title: 'Lịch sử giá',
+                subtitle: 'Biểu đồ nến, thêm, sửa, xóa phiên giá',
+                onTap: () =>
+                    _open(context, ref, const AdminPriceHistoryScreen()),
               ),
               const SizedBox(height: 12),
               _MenuTile(

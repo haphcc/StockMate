@@ -7,6 +7,7 @@ import 'models/admin_notification_model.dart';
 import 'models/admin_order_model.dart';
 import 'models/admin_transaction_model.dart';
 import 'models/admin_portfolio_model.dart';
+import 'models/admin_candle_model.dart';
 
 abstract class AdminRepository {
   // Khách hàng
@@ -101,4 +102,17 @@ abstract class AdminRepository {
     Map<String, dynamic> data,
   );
   Future<void> deletePortfolio(int portfolioId);
+
+    // Lịch sử giá (nến)
+  Future<AdminPage<AdminCandleModel>> listCandles({
+    String? stockSymbol,
+    int page = 1,
+    int pageSize = 30,
+  });
+  Future<AdminCandleModel> createCandle(Map<String, dynamic> data);
+  Future<AdminCandleModel> updateCandle(
+    int candleId,
+    Map<String, dynamic> data,
+  );
+  Future<void> deleteCandle(int candleId);
 }
