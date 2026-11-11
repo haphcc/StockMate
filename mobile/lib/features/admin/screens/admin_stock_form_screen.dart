@@ -77,47 +77,43 @@ class _AdminStockFormScreenState extends ConsumerState<AdminStockFormScreen> {
     return num.tryParse(text.trim()) != num.tryParse(original);
   }
 
-  String? _checkPrices(num? ref, num? cur, num? ceil, num? floor) {
-    if (ref != null && ceil != null && ceil < ref) {
-      return 'Giá trần phải lớn hơn hoặc bằng giá tham chiếu.';
-    }
-    if (ref != null && floor != null && floor > ref) {
-      return 'Giá sàn phải nhỏ hơn hoặc bằng giá tham chiếu.';
-    }
-    if (ceil != null && floor != null && floor > ceil) {
-      return 'Giá sàn không được lớn hơn giá trần.';
-    }
-    if (cur != null && ceil != null && cur > ceil) {
-      return 'Giá hiện tại vượt giá trần.';
-    }
-    if (cur != null && floor != null && cur < floor) {
-      return 'Giá hiện tại thấp hơn giá sàn.';
-    }
-    return null;
-  }
-
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     final s = widget.stock;
 
     final priceChanged = s == null ||
+        _exchange != s.exchange ||
         _changed(_current.text, s.currentPrice) ||
         _changed(_reference.text, s.referencePrice) ||
         _changed(_ceiling.text, s.ceilingPrice) ||
         _changed(_floor.text, s.floorPrice);
     if (priceChanged) {
+      final ref = num.tryParse(_reference.text.trim());
+      final cur = num.tryParse(_current.text.trim());
       var ceil = num.tryParse(_ceiling.text.trim());
       var floor = num.tryParse(_floor.text.trim());
-      // Đổi giá tham chiếu mà không sửa trần/sàn: backend sẽ tính lại, bỏ qua kiểm tra.
-      if (s != null && _changed(_reference.text, s.referencePrice)) {
-        if (!_changed(_ceiling.text, s.ceilingPrice)) ceil = null;
-        if (!_changed(_floor.text, s.floorPrice)) floor = null;
+      if (ref != null) {
+        final (calcCeil, calcFloor) =
+            AdminConstants.computeStockLimits(_exchange, ref);
+        final refOrExChanged = s != null &&
+            (_changed(_reference.text, s.referencePrice) ||
+                _exchange != s.exchange);
+        if (s == null) {
+          ceil ??= calcCeil;
+          floor ??= calcFloor;
+        } else if (refOrExChanged &&
+            !_changed(_ceiling.text, s.ceilingPrice) &&
+            !_changed(_floor.text, s.floorPrice)) {
+          // Đổi giá tham chiếu hoặc sàn mà không sửa trần/sàn: kiểm tra theo biên độ mới.
+          ceil = calcCeil;
+          floor = calcFloor;
+        }
       }
-      final problem = _checkPrices(
-        num.tryParse(_reference.text.trim()),
-        num.tryParse(_current.text.trim()),
-        ceil,
-        floor,
+      final problem = AdminConstants.validateStockPrices(
+        reference: ref,
+        current: cur,
+        ceiling: ceil,
+        floor: floor,
       );
       if (problem != null) {
         showAdminSnack(context, problem, error: true);

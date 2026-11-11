@@ -15,10 +15,11 @@ Comprehensive Admin Portal endpoints:
 
 import uuid
 from datetime import date, datetime, timezone
-from decimal import Decimal
+from decimal import ROUND_CEILING, ROUND_FLOOR, Decimal
 
 from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy import func, or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import CurrentAdminDep, get_db
@@ -62,6 +63,9 @@ from app.schemas.admin import (
     AdminWatchlistCreate,
     AdminWatchlistResponse,
 )
+from app.services.matching_service import compute_trading_fee, recalc_account_asset
+from app.services.notification_service import send_notification
+from app.services.order_service import get_price_tick
 
 router = APIRouter()
 
@@ -71,6 +75,114 @@ def _fmt(val: Decimal | float | int | None) -> str:
     if val is None:
         return "0.00"
     return f"{Decimal(str(val)):.2f}"
+
+
+def _generate_unique_account_number(db: Session, account_type: str) -> str:
+    """Generate a collision-free account number even after prior deletions."""
+    prefix = "068M" if account_type.upper() == "MARGIN" else "068C"
+    max_id = db.query(func.max(InvestmentAccount.account_id)).scalar() or 0
+    seq = int(max_id) + 1
+    candidate = f"{prefix}{seq:06d}"
+    while (
+        db.query(InvestmentAccount.account_id)
+        .filter(InvestmentAccount.account_number == candidate)
+        .first()
+        is not None
+    ):
+        seq += 1
+        candidate = f"{prefix}{seq:06d}"
+    return candidate
+
+
+def _compute_stock_limits(exchange: str, reference_price: Decimal) -> tuple[Decimal, Decimal]:
+    """Compute ceiling and floor prices matching DB trigger fn_set_price_limits."""
+    ex = exchange.upper()
+    band = (
+        Decimal("0.07") if ex == "HOSE" else (Decimal("0.10") if ex == "HNX" else Decimal("0.15"))
+    )
+    tick = get_price_tick(ex, reference_price)
+    ceiling = ((reference_price * (Decimal("1") + band)) / tick).to_integral_value(
+        rounding=ROUND_FLOOR
+    ) * tick
+    floor = ((reference_price * (Decimal("1") - band)) / tick).to_integral_value(
+        rounding=ROUND_CEILING
+    ) * tick
+    if reference_price > Decimal("0") and floor < tick:
+        floor = tick
+    return ceiling.quantize(Decimal("0.01")), floor.quantize(Decimal("0.01"))
+
+
+def _validate_stock_prices(
+    reference_price: Decimal,
+    current_price: Decimal,
+    ceiling_price: Decimal,
+    floor_price: Decimal,
+) -> None:
+    """Ensure ceiling/floor/reference/current prices are logically consistent."""
+    if floor_price > ceiling_price:
+        raise ValidationException(
+            message="Giá sàn không được lớn hơn giá trần.",
+            code="INVALID_PRICE_BAND",
+        )
+    if ceiling_price < reference_price:
+        raise ValidationException(
+            message="Giá trần phải lớn hơn hoặc bằng giá tham chiếu.",
+            code="INVALID_PRICE_BAND",
+        )
+    if floor_price > reference_price:
+        raise ValidationException(
+            message="Giá sàn phải nhỏ hơn hoặc bằng giá tham chiếu.",
+            code="INVALID_PRICE_BAND",
+        )
+    if current_price > ceiling_price or current_price < floor_price:
+        raise ValidationException(
+            message=(
+                f"Giá hiện tại ({current_price:,.0f}) phải nằm trong biên độ "
+                f"sàn - trần ({floor_price:,.0f} - {ceiling_price:,.0f})."
+            ),
+            code="PRICE_OUT_OF_BAND",
+        )
+
+
+def _release_order_reservations(db: Session, order: StockOrder) -> None:
+    """Release remaining blocked cash (BUY) or blocked shares (SELL) for an active order."""
+    remaining_qty = max(order.quantity - order.filled_quantity, 0)
+    if remaining_qty <= 0:
+        return
+
+    account = (
+        db.query(InvestmentAccount)
+        .filter(InvestmentAccount.account_id == order.account_id)
+        .with_for_update()
+        .first()
+    )
+    if not account:
+        return
+
+    if order.order_type == "BUY":
+        gross = Decimal(remaining_qty) * order.order_price
+        fee = compute_trading_fee(gross)
+        reserve = gross + fee
+        release = min(account.blocked_balance, reserve)
+        if release > Decimal("0.00"):
+            account.blocked_balance -= release
+            account.cash_balance += release
+    elif order.order_type == "SELL":
+        portfolio = (
+            db.query(Portfolio)
+            .filter(
+                Portfolio.account_id == account.account_id,
+                Portfolio.stock_id == order.stock_id,
+            )
+            .with_for_update()
+            .first()
+        )
+        if portfolio and portfolio.blocked_quantity > 0:
+            release_qty = min(portfolio.blocked_quantity, remaining_qty)
+            portfolio.blocked_quantity -= release_qty
+            portfolio.available_quantity += release_qty
+
+    recalc_account_asset(db, account.account_id)
 
 
 # =====================================================================
@@ -381,8 +493,7 @@ def create_customer(
     db.flush()
 
     # Automatically create default CASH investment account
-    acc_count = db.query(func.count(InvestmentAccount.account_id)).scalar() or 0
-    acc_num = f"068C{acc_count + 1:06d}"
+    acc_num = _generate_unique_account_number(db, "CASH")
     account = InvestmentAccount(
         customer_id=customer.customer_id,
         account_number=acc_num,
@@ -621,6 +732,12 @@ def create_account(
     if customer is None:
         raise NotFoundException(message="Không tìm thấy khách hàng để mở tài khoản.")
 
+    if payload.account_type.upper() == "CASH" and payload.margin_limit > Decimal("0.00"):
+        raise ValidationException(
+            message="Tài khoản tiền mặt (CASH) không thể có hạn mức ký quỹ lớn hơn 0.",
+            code="INVALID_MARGIN_LIMIT",
+        )
+
     if payload.account_number:
         if (
             db.query(InvestmentAccount)
@@ -632,9 +749,7 @@ def create_account(
             )
         account_number = payload.account_number
     else:
-        prefix = "068M" if payload.account_type.upper() == "MARGIN" else "068C"
-        acc_count = db.query(func.count(InvestmentAccount.account_id)).scalar() or 0
-        account_number = f"{prefix}{acc_count + 1:06d}"
+        account_number = _generate_unique_account_number(db, payload.account_type)
 
     account = InvestmentAccount(
         customer_id=payload.customer_id,
@@ -647,7 +762,14 @@ def create_account(
         status=payload.status.upper(),
     )
     db.add(account)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise ConflictException(
+            message="Số tài khoản đã tồn tại hoặc xung đột dữ liệu.",
+            code="DUPLICATE_ACCOUNT_NUMBER",
+        ) from exc
     db.refresh(account)
 
     return AdminAccountResponse(
@@ -707,16 +829,45 @@ def update_account(
     if account is None:
         raise NotFoundException(message="Không tìm thấy tài khoản đầu tư.")
 
-    if payload.account_type is not None:
-        account.account_type = payload.account_type.upper()
-    if payload.cash_balance is not None:
-        account.cash_balance = payload.cash_balance
-    if payload.blocked_balance is not None:
-        account.blocked_balance = payload.blocked_balance
+    new_type = (
+        payload.account_type.upper() if payload.account_type is not None else account.account_type
+    )
+    new_cash = payload.cash_balance if payload.cash_balance is not None else account.cash_balance
+    new_blocked = (
+        payload.blocked_balance if payload.blocked_balance is not None else account.blocked_balance
+    )
+    if new_type == "CASH" and payload.margin_limit is None:
+        new_margin = Decimal("0.00")
+    else:
+        new_margin = (
+            payload.margin_limit if payload.margin_limit is not None else account.margin_limit
+        )
+
+    if new_type == "CASH" and new_margin > Decimal("0.00"):
+        raise ValidationException(
+            message="Tài khoản tiền mặt (CASH) không thể có hạn mức ký quỹ lớn hơn 0.",
+            code="INVALID_MARGIN_LIMIT",
+        )
+
     if payload.total_asset_value is not None:
-        account.total_asset_value = payload.total_asset_value
-    if payload.margin_limit is not None:
-        account.margin_limit = payload.margin_limit
+        if payload.total_asset_value < new_cash + new_blocked:
+            raise ValidationException(
+                message=("Tổng giá trị tài sản không được nhỏ hơn tiền mặt cộng tiền phong tỏa."),
+                code="INVALID_ACCOUNT_BALANCE",
+            )
+        new_total = payload.total_asset_value
+    elif payload.cash_balance is not None or payload.blocked_balance is not None:
+        portfolios = db.query(Portfolio).filter(Portfolio.account_id == account.account_id).all()
+        portfolio_value = sum((p.current_value for p in portfolios), Decimal("0.00"))
+        new_total = new_cash + new_blocked + portfolio_value
+    else:
+        new_total = account.total_asset_value
+
+    account.account_type = new_type
+    account.cash_balance = new_cash
+    account.blocked_balance = new_blocked
+    account.total_asset_value = new_total
+    account.margin_limit = new_margin
     if payload.status is not None:
         account.status = payload.status.upper()
 
@@ -835,16 +986,15 @@ def create_stock(
         )
 
     # Band calculation if ceiling/floor omitted
-    band = (
-        Decimal("0.07")
-        if payload.exchange == "HOSE"
-        else (Decimal("0.10") if payload.exchange == "HNX" else Decimal("0.15"))
+    calc_ceiling, calc_floor = _compute_stock_limits(payload.exchange, payload.reference_price)
+    ceiling = payload.ceiling_price if payload.ceiling_price is not None else calc_ceiling
+    floor = payload.floor_price if payload.floor_price is not None else calc_floor
+    current = (
+        payload.current_price
+        if payload.current_price > Decimal("0.00")
+        else payload.reference_price
     )
-    ceiling = payload.ceiling_price or (payload.reference_price * (1 + band)).quantize(
-        Decimal("100")
-    )
-    floor = payload.floor_price or (payload.reference_price * (1 - band)).quantize(Decimal("100"))
-    current = payload.current_price or payload.reference_price
+    _validate_stock_prices(payload.reference_price, current, ceiling, floor)
 
     stock = Stock(
         stock_symbol=sym,
@@ -934,22 +1084,36 @@ def update_stock(
     if stock is None:
         raise NotFoundException(message="Không tìm thấy mã cổ phiếu.")
 
+    new_exchange = payload.exchange.upper() if payload.exchange is not None else stock.exchange
+    new_ref = (
+        payload.reference_price if payload.reference_price is not None else stock.reference_price
+    )
+    new_cur = payload.current_price if payload.current_price is not None else stock.current_price
+    if (
+        (payload.reference_price is not None or payload.exchange is not None)
+        and payload.ceiling_price is None
+        and payload.floor_price is None
+    ):
+        new_ceil, new_floor = _compute_stock_limits(new_exchange, new_ref)
+    else:
+        new_ceil = (
+            payload.ceiling_price if payload.ceiling_price is not None else stock.ceiling_price
+        )
+        new_floor = payload.floor_price if payload.floor_price is not None else stock.floor_price
+
+    _validate_stock_prices(new_ref, new_cur, new_ceil, new_floor)
+
     if payload.company_name is not None:
         stock.company_name = payload.company_name
-    if payload.exchange is not None:
-        stock.exchange = payload.exchange.upper()
+    stock.exchange = new_exchange
     if payload.industry is not None:
         stock.industry = payload.industry
     if payload.listed_shares is not None:
         stock.listed_shares = payload.listed_shares
-    if payload.current_price is not None:
-        stock.current_price = payload.current_price
-    if payload.reference_price is not None:
-        stock.reference_price = payload.reference_price
-    if payload.ceiling_price is not None:
-        stock.ceiling_price = payload.ceiling_price
-    if payload.floor_price is not None:
-        stock.floor_price = payload.floor_price
+    stock.current_price = new_cur
+    stock.reference_price = new_ref
+    stock.ceiling_price = new_ceil
+    stock.floor_price = new_floor
     if payload.total_volume is not None:
         stock.total_volume = payload.total_volume
     if payload.status is not None:
@@ -1115,14 +1279,39 @@ def update_order(
     db: Session = Depends(get_db),
 ) -> AdminOrderResponse:
     """Admin intervention: modify order status (e.g. force CANCELLED or COMPLETED) or quantities."""
-    order = db.query(StockOrder).filter(StockOrder.order_id == order_id).first()
+    order = db.query(StockOrder).filter(StockOrder.order_id == order_id).with_for_update().first()
     if order is None:
         raise NotFoundException(message="Không tìm thấy lệnh đặt.")
 
-    if payload.status is not None:
-        order.status = payload.status.upper()
-        if order.status == "COMPLETED" and order.matched_at is None:
-            order.matched_at = datetime.now(timezone.utc)
+    if payload.filled_quantity is not None and payload.filled_quantity > order.quantity:
+        raise ValidationException(
+            message="Số lượng đã khớp không được vượt quá số lượng đặt.",
+            code="INVALID_FILLED_QUANTITY",
+        )
+
+    old_status = order.status
+    new_status = payload.status.upper() if payload.status is not None else old_status
+
+    if old_status in ("PENDING", "PARTIAL") and new_status in ("CANCELLED", "REJECTED"):
+        _release_order_reservations(db, order)
+        if order.account:
+            symbol = order.stock.stock_symbol if order.stock else f"#{order.stock_id}"
+            reason_note = f" Lý do: {payload.reject_reason}." if payload.reject_reason else ""
+            send_notification(
+                db=db,
+                customer_id=order.account.customer_id,
+                title=f"Quản trị viên hủy lệnh {order.order_type} {symbol}",
+                content=(
+                    f"Lệnh #{order.order_id} ({order.order_type} {order.quantity:,} {symbol}) "
+                    f"đã được chuyển sang {new_status} và giải tỏa tài sản.{reason_note}"
+                ),
+                notification_type="ORDER",
+                ref_id=order.order_id,
+            )
+
+    order.status = new_status
+    if payload.status is not None and new_status == "COMPLETED" and order.matched_at is None:
+        order.matched_at = datetime.now(timezone.utc)
     if payload.filled_quantity is not None:
         order.filled_quantity = payload.filled_quantity
     if payload.reject_reason is not None:
@@ -1161,9 +1350,19 @@ def cancel_or_delete_order(
     db: Session = Depends(get_db),
 ) -> None:
     """Admin intervention: delete or cancel order."""
-    order = db.query(StockOrder).filter(StockOrder.order_id == order_id).first()
+    order = db.query(StockOrder).filter(StockOrder.order_id == order_id).with_for_update().first()
     if order is None:
         raise NotFoundException(message="Không tìm thấy lệnh cần xóa/hủy.")
+
+    has_txns = db.query(Transaction.transaction_id).filter(Transaction.order_id == order_id).first()
+    if has_txns is not None:
+        raise ConflictException(
+            message="Lệnh đã có giao dịch khớp nên không thể xóa.",
+            code="ORDER_HAS_TRANSACTIONS",
+        )
+
+    if order.status in ("PENDING", "PARTIAL"):
+        _release_order_reservations(db, order)
 
     db.delete(order)
     db.commit()

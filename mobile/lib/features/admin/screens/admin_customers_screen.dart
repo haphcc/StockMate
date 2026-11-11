@@ -25,11 +25,12 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
   final _searchController = TextEditingController();
   Timer? _debounce;
   String _q = '';
+  String? _role;
   String? _status;
   int _page = 1;
 
   AdminCustomerQuery get _query =>
-      AdminCustomerQuery(q: _q, status: _status, page: _page);
+      AdminCustomerQuery(q: _q, role: _role, status: _status, page: _page);
 
   @override
   void dispose() {
@@ -101,17 +102,21 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
               onChanged: _onSearchChanged,
             ),
           ),
-          SizedBox(
-            height: 44,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              children: [
-                _filterChip('Tất cả', null),
-                for (final s in AdminConstants.customerStatuses)
-                  _filterChip(AdminConstants.label(s), s),
-              ],
-            ),
+          AdminFilterChips(
+            options: AdminConstants.customerStatuses,
+            selected: _status,
+            onChanged: (v) => setState(() {
+              _status = v;
+              _page = 1;
+            }),
+          ),
+          AdminFilterChips(
+            options: AdminConstants.customerRoles,
+            selected: _role,
+            onChanged: (v) => setState(() {
+              _role = v;
+              _page = 1;
+            }),
           ),
           Expanded(
             child: async.when(
@@ -144,29 +149,6 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _filterChip(String label, String? value) {
-    final selected = _status == value;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: selected,
-        showCheckmark: false,
-        onSelected: (_) => setState(() {
-          _status = value;
-          _page = 1;
-        }),
-        selectedColor: AppColors.primary,
-        backgroundColor: AppColors.darkCard,
-        side: const BorderSide(color: AppColors.darkBorder),
-        labelStyle: TextStyle(
-          color: selected ? const Color(0xFF052B19) : AppColors.darkTextSecondary,
-          fontWeight: FontWeight.w600,
-        ),
       ),
     );
   }

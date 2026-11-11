@@ -45,4 +45,64 @@ void main() {
     expect((await repo.listCustomers()).total, 5);
     expect((await repo.listAccounts(customerId: 1)).total, 0);
   });
+
+  test('cập nhật tài khoản từ chối số dư vô lý và tự tính tổng tài sản',
+      () async {
+    final repo = MockAdminRepository();
+    expect(
+      () => repo.updateAccount(1, {
+        'cash_balance': '100.00',
+        'blocked_balance': '999999.00',
+        'total_asset_value': '50.00',
+      }),
+      throwsA(isA<AdminException>()),
+    );
+
+    final updated = await repo.updateAccount(1, {'cash_balance': '60000000'});
+    expect(updated.totalAssetValue, '60000000.00');
+  });
+
+  test('cổ phiếu kiểm tra logic giá và tự tính lại trần/sàn khi đổi tham chiếu',
+      () async {
+    final repo = MockAdminRepository();
+    expect(
+      () => repo.updateStock(1, {
+        'ceiling_price': '10000',
+        'floor_price': '30000',
+      }),
+      throwsA(isA<AdminException>()),
+    );
+
+    final updated = await repo.updateStock(1, {
+      'reference_price': '50000',
+      'current_price': '51000',
+    });
+    expect(updated.ceilingPrice, '53500.00');
+    expect(updated.floorPrice, '46500.00');
+  });
+
+  test('sổ lệnh chặn xóa lệnh đã có giao dịch và hủy được lệnh chờ', () async {
+    final repo = MockAdminRepository();
+    expect(() => repo.deleteOrder(101), throwsA(isA<AdminException>()));
+
+    final cancelled = await repo.updateOrder(103, {
+      'status': 'CANCELLED',
+      'reject_reason': 'Admin test',
+    });
+    expect(cancelled.status, 'CANCELLED');
+    expect(cancelled.rejectReason, 'Admin test');
+  });
+
+  test('thông báo gửi đích danh, broadcast và xóa được', () async {
+    final repo = MockAdminRepository();
+    final broadcast = await repo.sendNotification({
+      'customer_id': null,
+      'title': 'Bảo trì',
+      'content': 'Nội dung bảo trì',
+      'notification_type': 'SYSTEM',
+    });
+    expect(broadcast.customerName, '[TOÀN BỘ KHÁCH HÀNG]');
+
+    await repo.deleteNotification(broadcast.notificationId);
+  });
 }

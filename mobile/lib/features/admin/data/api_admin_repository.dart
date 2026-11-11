@@ -18,15 +18,17 @@ class ApiAdminRepository implements AdminRepository {
   ApiAdminRepository({
     required String baseUrl,
     required AdminTokenSource tokenSource,
+    Dio? dio,
   })  : _tokenSource = tokenSource,
-        _dio = Dio(
-          BaseOptions(
-            baseUrl: baseUrl,
-            connectTimeout: const Duration(seconds: 10),
-            receiveTimeout: const Duration(seconds: 15),
-            responseType: ResponseType.json,
-          ),
-        );
+        _dio = dio ??
+            Dio(
+              BaseOptions(
+                baseUrl: baseUrl,
+                connectTimeout: const Duration(seconds: 10),
+                receiveTimeout: const Duration(seconds: 15),
+                responseType: ResponseType.json,
+              ),
+            );
 
   // ---------------- Hạ tầng gọi API ----------------
 
@@ -173,6 +175,7 @@ class ApiAdminRepository implements AdminRepository {
       'GET',
       '/api/admin/accounts',
       query: {
+        if (q != null && q.isNotEmpty) 'q': q,
         'customer_id': ?customerId,
         'account_type': ?accountType,
         'status': ?status,

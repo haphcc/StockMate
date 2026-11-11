@@ -1,3 +1,4 @@
+import 'admin_constants.dart';
 import 'admin_exception.dart';
 import 'admin_repository.dart';
 import 'models/admin_account_model.dart';
@@ -15,22 +16,7 @@ String _money(Object? value) {
   return n == null ? '0.00' : n.toStringAsFixed(2);
 }
 
-String? _moneyOrNull(Object? value) => value == null ? null : _money(value);
-double _bandOf(String exchange) {
-  switch (exchange) {
-    case 'HNX':
-      return 0.10;
-    case 'UPCOM':
-      return 0.15;
-    default:
-      return 0.07;
-  }
-}
-
 String _price2(num value) => value.toStringAsFixed(2);
-
-// Làm tròn bước giá 50 đồng, khớp kết quả backend.
-num _roundTo50(num value) => (value / 50).round() * 50;
 
 AdminStockModel _makeStock({
   required int id,
@@ -46,7 +32,8 @@ AdminStockModel _makeStock({
   int volume = 0,
   String status = 'ACTIVE',
 }) {
-  final band = _bandOf(exchange);
+  final (calcCeil, calcFloor) =
+      AdminConstants.computeStockLimits(exchange, reference);
   final change = current - reference;
   final percent = reference == 0 ? 0 : change / reference * 100;
   return AdminStockModel(
@@ -58,8 +45,8 @@ AdminStockModel _makeStock({
     listedShares: shares,
     currentPrice: _price2(current),
     referencePrice: _price2(reference),
-    ceilingPrice: _price2(ceiling ?? _roundTo50(reference * (1 + band))),
-    floorPrice: _price2(floor ?? _roundTo50(reference * (1 - band))),
+    ceilingPrice: _price2(ceiling ?? calcCeil),
+    floorPrice: _price2(floor ?? calcFloor),
     priceChange: _price2(change),
     changePercent: _price2(percent),
     totalVolume: volume,
@@ -843,12 +830,47 @@ class MockAdminRepository implements AdminRepository {
   ) async {
     await _delay();
     final index = _accountIndex(accountId);
-    final updated = _accounts[index].copyWith(
-      accountType: data['account_type'] as String?,
-      cashBalance: _moneyOrNull(data['cash_balance']),
-      blockedBalance: _moneyOrNull(data['blocked_balance']),
-      totalAssetValue: _moneyOrNull(data['total_asset_value']),
-      marginLimit: _moneyOrNull(data['margin_limit']),
+    final old = _accounts[index];
+    final newType = (data['account_type'] as String?) ?? old.accountType;
+    final newCash = data.containsKey('cash_balance')
+        ? num.parse(_money(data['cash_balance']))
+        : num.parse(old.cashBalance);
+    final newBlocked = data.containsKey('blocked_balance')
+        ? num.parse(_money(data['blocked_balance']))
+        : num.parse(old.blockedBalance);
+    final newMargin = data.containsKey('margin_limit')
+        ? num.parse(_money(data['margin_limit']))
+        : (newType == 'CASH' ? 0 : num.parse(old.marginLimit));
+    if (newType == 'CASH' && newMargin > 0) {
+      throw const AdminException(
+        'Tài khoản tiền mặt (CASH) không thể có hạn mức ký quỹ lớn hơn 0.',
+        code: 'INVALID_MARGIN_LIMIT',
+      );
+    }
+    final num newTotal;
+    if (data.containsKey('total_asset_value')) {
+      newTotal = num.parse(_money(data['total_asset_value']));
+      if (newTotal < newCash + newBlocked) {
+        throw const AdminException(
+          'Tổng giá trị tài sản không được nhỏ hơn tiền mặt cộng tiền phong tỏa.',
+          code: 'INVALID_ACCOUNT_BALANCE',
+        );
+      }
+    } else if (data.containsKey('cash_balance') ||
+        data.containsKey('blocked_balance')) {
+      final holdings = num.parse(old.totalAssetValue) -
+          num.parse(old.cashBalance) -
+          num.parse(old.blockedBalance);
+      newTotal = newCash + newBlocked + (holdings > 0 ? holdings : 0);
+    } else {
+      newTotal = num.parse(old.totalAssetValue);
+    }
+    final updated = old.copyWith(
+      accountType: newType,
+      cashBalance: _price2(newCash),
+      blockedBalance: _price2(newBlocked),
+      totalAssetValue: _price2(newTotal),
+      marginLimit: _price2(newMargin),
       status: data['status'] as String?,
     );
     _accounts[index] = updated;
@@ -905,18 +927,33 @@ class MockAdminRepository implements AdminRepository {
         code: 'DUPLICATE_STOCK_SYMBOL',
       );
     }
+    final exchange = data['exchange'] as String? ?? 'HOSE';
     final reference = num.tryParse('${data['reference_price']}') ?? 0;
+    final current = num.tryParse('${data['current_price']}') ?? reference;
+    final (calcCeil, calcFloor) =
+        AdminConstants.computeStockLimits(exchange, reference);
+    final ceiling = num.tryParse('${data['ceiling_price'] ?? ''}') ?? calcCeil;
+    final floor = num.tryParse('${data['floor_price'] ?? ''}') ?? calcFloor;
+    final problem = AdminConstants.validateStockPrices(
+      reference: reference,
+      current: current,
+      ceiling: ceiling,
+      floor: floor,
+    );
+    if (problem != null) {
+      throw AdminException(problem, code: 'INVALID_STOCK_PRICE');
+    }
     final stock = _makeStock(
       id: _nextStockId++,
       symbol: symbol,
       name: data['company_name'] as String? ?? '',
-      exchange: data['exchange'] as String? ?? 'HOSE',
+      exchange: exchange,
       industry: data['industry'] as String?,
       shares: data['listed_shares'] as int? ?? 0,
       reference: reference,
-      current: num.tryParse('${data['current_price']}') ?? reference,
-      ceiling: num.tryParse('${data['ceiling_price'] ?? ''}'),
-      floor: num.tryParse('${data['floor_price'] ?? ''}'),
+      current: current,
+      ceiling: ceiling,
+      floor: floor,
       status: data['status'] as String? ?? 'ACTIVE',
     );
     _stocks.add(stock);
@@ -939,13 +976,25 @@ class MockAdminRepository implements AdminRepository {
     final current = numOf('current_price') ?? num.parse(old.currentPrice);
     var ceiling = numOf('ceiling_price');
     var floor = numOf('floor_price');
-    // Giống backend: đổi giá tham chiếu mà không gửi trần/sàn thì tính lại.
-    if (data.containsKey('reference_price') &&
+    // Giống backend: đổi giá tham chiếu hoặc sàn mà không gửi trần/sàn thì tính lại.
+    if ((data.containsKey('reference_price') || data.containsKey('exchange')) &&
         ceiling == null &&
         floor == null) {
-      final band = _bandOf(exchange);
-      ceiling = _roundTo50(reference * (1 + band));
-      floor = _roundTo50(reference * (1 - band));
+      final (calcCeil, calcFloor) =
+          AdminConstants.computeStockLimits(exchange, reference);
+      ceiling = calcCeil;
+      floor = calcFloor;
+    }
+    final effCeil = ceiling ?? num.parse(old.ceilingPrice);
+    final effFloor = floor ?? num.parse(old.floorPrice);
+    final problem = AdminConstants.validateStockPrices(
+      reference: reference,
+      current: current,
+      ceiling: effCeil,
+      floor: effFloor,
+    );
+    if (problem != null) {
+      throw AdminException(problem, code: 'INVALID_STOCK_PRICE');
     }
     final change = current - reference;
     final percent = reference == 0 ? 0 : change / reference * 100;
@@ -956,8 +1005,8 @@ class MockAdminRepository implements AdminRepository {
       listedShares: data['listed_shares'] as int?,
       currentPrice: _price2(current),
       referencePrice: _price2(reference),
-      ceilingPrice: ceiling == null ? null : _price2(ceiling),
-      floorPrice: floor == null ? null : _price2(floor),
+      ceilingPrice: _price2(effCeil),
+      floorPrice: _price2(effFloor),
       priceChange: _price2(change),
       changePercent: _price2(percent),
       status: data['status'] as String?,
@@ -1105,6 +1154,24 @@ class MockAdminRepository implements AdminRepository {
     return _paginate(filtered, page, pageSize);
   }
 
+  void _releaseMockOrderFunds(AdminOrderModel order) {
+    if (order.orderType != 'BUY') return;
+    final remainingQty = order.remainingQuantity;
+    if (remainingQty <= 0) return;
+    final accIdx = _accounts.indexWhere((a) => a.accountId == order.accountId);
+    if (accIdx < 0) return;
+    final acc = _accounts[accIdx];
+    final blocked = num.parse(acc.blockedBalance);
+    if (blocked <= 0) return;
+    final gross = remainingQty * (num.tryParse(order.orderPrice) ?? 0);
+    final reserve = gross * 1.0015;
+    final release = blocked < reserve ? blocked : reserve;
+    _accounts[accIdx] = acc.copyWith(
+      blockedBalance: _price2(blocked - release),
+      cashBalance: _price2(num.parse(acc.cashBalance) + release),
+    );
+  }
+
   @override
   Future<AdminOrderModel> updateOrder(
     int orderId,
@@ -1118,13 +1185,25 @@ class MockAdminRepository implements AdminRepository {
         code: 'NOT_FOUND',
       );
     }
-    final status = data['status'] as String?;
     final old = _orders[index];
+    final filledQty = data['filled_quantity'] as int?;
+    if (filledQty != null && filledQty > old.quantity) {
+      throw const AdminException(
+        'Số lượng đã khớp không được vượt quá số lượng đặt.',
+        code: 'INVALID_FILLED_QUANTITY',
+      );
+    }
+    final status = (data['status'] as String?)?.toUpperCase();
+    final newStatus = status ?? old.status;
+    if ((old.status == 'PENDING' || old.status == 'PARTIAL') &&
+        (newStatus == 'CANCELLED' || newStatus == 'REJECTED')) {
+      _releaseMockOrderFunds(old);
+    }
     final updated = old.copyWith(
       status: status,
-      filledQuantity: data['filled_quantity'] as int?,
+      filledQuantity: filledQty,
       rejectReason: data['reject_reason'] as String?,
-      matchedAt: status == 'COMPLETED' && old.matchedAt == null
+      matchedAt: newStatus == 'COMPLETED' && old.matchedAt == null
           ? DateTime.now().toUtc().toIso8601String()
           : null,
     );
@@ -1147,6 +1226,10 @@ class MockAdminRepository implements AdminRepository {
         'Lệnh đã có giao dịch khớp nên không thể xóa.',
         code: 'ORDER_HAS_TRANSACTIONS',
       );
+    }
+    final old = _orders[index];
+    if (old.status == 'PENDING' || old.status == 'PARTIAL') {
+      _releaseMockOrderFunds(old);
     }
     _orders.removeAt(index);
   }

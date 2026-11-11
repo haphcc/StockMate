@@ -112,6 +112,19 @@ class _AdminAccountFormScreenState
       return;
     }
     if (!_formKey.currentState!.validate()) return;
+    if (_isEdit) {
+      final cash = num.tryParse(_cash.text.trim()) ?? 0;
+      final blocked = num.tryParse(_blocked.text.trim()) ?? 0;
+      final asset = num.tryParse(_asset.text.trim()) ?? 0;
+      if (asset < cash + blocked) {
+        showAdminSnack(
+          context,
+          'Tổng giá trị tài sản không được nhỏ hơn tiền mặt cộng tiền phong tỏa.',
+          error: true,
+        );
+        return;
+      }
+    }
     setState(() => _saving = true);
     final repo = ref.read(adminRepositoryProvider);
     try {

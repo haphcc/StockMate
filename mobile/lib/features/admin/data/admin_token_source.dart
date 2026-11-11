@@ -11,15 +11,65 @@ abstract class AdminTokenSource {
 }
 
 /// Đọc token đã lưu lúc đăng nhập. Dùng được khi đăng nhập thật của Sơn xong.
-/// Hiện app vẫn lưu token giả nên chưa dùng được với backend thật.
+/// Hỗ trợ tự làm mới token qua /api/auth/refresh nếu có refresh_token.
 class StoredTokenSource implements AdminTokenSource {
-  static const _storage = FlutterSecureStorage();
+  static const _defaultStorage = FlutterSecureStorage();
+  final FlutterSecureStorage _storage;
+  final String? baseUrl;
+  final Dio? _dio;
+
+  StoredTokenSource({
+    this.baseUrl,
+    FlutterSecureStorage? storage,
+    Dio? dio,
+  })  : _storage = storage ?? _defaultStorage,
+        _dio = dio;
 
   @override
-  Future<String?> getToken() => _storage.read(key: 'jwt_token');
+  Future<String?> getToken() async {
+    final token = await _storage.read(key: 'jwt_token');
+    if (token != null && token.isNotEmpty) return token;
+    final alt = await _storage.read(key: 'access_token');
+    return (alt != null && alt.isNotEmpty) ? alt : null;
+  }
 
   @override
-  Future<void> invalidate() async {}
+  Future<void> invalidate() async {
+    final refreshToken = await _storage.read(key: 'refresh_token');
+    if (refreshToken == null || refreshToken.isEmpty || baseUrl == null) {
+      return;
+    }
+    final client = _dio ??
+        Dio(
+          BaseOptions(
+            baseUrl: baseUrl!,
+            connectTimeout: const Duration(seconds: 10),
+            receiveTimeout: const Duration(seconds: 10),
+          ),
+        );
+    try {
+      final response = await client.post<dynamic>(
+        '/api/auth/refresh',
+        data: {'refresh_token': refreshToken},
+      );
+      final data = response.data;
+      if (data is Map) {
+        final newAccess = data['access_token']?.toString();
+        final newRefresh = data['refresh_token']?.toString();
+        if (newAccess != null && newAccess.isNotEmpty) {
+          await _storage.write(key: 'jwt_token', value: newAccess);
+        }
+        if (newRefresh != null && newRefresh.isNotEmpty) {
+          await _storage.write(key: 'refresh_token', value: newRefresh);
+        }
+      }
+    } on DioException {
+      // Refresh token hết hạn hoặc không hợp lệ -> xóa phiên lỗi để không lặp vô ích.
+      await _storage.delete(key: 'jwt_token');
+      await _storage.delete(key: 'access_token');
+      await _storage.delete(key: 'refresh_token');
+    }
+  }
 }
 
 /// TẠM THỜI: tự đăng nhập bằng tài khoản truyền qua --dart-define để thử màn

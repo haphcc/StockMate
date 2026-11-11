@@ -497,3 +497,275 @@ def test_transactions_crud(client: TestClient, admin_token: str) -> None:
     # 3. Delete transaction
     del_res = client.delete(f"/api/admin/transactions/{tid}", headers=headers)
     assert del_res.status_code == 204
+
+
+# =====================================================================
+# 13. QA BUG FIXES & ADMIN ORDER INTERVENTION REGRESSION TESTS
+# =====================================================================
+
+
+def _create_temp_customer(
+    client: TestClient, headers: dict[str, str], initial_cash: str = "10000000.00"
+) -> tuple[int, int, str]:
+    suffix = uuid.uuid4().hex[:8]
+    email = f"qa_{suffix}@example.com"
+    phone = f"09{uuid.uuid4().int % 100000000:08d}"
+    res = client.post(
+        "/api/admin/customers",
+        json={
+            "full_name": f"QA Tester {suffix}",
+            "email": email,
+            "phone_number": phone,
+            "password": "Password@123",
+            "initial_cash_balance": initial_cash,
+        },
+        headers=headers,
+    )
+    assert res.status_code == 201, res.text
+    cid = res.json()["customer_id"]
+    detail = client.get(f"/api/admin/customers/{cid}", headers=headers).json()
+    acc_id = detail["accounts"][0]["account_id"]
+    return cid, acc_id, email
+
+
+def test_account_balance_validation_bug03(client: TestClient, admin_token: str) -> None:
+    """BUG-03: Reject inconsistent balances and auto-recalc total asset value."""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    cid, acc_id, _ = _create_temp_customer(client, headers)
+    try:
+        # 1. total_asset_value < cash_balance + blocked_balance -> 422
+        bad_bal = client.put(
+            f"/api/admin/accounts/{acc_id}",
+            json={
+                "cash_balance": "100.00",
+                "blocked_balance": "999999.00",
+                "total_asset_value": "50.00",
+            },
+            headers=headers,
+        )
+        assert bad_bal.status_code == 422
+        assert bad_bal.json()["error"]["code"] == "INVALID_ACCOUNT_BALANCE"
+
+        # 2. CASH account with margin_limit > 0 -> 422
+        bad_margin = client.put(
+            f"/api/admin/accounts/{acc_id}",
+            json={"account_type": "CASH", "margin_limit": "5000000.00"},
+            headers=headers,
+        )
+        assert bad_margin.status_code == 422
+        assert bad_margin.json()["error"]["code"] == "INVALID_MARGIN_LIMIT"
+
+        # 3. Updating only cash_balance auto-recalculates total_asset_value
+        ok_upd = client.put(
+            f"/api/admin/accounts/{acc_id}",
+            json={"cash_balance": "25000000.00"},
+            headers=headers,
+        )
+        assert ok_upd.status_code == 200
+        assert ok_upd.json()["total_asset_value"] == "25000000.00"
+    finally:
+        client.delete(f"/api/admin/customers/{cid}", headers=headers)
+
+
+def test_create_account_after_deletion_bug04(client: TestClient, admin_token: str) -> None:
+    """BUG-04: Creating an account after deleting another must not collide."""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    cid, acc1_id, _ = _create_temp_customer(client, headers)
+    try:
+        a2_res = client.post(
+            "/api/admin/accounts",
+            json={"customer_id": cid, "account_type": "CASH", "cash_balance": "1000000.00"},
+            headers=headers,
+        )
+        assert a2_res.status_code == 201, a2_res.text
+        acc2_num = a2_res.json()["account_number"]
+
+        del_res = client.delete(f"/api/admin/accounts/{acc1_id}", headers=headers)
+        assert del_res.status_code == 204
+
+        a3_res = client.post(
+            "/api/admin/accounts",
+            json={"customer_id": cid, "account_type": "CASH", "cash_balance": "2000000.00"},
+            headers=headers,
+        )
+        assert a3_res.status_code == 201, a3_res.text
+        assert a3_res.json()["account_number"] != acc2_num
+    finally:
+        client.delete(f"/api/admin/customers/{cid}", headers=headers)
+
+
+def test_stock_price_validation_and_recalc_bug05(client: TestClient, admin_token: str) -> None:
+    """BUG-05: Reject invalid stock bands/prices and recalc limits on reference change."""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    sym = f"Q{uuid.uuid4().hex[:4].upper()}"
+    create_res = client.post(
+        "/api/admin/stocks",
+        json={
+            "stock_symbol": sym,
+            "company_name": "CTCP QA Price Check",
+            "exchange": "HOSE",
+            "reference_price": "20000.00",
+            "current_price": "20000.00",
+        },
+        headers=headers,
+    )
+    assert create_res.status_code == 201, create_res.text
+    stock_id = create_res.json()["stock_id"]
+    try:
+        # 1. ceiling < floor -> 422
+        bad_band = client.put(
+            f"/api/admin/stocks/{stock_id}",
+            json={"ceiling_price": "10000.00", "floor_price": "30000.00"},
+            headers=headers,
+        )
+        assert bad_band.status_code == 422
+        assert bad_band.json()["error"]["code"] == "INVALID_PRICE_BAND"
+
+        # 2. current_price > ceiling -> 422
+        bad_cur = client.put(
+            f"/api/admin/stocks/{stock_id}",
+            json={"current_price": "99999.00"},
+            headers=headers,
+        )
+        assert bad_cur.status_code == 422
+        assert bad_cur.json()["error"]["code"] == "PRICE_OUT_OF_BAND"
+
+        # 3. Updating reference_price without ceiling/floor recalculates both
+        upd_ref = client.put(
+            f"/api/admin/stocks/{stock_id}",
+            json={"reference_price": "30000.00", "current_price": "30500.00"},
+            headers=headers,
+        )
+        assert upd_ref.status_code == 200, upd_ref.text
+        assert upd_ref.json()["ceiling_price"] == "32100.00"
+        assert upd_ref.json()["floor_price"] == "27900.00"
+    finally:
+        client.delete(f"/api/admin/stocks/{stock_id}", headers=headers)
+
+
+def test_admin_cancel_order_releases_reservations(client: TestClient, admin_token: str) -> None:
+    """Cancelling a PENDING order as Admin releases blocked cash and blocked shares."""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    cid, acc_id, email = _create_temp_customer(client, headers, initial_cash="100000000.00")
+    sym = f"O{uuid.uuid4().hex[:4].upper()}"
+    stock_res = client.post(
+        "/api/admin/stocks",
+        json={
+            "stock_symbol": sym,
+            "company_name": "CTCP Order Test",
+            "exchange": "HOSE",
+            "reference_price": "20000.00",
+            "current_price": "20000.00",
+        },
+        headers=headers,
+    )
+    assert stock_res.status_code == 201, stock_res.text
+    stock_id = stock_res.json()["stock_id"]
+    try:
+        login_res = client.post(
+            "/api/auth/login",
+            json={"email": email, "password": "Password@123"},
+        )
+        assert login_res.status_code == 200
+        cust_headers = {"Authorization": f"Bearer {login_res.json()['access_token']}"}
+
+        # 1. Place a PENDING BUY order (limit 19000 < market 20000)
+        buy_res = client.post(
+            f"/api/accounts/{acc_id}/orders",
+            json={
+                "client_order_id": str(uuid.uuid4()),
+                "stock_symbol": sym,
+                "order_type": "BUY",
+                "order_kind": "LO",
+                "quantity": 100,
+                "order_price": 19000,
+            },
+            headers=cust_headers,
+        )
+        assert buy_res.status_code == 201, buy_res.text
+        buy_order_id = buy_res.json()["order_id"]
+        assert buy_res.json()["status"] == "PENDING"
+
+        acc_mid = client.get(f"/api/admin/accounts/{acc_id}", headers=headers).json()
+        assert Decimal(acc_mid["blocked_balance"]) > Decimal("0.00")
+
+        # Admin cancels PENDING BUY order -> cash released
+        cancel_buy = client.put(
+            f"/api/admin/orders/{buy_order_id}",
+            json={"status": "CANCELLED", "reject_reason": "Admin release check"},
+            headers=headers,
+        )
+        assert cancel_buy.status_code == 200
+        assert cancel_buy.json()["status"] == "CANCELLED"
+        acc_after = client.get(f"/api/admin/accounts/{acc_id}", headers=headers).json()
+        assert acc_after["blocked_balance"] == "0.00"
+        assert acc_after["cash_balance"] == "100000000.00"
+
+        # 2. Give customer shares and place a PENDING SELL order (limit 21000 > market 20000)
+        port_res = client.post(
+            "/api/admin/portfolios",
+            json={
+                "account_id": acc_id,
+                "stock_symbol": sym,
+                "quantity": 100,
+                "available_quantity": 100,
+                "blocked_quantity": 0,
+                "average_price": "20000.00",
+            },
+            headers=headers,
+        )
+        assert port_res.status_code == 201, port_res.text
+        port_id = port_res.json()["portfolio_id"]
+
+        sell_res = client.post(
+            f"/api/accounts/{acc_id}/orders",
+            json={
+                "client_order_id": str(uuid.uuid4()),
+                "stock_symbol": sym,
+                "order_type": "SELL",
+                "order_kind": "LO",
+                "quantity": 100,
+                "order_price": 21000,
+            },
+            headers=cust_headers,
+        )
+        assert sell_res.status_code == 201, sell_res.text
+        sell_order_id = sell_res.json()["order_id"]
+        assert sell_res.json()["status"] == "PENDING"
+
+        # Admin cancels PENDING SELL order -> shares released
+        cancel_sell = client.put(
+            f"/api/admin/orders/{sell_order_id}",
+            json={"status": "CANCELLED"},
+            headers=headers,
+        )
+        assert cancel_sell.status_code == 200
+        ports = client.get(f"/api/admin/portfolios?account_id={acc_id}", headers=headers).json()
+        assert ports["items"][0]["blocked_quantity"] == 0
+        assert ports["items"][0]["available_quantity"] == 100
+
+        # 3. Deleting an order with transactions returns 409 instead of 503
+        matched_res = client.post(
+            f"/api/accounts/{acc_id}/orders",
+            json={
+                "client_order_id": str(uuid.uuid4()),
+                "stock_symbol": sym,
+                "order_type": "BUY",
+                "order_kind": "LO",
+                "quantity": 100,
+                "order_price": 20000,
+            },
+            headers=cust_headers,
+        )
+        assert matched_res.status_code == 201, matched_res.text
+        matched_order_id = matched_res.json()["order_id"]
+        assert matched_res.json()["status"] == "COMPLETED"
+
+        del_matched = client.delete(f"/api/admin/orders/{matched_order_id}", headers=headers)
+        assert del_matched.status_code == 409
+        assert del_matched.json()["error"]["code"] == "ORDER_HAS_TRANSACTIONS"
+
+        client.delete(f"/api/admin/portfolios/{port_id}", headers=headers)
+    finally:
+        client.delete(f"/api/admin/customers/{cid}", headers=headers)
+        client.delete(f"/api/admin/stocks/{stock_id}", headers=headers)
