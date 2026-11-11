@@ -11,6 +11,8 @@ import '../data/admin_token_source.dart';
 import '../data/api_admin_repository.dart';
 import '../data/models/admin_stock_model.dart';
 import '../data/models/admin_notification_model.dart';
+import '../data/models/admin_order_model.dart';
+import '../data/models/admin_transaction_model.dart';
 
 // Bật bằng cờ lúc chạy, không ghi mật khẩu vào code:
 // --dart-define=ADMIN_USE_API=true --dart-define=ADMIN_DEV_EMAIL=... --dart-define=ADMIN_DEV_PASSWORD=...
@@ -148,6 +150,60 @@ final adminNotificationsProvider = FutureProvider.autoDispose
         (ref, query) {
   return ref.watch(adminRepositoryProvider).listNotifications(
         notificationType: query.notificationType,
+        page: query.page,
+      );
+});
+
+/// Bộ lọc sổ lệnh.
+class AdminOrderQuery extends Equatable {
+  final String stockSymbol;
+  final String? status;
+  final String? orderType;
+  final int page;
+
+  const AdminOrderQuery({
+    this.stockSymbol = '',
+    this.status,
+    this.orderType,
+    this.page = 1,
+  });
+
+  @override
+  List<Object?> get props => [stockSymbol, status, orderType, page];
+}
+
+final adminOrdersProvider = FutureProvider.autoDispose
+    .family<AdminPage<AdminOrderModel>, AdminOrderQuery>((ref, query) {
+  return ref.watch(adminRepositoryProvider).listOrders(
+        stockSymbol: query.stockSymbol.isEmpty ? null : query.stockSymbol,
+        status: query.status,
+        orderType: query.orderType,
+        page: query.page,
+      );
+});
+
+/// Bộ lọc lịch sử giao dịch.
+class AdminTransactionQuery extends Equatable {
+  final String stockSymbol;
+  final String? transactionType;
+  final int page;
+
+  const AdminTransactionQuery({
+    this.stockSymbol = '',
+    this.transactionType,
+    this.page = 1,
+  });
+
+  @override
+  List<Object?> get props => [stockSymbol, transactionType, page];
+}
+
+final adminTransactionsProvider = FutureProvider.autoDispose
+    .family<AdminPage<AdminTransactionModel>, AdminTransactionQuery>(
+        (ref, query) {
+  return ref.watch(adminRepositoryProvider).listTransactions(
+        stockSymbol: query.stockSymbol.isEmpty ? null : query.stockSymbol,
+        transactionType: query.transactionType,
         page: query.page,
       );
 });

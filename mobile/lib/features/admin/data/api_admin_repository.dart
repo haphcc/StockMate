@@ -8,6 +8,8 @@ import 'models/admin_dashboard_model.dart';
 import 'models/admin_page.dart';
 import 'models/admin_stock_model.dart';
 import 'models/admin_notification_model.dart';
+import 'models/admin_order_model.dart';
+import 'models/admin_transaction_model.dart';
 
 class ApiAdminRepository implements AdminRepository {
   final Dio _dio;
@@ -297,6 +299,82 @@ class ApiAdminRepository implements AdminRepository {
     await _request('DELETE', '/api/admin/notifications/$notificationId');
   }
   
+    // ---------------- Lệnh đặt ----------------
+
+  @override
+  Future<AdminPage<AdminOrderModel>> listOrders({
+    int? accountId,
+    String? stockSymbol,
+    String? status,
+    String? orderType,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final data = await _request(
+      'GET',
+      '/api/admin/orders',
+      query: {
+        'account_id': ?accountId,
+        if (stockSymbol != null && stockSymbol.isNotEmpty)
+          'stock_symbol': stockSymbol,
+        'status': ?status,
+        'order_type': ?orderType,
+        'page': page,
+        'page_size': pageSize,
+      },
+    );
+    return AdminPage<AdminOrderModel>.fromJson(
+      _asMap(data),
+      AdminOrderModel.fromJson,
+    );
+  }
+
+  @override
+  Future<AdminOrderModel> updateOrder(
+    int orderId,
+    Map<String, dynamic> data,
+  ) async {
+    final result = await _request(
+      'PUT',
+      '/api/admin/orders/$orderId',
+      body: data,
+    );
+    return AdminOrderModel.fromJson(_asMap(result));
+  }
+
+  @override
+  Future<void> deleteOrder(int orderId) async {
+    await _request('DELETE', '/api/admin/orders/$orderId');
+  }
+
+  // ---------------- Giao dịch ----------------
+
+  @override
+  Future<AdminPage<AdminTransactionModel>> listTransactions({
+    int? accountId,
+    String? stockSymbol,
+    String? transactionType,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    final data = await _request(
+      'GET',
+      '/api/admin/transactions',
+      query: {
+        'account_id': ?accountId,
+        if (stockSymbol != null && stockSymbol.isNotEmpty)
+          'stock_symbol': stockSymbol,
+        'transaction_type': ?transactionType,
+        'page': page,
+        'page_size': pageSize,
+      },
+    );
+    return AdminPage<AdminTransactionModel>.fromJson(
+      _asMap(data),
+      AdminTransactionModel.fromJson,
+    );
+  }
+
   // ---------------- Dashboard ----------------
 
   @override

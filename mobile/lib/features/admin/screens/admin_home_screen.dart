@@ -9,6 +9,8 @@ import 'admin_accounts_screen.dart';
 import 'admin_customers_screen.dart';
 import 'admin_stocks_screen.dart';
 import 'admin_notifications_screen.dart';
+import 'admin_orders_screen.dart';
+import 'admin_transactions_screen.dart';
 
 class AdminHomeScreen extends ConsumerWidget {
   const AdminHomeScreen({super.key});
@@ -106,10 +108,19 @@ class AdminHomeScreen extends ConsumerWidget {
                 onTap: () => _open(context, ref, const AdminStocksScreen()),
               ),
               const SizedBox(height: 12),
-              const _MenuTile(
+                            _MenuTile(
                 icon: Icons.receipt_long_rounded,
-                title: 'Lệnh và giao dịch',
-                subtitle: 'Sắp có',
+                title: 'Sổ lệnh',
+                subtitle: 'Tra cứu toàn hệ thống, hủy lệnh đang chờ',
+                onTap: () => _open(context, ref, const AdminOrdersScreen()),
+              ),
+              const SizedBox(height: 12),
+              _MenuTile(
+                icon: Icons.swap_horiz_rounded,
+                title: 'Lịch sử giao dịch',
+                subtitle: 'Lịch sử khớp lệnh toàn hệ thống',
+                onTap: () =>
+                    _open(context, ref, const AdminTransactionsScreen()),
               ),
               const SizedBox(height: 12),
               _MenuTile(

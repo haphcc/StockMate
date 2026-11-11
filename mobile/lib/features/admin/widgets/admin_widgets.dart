@@ -39,14 +39,17 @@ class AdminStatusBadge extends StatelessWidget {
   const AdminStatusBadge({super.key, required this.code});
 
   Color get _color {
-    switch (code) {
+      switch (code) {
       case 'ACTIVE':
+      case 'COMPLETED':
         return AppColors.priceUp;
       case 'LOCKED':
       case 'SUSPENDED':
+      case 'REJECTED':
         return AppColors.priceDown;
       case 'HALTED':
       case 'PENDING':
+      case 'PARTIAL':
         return AppColors.priceRef;
       case 'ADMIN':
         return AppColors.accent;

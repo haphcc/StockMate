@@ -4,6 +4,8 @@ import 'models/admin_page.dart';
 import 'models/admin_dashboard_model.dart';
 import 'models/admin_stock_model.dart';
 import 'models/admin_notification_model.dart';
+import 'models/admin_order_model.dart';
+import 'models/admin_transaction_model.dart';
 
 abstract class AdminRepository {
   // Khách hàng
@@ -63,4 +65,25 @@ abstract class AdminRepository {
   /// customer_id = null nghĩa là gửi cho toàn bộ khách hàng đang hoạt động.
   Future<AdminNotificationModel> sendNotification(Map<String, dynamic> data);
   Future<void> deleteNotification(int notificationId);
+
+    // Lệnh đặt
+  Future<AdminPage<AdminOrderModel>> listOrders({
+    int? accountId,
+    String? stockSymbol,
+    String? status,
+    String? orderType,
+    int page = 1,
+    int pageSize = 20,
+  });
+  Future<AdminOrderModel> updateOrder(int orderId, Map<String, dynamic> data);
+  Future<void> deleteOrder(int orderId);
+
+  // Giao dịch (chỉ xem)
+  Future<AdminPage<AdminTransactionModel>> listTransactions({
+    int? accountId,
+    String? stockSymbol,
+    String? transactionType,
+    int page = 1,
+    int pageSize = 20,
+  });
 }
