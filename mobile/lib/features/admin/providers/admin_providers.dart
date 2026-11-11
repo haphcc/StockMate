@@ -6,13 +6,32 @@ import '../data/mock_admin_repository.dart';
 import '../data/models/admin_account_model.dart';
 import '../data/models/admin_customer_model.dart';
 import '../data/models/admin_page.dart';
+import '../data/models/admin_dashboard_model.dart';
+import '../data/admin_token_source.dart';
+import '../data/api_admin_repository.dart';
+import '../data/models/admin_stock_model.dart';
+
+// Bật bằng cờ lúc chạy, không ghi mật khẩu vào code:
+// --dart-define=ADMIN_USE_API=true --dart-define=ADMIN_DEV_EMAIL=... --dart-define=ADMIN_DEV_PASSWORD=...
+const _adminUseApi = bool.fromEnvironment('ADMIN_USE_API');
+const _devEmail = String.fromEnvironment('ADMIN_DEV_EMAIL');
+const _devPassword = String.fromEnvironment('ADMIN_DEV_PASSWORD');
 
 final adminRepositoryProvider = Provider<AdminRepository>((ref) {
-  if (AppConfig.useMock) {
-    return MockAdminRepository();
+  if (_adminUseApi || !AppConfig.useMock) {
+    final AdminTokenSource tokenSource = _devEmail.isNotEmpty
+        ? DevLoginTokenSource(
+            baseUrl: AppConfig.apiBaseUrl,
+            email: _devEmail,
+            password: _devPassword,
+          )
+        : StoredTokenSource();
+    return ApiAdminRepository(
+      baseUrl: AppConfig.apiBaseUrl,
+      tokenSource: tokenSource,
+    );
   }
-  // TODO(Bước 7): trả về ApiAdminRepository khi nối API thật.
-  throw UnimplementedError('API admin repository chưa được triển khai');
+  return MockAdminRepository();
 });
 
 /// Bộ lọc danh sách khách hàng (tìm kiếm, lọc, trang).
@@ -74,6 +93,39 @@ final adminAccountsProvider = FutureProvider.autoDispose
         q: query.q.isEmpty ? null : query.q,
         customerId: query.customerId,
         accountType: query.accountType,
+        status: query.status,
+        page: query.page,
+      );
+});
+
+final adminDashboardProvider =
+    FutureProvider.autoDispose<AdminDashboardModel>((ref) {
+  return ref.watch(adminRepositoryProvider).getDashboard();
+});
+
+/// Bộ lọc danh sách cổ phiếu.
+class AdminStockQuery extends Equatable {
+  final String q;
+  final String? exchange;
+  final String? status;
+  final int page;
+
+  const AdminStockQuery({
+    this.q = '',
+    this.exchange,
+    this.status,
+    this.page = 1,
+  });
+
+  @override
+  List<Object?> get props => [q, exchange, status, page];
+}
+
+final adminStocksProvider = FutureProvider.autoDispose
+    .family<AdminPage<AdminStockModel>, AdminStockQuery>((ref, query) {
+  return ref.watch(adminRepositoryProvider).listStocks(
+        q: query.q.isEmpty ? null : query.q,
+        exchange: query.exchange,
         status: query.status,
         page: query.page,
       );

@@ -45,6 +45,7 @@ class AdminStatusBadge extends StatelessWidget {
       case 'LOCKED':
       case 'SUSPENDED':
         return AppColors.priceDown;
+      case 'HALTED':
       case 'PENDING':
         return AppColors.priceRef;
       case 'ADMIN':
@@ -172,4 +173,69 @@ String formatVnd(String raw) {
     buffer.write(digits[i]);
   }
   return '${negative ? '-' : ''}$buffer ₫';
+}
+
+/// Hàng chip lọc cuộn ngang: "Tất cả" + các tùy chọn.
+class AdminFilterChips extends StatelessWidget {
+  final List<String> options;
+  final String? selected;
+  final ValueChanged<String?> onChanged;
+
+  const AdminFilterChips({
+    super.key,
+    required this.options,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          _chip('Tất cả', null),
+          for (final option in options)
+            _chip(AdminConstants.label(option), option),
+        ],
+      ),
+    );
+  }
+
+  Widget _chip(String label, String? value) {
+    final isSelected = selected == value;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: isSelected,
+        showCheckmark: false,
+        onSelected: (_) => onChanged(value),
+        selectedColor: AppColors.primary,
+        backgroundColor: AppColors.darkCard,
+        side: const BorderSide(color: AppColors.darkBorder),
+        labelStyle: TextStyle(
+          color: isSelected
+              ? const Color(0xFF052B19)
+              : AppColors.darkTextSecondary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+}
+
+/// Định dạng số từ chuỗi, ví dụ "25350.00" thành "25.350". Không qua double.
+String formatNumber(String raw) {
+  final intPart = raw.split('.').first;
+  final negative = intPart.startsWith('-');
+  final digits = negative ? intPart.substring(1) : intPart;
+  final buffer = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) buffer.write('.');
+    buffer.write(digits[i]);
+  }
+  return '${negative ? '-' : ''}$buffer';
 }

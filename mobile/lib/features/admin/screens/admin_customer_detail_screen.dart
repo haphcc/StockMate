@@ -9,6 +9,7 @@ import '../data/models/admin_customer_model.dart';
 import '../providers/admin_providers.dart';
 import '../widgets/admin_widgets.dart';
 import 'admin_customer_form_screen.dart';
+import 'admin_account_form_screen.dart';
 
 class AdminCustomerDetailScreen extends ConsumerStatefulWidget {
   final int customerId;
@@ -200,10 +201,28 @@ class _AdminCustomerDetailScreenState
     }
   }
 
+    Future<void> _openAccount(AdminCustomerModel c) async {
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => AdminAccountFormScreen(presetCustomer: c),
+      ),
+    );
+    if (created == true) _refresh();
+  }
+
+  Future<void> _editAccount(AdminAccountModel a) async {
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => AdminAccountFormScreen(account: a),
+      ),
+    );
+    if (changed == true) _refresh();
+  }
+
   @override
   Widget build(BuildContext context) {
     final async = ref.watch(adminCustomerDetailProvider(widget.customerId));
-    final selfId = ref.watch(authProvider).value?.id;
+    final selfEmail = ref.watch(authProvider).value?.email.toLowerCase();
 
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
@@ -219,7 +238,7 @@ class _AdminCustomerDetailScreenState
           message: e.toString(),
           onRetry: _refresh,
         ),
-        data: (c) => _buildBody(c, c.customerId == selfId),
+        data: (c) => _buildBody(c, c.email.toLowerCase() == selfEmail),
       ),
     );
   }
@@ -322,6 +341,11 @@ class _AdminCustomerDetailScreenState
           onTap: () => _edit(c, isSelf),
         ),
         _actionTile(
+          icon: Icons.add_card_rounded,
+          label: 'Mở tài khoản đầu tư',
+          onTap: () => _openAccount(c),
+        ),
+        _actionTile(
           icon: Icons.lock_reset_rounded,
           label: 'Đặt lại mật khẩu',
           onTap: () => _resetPassword(c),
@@ -354,6 +378,7 @@ class _AdminCustomerDetailScreenState
 
   Widget _accountTile(AdminAccountModel a) {
     return AdminCard(
+      onTap: () => _editAccount(a),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
