@@ -105,4 +105,79 @@ void main() {
 
     await repo.deleteNotification(broadcast.notificationId);
   });
+
+  test('danh mục nắm giữ CRUD, kiểm tra số lượng và đồng bộ tổng tài sản',
+      () async {
+    final repo = MockAdminRepository();
+    final before = await repo.listPortfolios(accountId: 1);
+    expect(before.total, 1);
+
+    expect(
+      () => repo.createPortfolio({
+        'account_id': 1,
+        'stock_symbol': 'ACB',
+        'quantity': 100,
+        'available_quantity': 80,
+        'blocked_quantity': 30,
+        'average_price': '25000',
+      }),
+      throwsA(isA<AdminException>()),
+    );
+
+    final created = await repo.createPortfolio({
+      'account_id': 1,
+      'stock_symbol': 'ACB',
+      'quantity': 1000,
+      'available_quantity': 1000,
+      'blocked_quantity': 0,
+      'average_price': '25000',
+    });
+    expect(created.stockSymbol, 'ACB');
+
+    final updated = await repo.updatePortfolio(
+      created.portfolioId,
+      {'average_price': '26000'},
+    );
+    expect(updated.averagePrice, '26000.00');
+
+    await repo.deletePortfolio(created.portfolioId);
+    expect((await repo.listPortfolios(accountId: 1)).total, 1);
+  });
+
+  test('lịch sử giá OHLCV CRUD và kiểm tra giá nến', () async {
+    final repo = MockAdminRepository();
+    final initial = await repo.listCandles(stockSymbol: 'ACB');
+    expect(initial.total, 60);
+
+    expect(
+      () => repo.createCandle({
+        'stock_symbol': 'ACB',
+        'recorded_date': '2026-12-01',
+        'open_price': '25000',
+        'close_price': '25500',
+        'highest_price': '24000',
+        'lowest_price': '26000',
+      }),
+      throwsA(isA<AdminException>()),
+    );
+
+    final created = await repo.createCandle({
+      'stock_symbol': 'ACB',
+      'recorded_date': '2026-12-01',
+      'open_price': '25000',
+      'close_price': '25500',
+      'highest_price': '26000',
+      'lowest_price': '24800',
+      'trading_volume': 500000,
+    });
+    expect(created.closePrice, '25500.00');
+
+    final updated = await repo.updateCandle(
+      created.candleId,
+      {'close_price': '25800'},
+    );
+    expect(updated.closePrice, '25800.00');
+
+    await repo.deleteCandle(created.candleId);
+  });
 }

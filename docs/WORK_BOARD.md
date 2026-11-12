@@ -10,7 +10,7 @@ Châu cập nhật khi người nhận đã thử bàn giao. Chọn một trạn
 | Me (TV3) | Bảng giá/chi tiết với JSON mẫu | Chưa làm | Nhận helper/network/router từ Sơn |
 | LB | CP1 auth/accounts; CP2 market/chart/watchlist/assets/portfolio; CP3 tích hợp tài sản và báo cáo | Chờ bàn giao | Backend đã kiểm thử PostgreSQL 16; [bằng chứng CP2/3](qa/TV4_CP2_CP3.md), [báo cáo LB](reports/TV4_LB_BACKEND.md). Chờ Sơn/Me/Châu xác nhận trên Flutter |
 | Tuệ | Đặt/khớp/hủy lệnh, giữ tiền/CP, T+2, thông báo | Chờ bàn giao | Đã xong TR-01/02/03 + 9 unit test pass; sẵn sàng bàn giao cho Me (TV3) & Châu (TV6) |
-| Châu | Thử setup, soạn case và dựng Tab Quản trị Admin trên mobile | Đang làm | Đã dựng DB/seed/API ([environment](qa/environment.md)); bug ghi ở [bugs](qa/bugs.md). Mobile Admin đã có Dashboard, Khách hàng, Tài khoản, Cổ phiếu, Sổ lệnh, Lịch sử GD (chỉ xem), Thông báo và `ApiAdminRepository` (`ADMIN_USE_API=true`); `flutter test` pass. Chờ làm tiếp: Danh mục/Tài sản, Lịch sử giá OHLCV, và nối `StoredTokenSource` khi Sơn xong FE-02. |
+| Châu | Thử setup, soạn case và dựng Tab Quản trị Admin trên mobile | Chờ bàn giao | Đã dựng DB/seed/API ([environment](qa/environment.md)); bug ghi ở [bugs](qa/bugs.md). Mobile Admin đã hoàn thành toàn bộ 8 phân hệ (Dashboard, Khách hàng, Tài khoản, Cổ phiếu, Sổ lệnh, Lịch sử GD, Danh mục nắm giữ, Lịch sử giá & Biểu đồ nến OHLCV, Thông báo) + `ApiAdminRepository` (`ADMIN_USE_API=true`); `flutter test` & `flutter analyze` sạch lỗi. Chờ Sơn hoàn thành FE-02 (login thật & `AppConfig.useMock = false`) để dùng `StoredTokenSource` mặc định. |
 
 | Chặng | Xong khi | Trạng thái |
 |---|---|---|

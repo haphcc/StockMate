@@ -5,6 +5,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
+import '../data/admin_constants.dart';
+import '../data/models/admin_account_model.dart';
 import '../data/models/admin_page.dart';
 import '../data/models/admin_portfolio_model.dart';
 import '../providers/admin_providers.dart';
@@ -22,11 +24,36 @@ class AdminPortfoliosScreen extends ConsumerStatefulWidget {
 class _AdminPortfoliosScreenState extends ConsumerState<AdminPortfoliosScreen> {
   final _searchController = TextEditingController();
   Timer? _debounce;
+  AdminAccountModel? _accountFilter;
   String _symbol = '';
   int _page = 1;
 
-  AdminPortfolioQuery get _query =>
-      AdminPortfolioQuery(stockSymbol: _symbol, page: _page);
+  AdminPortfolioQuery get _query => AdminPortfolioQuery(
+        accountId: _accountFilter?.accountId,
+        stockSymbol: _symbol,
+        page: _page,
+      );
+
+  Future<void> _pickAccountFilter() async {
+    final repo = ref.read(adminRepositoryProvider);
+    final picked = await showAdminSearchPicker<AdminAccountModel>(
+      context,
+      title: 'Lọc theo tài khoản',
+      searchHint: 'Tìm số tài khoản, tên hoặc email...',
+      loadItems: (q) async =>
+          (await repo.listAccounts(q: q.isEmpty ? null : q, pageSize: 50))
+              .items,
+      itemTitle: (a) =>
+          '${a.accountNumber} · ${AdminConstants.label(a.accountType)}',
+      itemSubtitle: (a) => a.customerName,
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _accountFilter = picked;
+        _page = 1;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -68,6 +95,16 @@ class _AdminPortfoliosScreenState extends ConsumerState<AdminPortfoliosScreen> {
         title: const Text('Danh mục nắm giữ'),
         actions: [
           IconButton(
+            tooltip: 'Lọc theo tài khoản',
+            icon: Icon(
+              _accountFilter == null
+                  ? Icons.filter_alt_outlined
+                  : Icons.filter_alt_rounded,
+              color: _accountFilter == null ? Colors.white : AppColors.primary,
+            ),
+            onPressed: _pickAccountFilter,
+          ),
+          IconButton(
             tooltip: 'Thêm dòng nắm giữ',
             icon: const Icon(Icons.add_circle_outline_rounded),
             onPressed: () => _openForm(),
@@ -88,6 +125,30 @@ class _AdminPortfoliosScreenState extends ConsumerState<AdminPortfoliosScreen> {
               onChanged: _onSearchChanged,
             ),
           ),
+          if (_accountFilter != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: InputChip(
+                  label: Text(
+                    'TK ${_accountFilter!.accountNumber} · '
+                    '${_accountFilter!.customerName}',
+                  ),
+                  labelStyle: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                  ),
+                  backgroundColor: AppColors.darkCard,
+                  side: const BorderSide(color: AppColors.primary),
+                  deleteIconColor: AppColors.darkTextSecondary,
+                  onDeleted: () => setState(() {
+                    _accountFilter = null;
+                    _page = 1;
+                  }),
+                ),
+              ),
+            ),
           Expanded(
             child: async.when(
               loading: () => const Center(child: CircularProgressIndicator()),

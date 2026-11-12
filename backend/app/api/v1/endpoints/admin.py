@@ -144,6 +144,43 @@ def _validate_stock_prices(
         )
 
 
+def _validate_portfolio_quantities(
+    quantity: int,
+    available_quantity: int,
+    blocked_quantity: int,
+) -> None:
+    """Ensure available + blocked quantities never exceed total quantity."""
+    if available_quantity + blocked_quantity > quantity:
+        raise ValidationException(
+            message="Số lượng khả dụng cộng số lượng phong tỏa không được vượt tổng số lượng.",
+            code="INVALID_PORTFOLIO_QUANTITY",
+        )
+
+
+def _validate_price_history_ohlc(
+    open_price: Decimal,
+    close_price: Decimal,
+    highest_price: Decimal,
+    lowest_price: Decimal,
+) -> None:
+    """Ensure OHLC candlestick prices satisfy low <= open, close <= high."""
+    if highest_price < lowest_price:
+        raise ValidationException(
+            message="Giá cao nhất phải lớn hơn hoặc bằng giá thấp nhất.",
+            code="INVALID_CANDLE_PRICES",
+        )
+    if open_price < lowest_price or open_price > highest_price:
+        raise ValidationException(
+            message="Giá mở cửa phải nằm trong khoảng từ giá thấp nhất đến cao nhất.",
+            code="INVALID_CANDLE_PRICES",
+        )
+    if close_price < lowest_price or close_price > highest_price:
+        raise ValidationException(
+            message="Giá đóng cửa phải nằm trong khoảng từ giá thấp nhất đến cao nhất.",
+            code="INVALID_CANDLE_PRICES",
+        )
+
+
 def _release_order_reservations(db: Session, order: StockOrder) -> None:
     """Release remaining blocked cash (BUY) or blocked shares (SELL) for an active order."""
     remaining_qty = max(order.quantity - order.filled_quantity, 0)
@@ -1620,6 +1657,10 @@ def create_portfolio_holding(
             code="PORTFOLIO_EXISTS",
         )
 
+    _validate_portfolio_quantities(
+        payload.quantity, payload.available_quantity, payload.blocked_quantity
+    )
+
     cur_val = payload.quantity * stock.current_price
     pl = cur_val - (payload.quantity * payload.average_price)
 
@@ -1634,6 +1675,8 @@ def create_portfolio_holding(
         profit_loss=pl,
     )
     db.add(p)
+    db.flush()
+    recalc_account_asset(db, p.account_id)
     db.commit()
     db.refresh(p)
 
@@ -1674,12 +1717,20 @@ def update_portfolio_holding(
     if p is None:
         raise NotFoundException(message="Không tìm thấy danh mục nắm giữ.")
 
-    if payload.quantity is not None:
-        p.quantity = payload.quantity
-    if payload.available_quantity is not None:
-        p.available_quantity = payload.available_quantity
-    if payload.blocked_quantity is not None:
-        p.blocked_quantity = payload.blocked_quantity
+    new_qty = payload.quantity if payload.quantity is not None else p.quantity
+    new_avail = (
+        payload.available_quantity
+        if payload.available_quantity is not None
+        else p.available_quantity
+    )
+    new_blocked = (
+        payload.blocked_quantity if payload.blocked_quantity is not None else p.blocked_quantity
+    )
+    _validate_portfolio_quantities(new_qty, new_avail, new_blocked)
+
+    p.quantity = new_qty
+    p.available_quantity = new_avail
+    p.blocked_quantity = new_blocked
     if payload.average_price is not None:
         p.average_price = payload.average_price
 
@@ -1688,6 +1739,8 @@ def update_portfolio_holding(
     p.current_value = cur_val
     p.profit_loss = pl
 
+    db.flush()
+    recalc_account_asset(db, p.account_id)
     db.commit()
     db.refresh(p)
 
@@ -1727,7 +1780,10 @@ def delete_portfolio_holding(
     if p is None:
         raise NotFoundException(message="Không tìm thấy danh mục cần xóa.")
 
+    account_id = p.account_id
     db.delete(p)
+    db.flush()
+    recalc_account_asset(db, account_id)
     db.commit()
 
 
@@ -1823,6 +1879,13 @@ def create_price_history(
             code="CANDLE_EXISTS",
         )
 
+    _validate_price_history_ohlc(
+        payload.open_price,
+        payload.close_price,
+        payload.highest_price,
+        payload.lowest_price,
+    )
+
     candle = StockPriceHistory(
         stock_id=stock.stock_id,
         recorded_date=payload.recorded_date,
@@ -1865,14 +1928,16 @@ def update_price_history(
     if candle is None:
         raise NotFoundException(message="Không tìm thấy phiên giá lịch sử.")
 
-    if payload.open_price is not None:
-        candle.open_price = payload.open_price
-    if payload.close_price is not None:
-        candle.close_price = payload.close_price
-    if payload.highest_price is not None:
-        candle.highest_price = payload.highest_price
-    if payload.lowest_price is not None:
-        candle.lowest_price = payload.lowest_price
+    new_open = payload.open_price if payload.open_price is not None else candle.open_price
+    new_close = payload.close_price if payload.close_price is not None else candle.close_price
+    new_high = payload.highest_price if payload.highest_price is not None else candle.highest_price
+    new_low = payload.lowest_price if payload.lowest_price is not None else candle.lowest_price
+    _validate_price_history_ohlc(new_open, new_close, new_high, new_low)
+
+    candle.open_price = new_open
+    candle.close_price = new_close
+    candle.highest_price = new_high
+    candle.lowest_price = new_low
     if payload.trading_volume is not None:
         candle.trading_volume = payload.trading_volume
     if payload.trading_value is not None:

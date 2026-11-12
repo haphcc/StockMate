@@ -18,7 +18,11 @@ String _money(Object? value) {
   return n == null ? '0.00' : n.toStringAsFixed(2);
 }
 
+String? _moneyOrNull(Object? value) => value == null ? null : _money(value);
+
 String _price2(num value) => value.toStringAsFixed(2);
+
+num _roundTo50(num value) => (value / 50).round() * 50;
 
 AdminStockModel _makeStock({
   required int id,
@@ -1430,12 +1434,26 @@ class MockAdminRepository implements AdminRepository {
     return _valued(p, price);
   }
 
-  // Giống backend: ràng buộc DB bị vi phạm sẽ bị báo nhầm là lỗi cơ sở dữ liệu.
+  void _recalcMockAccountTotalAsset(int accountId) {
+    final accIdx = _accounts.indexWhere((a) => a.accountId == accountId);
+    if (accIdx < 0) return;
+    final acc = _accounts[accIdx];
+    final portfolioTotal = _portfolios
+        .where((p) => p.accountId == accountId)
+        .map(_portfolioView)
+        .fold<num>(0, (s, p) => s + (num.tryParse(p.currentValue) ?? 0));
+    final cash = num.tryParse(acc.cashBalance) ?? 0;
+    final blocked = num.tryParse(acc.blockedBalance) ?? 0;
+    _accounts[accIdx] = acc.copyWith(
+      totalAssetValue: _price2(cash + blocked + portfolioTotal),
+    );
+  }
+
   void _checkHolding(int quantity, int available, int blocked) {
     if (available + blocked > quantity) {
       throw const AdminException(
-        'Không thể truy cập cơ sở dữ liệu.',
-        code: 'DATABASE_UNAVAILABLE',
+        'Số lượng khả dụng cộng số lượng phong tỏa không được vượt tổng số lượng.',
+        code: 'INVALID_PORTFOLIO_QUANTITY',
       );
     }
   }
@@ -1505,6 +1523,7 @@ class MockAdminRepository implements AdminRepository {
       averagePrice: _money(data['average_price']),
     );
     _portfolios.add(holding);
+    _recalcMockAccountTotalAsset(account.accountId);
     return _portfolioView(holding);
   }
 
@@ -1533,6 +1552,7 @@ class MockAdminRepository implements AdminRepository {
       averagePrice: _moneyOrNull(data['average_price']),
     );
     _portfolios[index] = updated;
+    _recalcMockAccountTotalAsset(updated.accountId);
     return _portfolioView(updated);
   }
 
@@ -1546,7 +1566,9 @@ class MockAdminRepository implements AdminRepository {
         code: 'NOT_FOUND',
       );
     }
+    final accountId = _portfolios[index].accountId;
     _portfolios.removeAt(index);
+    _recalcMockAccountTotalAsset(accountId);
   }
 
     // ---------------- Lịch sử giá (nến) ----------------
@@ -1562,14 +1584,27 @@ class MockAdminRepository implements AdminRepository {
     return index;
   }
 
-  // Giống backend: cao nhất nhỏ hơn thấp nhất bị báo nhầm là lỗi cơ sở dữ liệu.
-  void _checkCandle(String high, String low) {
+  void _checkCandle(String open, String close, String high, String low) {
+    final o = num.tryParse(open) ?? 0;
+    final c = num.tryParse(close) ?? 0;
     final h = num.tryParse(high) ?? 0;
     final l = num.tryParse(low) ?? 0;
     if (h < l) {
       throw const AdminException(
-        'Không thể truy cập cơ sở dữ liệu.',
-        code: 'DATABASE_UNAVAILABLE',
+        'Giá cao nhất phải lớn hơn hoặc bằng giá thấp nhất.',
+        code: 'INVALID_CANDLE_PRICES',
+      );
+    }
+    if (o < l || o > h) {
+      throw const AdminException(
+        'Giá mở cửa phải nằm trong khoảng từ giá thấp nhất đến cao nhất.',
+        code: 'INVALID_CANDLE_PRICES',
+      );
+    }
+    if (c < l || c > h) {
+      throw const AdminException(
+        'Giá đóng cửa phải nằm trong khoảng từ giá thấp nhất đến cao nhất.',
+        code: 'INVALID_CANDLE_PRICES',
       );
     }
   }
@@ -1609,16 +1644,18 @@ class MockAdminRepository implements AdminRepository {
         code: 'CANDLE_EXISTS',
       );
     }
+    final open = _money(data['open_price']);
+    final close = _money(data['close_price']);
     final high = _money(data['highest_price']);
     final low = _money(data['lowest_price']);
-    _checkCandle(high, low);
+    _checkCandle(open, close, high, low);
     final candle = AdminCandleModel(
       candleId: _nextCandleId++,
       stockId: _stocks[stockIndex].stockId,
       stockSymbol: symbol,
       recordedDate: date,
-      openPrice: _money(data['open_price']),
-      closePrice: _money(data['close_price']),
+      openPrice: open,
+      closePrice: close,
       highestPrice: high,
       lowestPrice: low,
       tradingVolume: data['trading_volume'] as int? ?? 0,
@@ -1643,7 +1680,12 @@ class MockAdminRepository implements AdminRepository {
       tradingVolume: data['trading_volume'] as int?,
       tradingValue: _moneyOrNull(data['trading_value']),
     );
-    _checkCandle(updated.highestPrice, updated.lowestPrice);
+    _checkCandle(
+      updated.openPrice,
+      updated.closePrice,
+      updated.highestPrice,
+      updated.lowestPrice,
+    );
     _candles[index] = updated;
     return updated;
   }

@@ -769,3 +769,126 @@ def test_admin_cancel_order_releases_reservations(client: TestClient, admin_toke
     finally:
         client.delete(f"/api/admin/customers/{cid}", headers=headers)
         client.delete(f"/api/admin/stocks/{stock_id}", headers=headers)
+
+
+def test_portfolios_validation_and_asset_sync(client: TestClient, admin_token: str) -> None:
+    """Reject available + blocked > quantity (422) and sync account total_asset_value."""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    suffix = uuid.uuid4().hex[:6].upper()
+    email = f"port_{suffix.lower()}@example.com"
+    cust_res = client.post(
+        "/api/admin/customers",
+        json={
+            "full_name": "Portfolio Sync User",
+            "email": email,
+            "phone_number": f"097{uuid.uuid4().int % 10000000:07d}",
+            "password": "Password@123",
+            "initial_cash_balance": "100000000.00",
+        },
+        headers=headers,
+    )
+    assert cust_res.status_code == 201, cust_res.text
+    cid = cust_res.json()["customer_id"]
+    acc_res = client.get(f"/api/admin/accounts?customer_id={cid}", headers=headers)
+    acc_id = acc_res.json()["items"][0]["account_id"]
+
+    try:
+        # Invalid create: available + blocked > quantity -> 422 instead of 503
+        bad = client.post(
+            "/api/admin/portfolios",
+            json={
+                "account_id": acc_id,
+                "stock_symbol": "FPT",
+                "quantity": 100,
+                "available_quantity": 80,
+                "blocked_quantity": 30,
+                "average_price": "100000.00",
+            },
+            headers=headers,
+        )
+        assert bad.status_code == 422
+        assert bad.json()["error"]["code"] == "INVALID_PORTFOLIO_QUANTITY"
+
+        # Valid create updates total_asset_value
+        ok = client.post(
+            "/api/admin/portfolios",
+            json={
+                "account_id": acc_id,
+                "stock_symbol": "FPT",
+                "quantity": 100,
+                "available_quantity": 100,
+                "blocked_quantity": 0,
+                "average_price": "100000.00",
+            },
+            headers=headers,
+        )
+        assert ok.status_code == 201, ok.text
+        pid = ok.json()["portfolio_id"]
+        cur_val = Decimal(ok.json()["current_value"])
+
+        acc_after_create = client.get(f"/api/admin/accounts/{acc_id}", headers=headers).json()
+        assert Decimal(acc_after_create["total_asset_value"]) == Decimal("100000000.00") + cur_val
+
+        # Invalid update: available > quantity -> 422
+        bad_upd = client.put(
+            f"/api/admin/portfolios/{pid}",
+            json={"available_quantity": 150},
+            headers=headers,
+        )
+        assert bad_upd.status_code == 422
+
+        # Delete restores account total_asset_value to cash only
+        del_res = client.delete(f"/api/admin/portfolios/{pid}", headers=headers)
+        assert del_res.status_code == 204
+        acc_after_del = client.get(f"/api/admin/accounts/{acc_id}", headers=headers).json()
+        assert acc_after_del["total_asset_value"] == "100000000.00"
+    finally:
+        client.delete(f"/api/admin/customers/{cid}", headers=headers)
+
+
+def test_price_history_ohlc_validation(client: TestClient, admin_token: str) -> None:
+    """Reject invalid OHLC relationships (422) on create and update."""
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    test_date = "2018-01-15"
+
+    bad_hl = client.post(
+        "/api/admin/price-history",
+        json={
+            "stock_symbol": "FPT",
+            "recorded_date": test_date,
+            "open_price": "45000.00",
+            "close_price": "45500.00",
+            "highest_price": "44000.00",
+            "lowest_price": "46000.00",
+            "trading_volume": 1000,
+        },
+        headers=headers,
+    )
+    assert bad_hl.status_code == 422
+    assert bad_hl.json()["error"]["code"] == "INVALID_CANDLE_PRICES"
+
+    created = client.post(
+        "/api/admin/price-history",
+        json={
+            "stock_symbol": "FPT",
+            "recorded_date": test_date,
+            "open_price": "45000.00",
+            "close_price": "46000.00",
+            "highest_price": "46500.00",
+            "lowest_price": "44500.00",
+            "trading_volume": 1000,
+        },
+        headers=headers,
+    )
+    assert created.status_code == 201, created.text
+    hid = created.json()["price_history_id"]
+    try:
+        bad_upd = client.put(
+            f"/api/admin/price-history/{hid}",
+            json={"open_price": "47000.00"},
+            headers=headers,
+        )
+        assert bad_upd.status_code == 422
+        assert bad_upd.json()["error"]["code"] == "INVALID_CANDLE_PRICES"
+    finally:
+        client.delete(f"/api/admin/price-history/{hid}", headers=headers)

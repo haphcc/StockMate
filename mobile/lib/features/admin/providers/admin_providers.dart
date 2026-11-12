@@ -212,18 +212,24 @@ final adminTransactionsProvider = FutureProvider.autoDispose
 
 /// Bộ lọc danh mục nắm giữ.
 class AdminPortfolioQuery extends Equatable {
+  final int? accountId;
   final String stockSymbol;
   final int page;
 
-  const AdminPortfolioQuery({this.stockSymbol = '', this.page = 1});
+  const AdminPortfolioQuery({
+    this.accountId,
+    this.stockSymbol = '',
+    this.page = 1,
+  });
 
   @override
-  List<Object?> get props => [stockSymbol, page];
+  List<Object?> get props => [accountId, stockSymbol, page];
 }
 
 final adminPortfoliosProvider = FutureProvider.autoDispose
     .family<AdminPage<AdminPortfolioModel>, AdminPortfolioQuery>((ref, query) {
   return ref.watch(adminRepositoryProvider).listPortfolios(
+        accountId: query.accountId,
         stockSymbol: query.stockSymbol.isEmpty ? null : query.stockSymbol,
         page: query.page,
       );

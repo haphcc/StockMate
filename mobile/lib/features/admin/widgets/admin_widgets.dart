@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../data/admin_constants.dart';
@@ -251,4 +252,208 @@ String formatDateTime(String iso) {
   String two(int n) => n.toString().padLeft(2, '0');
   return '${two(t.day)}/${two(t.month)}/${t.year} '
       '${two(t.hour)}:${two(t.minute)}';
+}
+
+/// Bottom sheet chọn phần tử có thanh tìm kiếm dùng chung cho Admin.
+Future<T?> showAdminSearchPicker<T>(
+  BuildContext context, {
+  required String title,
+  required String searchHint,
+  required Future<List<T>> Function(String query) loadItems,
+  required String Function(T item) itemTitle,
+  required String Function(T item) itemSubtitle,
+}) {
+  return showModalBottomSheet<T>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: AppColors.darkSurface,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (_) => _AdminSearchPickerSheet<T>(
+      title: title,
+      searchHint: searchHint,
+      loadItems: loadItems,
+      itemTitle: itemTitle,
+      itemSubtitle: itemSubtitle,
+    ),
+  );
+}
+
+class _AdminSearchPickerSheet<T> extends StatefulWidget {
+  final String title;
+  final String searchHint;
+  final Future<List<T>> Function(String query) loadItems;
+  final String Function(T item) itemTitle;
+  final String Function(T item) itemSubtitle;
+
+  const _AdminSearchPickerSheet({
+    required this.title,
+    required this.searchHint,
+    required this.loadItems,
+    required this.itemTitle,
+    required this.itemSubtitle,
+  });
+
+  @override
+  State<_AdminSearchPickerSheet<T>> createState() =>
+      _AdminSearchPickerSheetState<T>();
+}
+
+class _AdminSearchPickerSheetState<T>
+    extends State<_AdminSearchPickerSheet<T>> {
+  final _controller = TextEditingController();
+  Timer? _debounce;
+  List<T> _items = const [];
+  bool _loading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetch('');
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _fetch(String query) async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final result = await widget.loadItems(query.trim());
+      if (!mounted) return;
+      setState(() {
+        _items = result;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  void _onSearchChanged(String value) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) _fetch(value);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.72,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      widget.title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      color: AppColors.darkTextMuted,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: TextField(
+                controller: _controller,
+                onChanged: _onSearchChanged,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: widget.searchHint,
+                  hintStyle: const TextStyle(color: AppColors.darkTextMuted),
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: AppColors.darkTextMuted,
+                  ),
+                  filled: true,
+                  fillColor: AppColors.darkCard,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.darkBorder),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: const BorderSide(color: AppColors.darkBorder),
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Text(
+                              _error!,
+                              textAlign: TextAlign.center,
+                              style:
+                                  const TextStyle(color: AppColors.priceDown),
+                            ),
+                          ),
+                        )
+                      : _items.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'Không tìm thấy kết quả phù hợp',
+                                style:
+                                    TextStyle(color: AppColors.darkTextMuted),
+                              ),
+                            )
+                          : ListView.builder(
+                              itemCount: _items.length,
+                              itemBuilder: (_, i) {
+                                final item = _items[i];
+                                return ListTile(
+                                  title: Text(
+                                    widget.itemTitle(item),
+                                    style: const TextStyle(color: Colors.white),
+                                  ),
+                                  subtitle: Text(
+                                    widget.itemSubtitle(item),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: AppColors.darkTextSecondary,
+                                    ),
+                                  ),
+                                  onTap: () => Navigator.pop(context, item),
+                                );
+                              },
+                            ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

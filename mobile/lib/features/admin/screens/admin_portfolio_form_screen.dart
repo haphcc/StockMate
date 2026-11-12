@@ -72,34 +72,18 @@ class _AdminPortfolioFormScreenState
 
   Future<void> _pickAccount() async {
     final repo = ref.read(adminRepositoryProvider);
-    try {
-      final page = await repo.listAccounts(pageSize: 100);
-      if (!mounted) return;
-      final picked = await showModalBottomSheet<AdminAccountModel>(
-        context: context,
-        backgroundColor: AppColors.darkSurface,
-        builder: (sheetContext) => ListView(
-          children: [
-            for (final a in page.items)
-              ListTile(
-                title: Text(
-                  '${a.accountNumber} · ${AdminConstants.label(a.accountType)}',
-                  style: const TextStyle(color: Colors.white),
-                ),
-                subtitle: Text(
-                  a.customerName,
-                  style: const TextStyle(color: AppColors.darkTextSecondary),
-                ),
-                onTap: () => Navigator.pop(sheetContext, a),
-              ),
-          ],
-        ),
-      );
-      if (picked != null && mounted) setState(() => _account = picked);
-    } catch (e) {
-      if (!mounted) return;
-      showAdminSnack(context, e.toString(), error: true);
-    }
+    final picked = await showAdminSearchPicker<AdminAccountModel>(
+      context,
+      title: 'Chọn tài khoản đầu tư',
+      searchHint: 'Tìm số tài khoản, tên hoặc email...',
+      loadItems: (q) async =>
+          (await repo.listAccounts(q: q.isEmpty ? null : q, pageSize: 50))
+              .items,
+      itemTitle: (a) =>
+          '${a.accountNumber} · ${AdminConstants.label(a.accountType)}',
+      itemSubtitle: (a) => a.customerName,
+    );
+    if (picked != null && mounted) setState(() => _account = picked);
   }
 
   Future<void> _submit() async {

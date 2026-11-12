@@ -164,4 +164,93 @@ void main() {
       ),
     );
   });
+
+  test('listPortfolios truyền account_id và stock_symbol lên API', () async {
+    final tokenSource = _FakeTokenSource();
+    RequestOptions? captured;
+    final dio = Dio(BaseOptions(baseUrl: 'http://test.local'))
+      ..httpClientAdapter = _FakeAdapter((options) async {
+        captured = options;
+        return _jsonResponse({
+          'items': [
+            {
+              'portfolio_id': 7,
+              'account_id': 2,
+              'account_number': '068C000002',
+              'customer_name': 'TRAN THI BICH',
+              'stock_id': 1,
+              'stock_symbol': 'ACB',
+              'company_name': 'Ngân hàng TMCP Á Châu',
+              'quantity': 1000,
+              'available_quantity': 1000,
+              'blocked_quantity': 0,
+              'average_price': '24000.00',
+              'current_value': '25500000.00',
+              'profit_loss': '1500000.00',
+              'profit_loss_percent': '6.25',
+            },
+          ],
+          'page': 1,
+          'page_size': 20,
+          'total': 1,
+        });
+      });
+
+    final repo = ApiAdminRepository(
+      baseUrl: 'http://test.local',
+      tokenSource: tokenSource,
+      dio: dio,
+    );
+
+    final page = await repo.listPortfolios(accountId: 2, stockSymbol: 'ACB');
+    expect(page.total, 1);
+    expect(page.items.first.stockSymbol, 'ACB');
+    expect(captured?.queryParameters['account_id'], 2);
+    expect(captured?.queryParameters['stock_symbol'], 'ACB');
+  });
+
+  test('createCandle gửi payload và phân giải phản hồi nến OHLCV', () async {
+    final tokenSource = _FakeTokenSource();
+    RequestOptions? captured;
+    final dio = Dio(BaseOptions(baseUrl: 'http://test.local'))
+      ..httpClientAdapter = _FakeAdapter((options) async {
+        captured = options;
+        return _jsonResponse(
+          {
+            'price_history_id': 99,
+            'stock_id': 1,
+            'stock_symbol': 'ACB',
+            'recorded_date': '2026-11-11',
+            'open_price': '25000.00',
+            'close_price': '25600.00',
+            'highest_price': '25800.00',
+            'lowest_price': '24900.00',
+            'trading_volume': 120000,
+            'trading_value': '3060000000.00',
+          },
+          statusCode: 201,
+        );
+      });
+
+    final repo = ApiAdminRepository(
+      baseUrl: 'http://test.local',
+      tokenSource: tokenSource,
+      dio: dio,
+    );
+
+    final candle = await repo.createCandle({
+      'stock_symbol': 'ACB',
+      'recorded_date': '2026-11-11',
+      'open_price': '25000',
+      'close_price': '25600',
+      'highest_price': '25800',
+      'lowest_price': '24900',
+      'trading_volume': 120000,
+    });
+    expect(candle.candleId, 99);
+    expect(candle.stockSymbol, 'ACB');
+    expect(candle.isUp, isTrue);
+    expect(captured?.path, '/api/admin/price-history');
+    expect(captured?.method, 'POST');
+  });
 }

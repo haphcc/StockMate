@@ -24,44 +24,20 @@ class _AdminPriceHistoryScreenState
 
   Future<void> _pickStock() async {
     final repo = ref.read(adminRepositoryProvider);
-    try {
-      final page = await repo.listStocks(pageSize: 100);
-      if (!mounted) return;
-      final picked = await showModalBottomSheet<AdminStockModel>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: AppColors.darkSurface,
-        builder: (sheetContext) => SizedBox(
-          height: MediaQuery.of(sheetContext).size.height * 0.7,
-          child: ListView(
-            children: [
-              for (final s in page.items)
-                ListTile(
-                  title: Text(
-                    '${s.stockSymbol} · ${s.exchange}',
-                    style: const TextStyle(color: Colors.white),
-                  ),
-                  subtitle: Text(
-                    s.companyName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: AppColors.darkTextSecondary),
-                  ),
-                  onTap: () => Navigator.pop(sheetContext, s),
-                ),
-            ],
-          ),
-        ),
-      );
-      if (picked != null && mounted) {
-        setState(() {
-          _stock = picked;
-          _page = 1;
-        });
-      }
-    } catch (e) {
-      if (!mounted) return;
-      showAdminSnack(context, e.toString(), error: true);
+    final picked = await showAdminSearchPicker<AdminStockModel>(
+      context,
+      title: 'Chọn mã cổ phiếu',
+      searchHint: 'Tìm mã cổ phiếu hoặc tên công ty...',
+      loadItems: (q) async =>
+          (await repo.listStocks(q: q.isEmpty ? null : q, pageSize: 50)).items,
+      itemTitle: (s) => '${s.stockSymbol} · ${s.exchange}',
+      itemSubtitle: (s) => s.companyName,
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        _stock = picked;
+        _page = 1;
+      });
     }
   }
 
