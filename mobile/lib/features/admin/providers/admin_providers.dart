@@ -28,7 +28,7 @@ final adminRepositoryProvider = Provider<AdminRepository>((ref) {
           email: _devEmail,
           password: _devPassword,
         )
-      : StoredTokenSource();
+      : StoredTokenSource(baseUrl: AppConfig.apiBaseUrl);
   return ApiAdminRepository(
     baseUrl: AppConfig.apiBaseUrl,
     tokenSource: tokenSource,
