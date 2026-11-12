@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/config/app_config.dart';
 import '../data/admin_repository.dart';
-import '../data/mock_admin_repository.dart';
 import '../data/models/admin_account_model.dart';
 import '../data/models/admin_customer_model.dart';
 import '../data/models/admin_page.dart';
@@ -16,27 +15,24 @@ import '../data/models/admin_transaction_model.dart';
 import '../data/models/admin_portfolio_model.dart';
 import '../data/models/admin_candle_model.dart';
 
-// Bật bằng cờ lúc chạy, không ghi mật khẩu vào code:
-// --dart-define=ADMIN_USE_API=true --dart-define=ADMIN_DEV_EMAIL=... --dart-define=ADMIN_DEV_PASSWORD=...
-const _adminUseApi = bool.fromEnvironment('ADMIN_USE_API');
+// Admin luôn gọi backend FastAPI -> PostgreSQL (đã bỏ mock).
+// Tạm thời tự đăng nhập bằng tài khoản truyền lúc chạy:
+// --dart-define=ADMIN_DEV_EMAIL=... --dart-define=ADMIN_DEV_PASSWORD=...
 const _devEmail = String.fromEnvironment('ADMIN_DEV_EMAIL');
 const _devPassword = String.fromEnvironment('ADMIN_DEV_PASSWORD');
 
 final adminRepositoryProvider = Provider<AdminRepository>((ref) {
-  if (_adminUseApi || !AppConfig.useMock) {
-    final AdminTokenSource tokenSource = _devEmail.isNotEmpty
-        ? DevLoginTokenSource(
-            baseUrl: AppConfig.apiBaseUrl,
-            email: _devEmail,
-            password: _devPassword,
-          )
-        : StoredTokenSource(baseUrl: AppConfig.apiBaseUrl);
-    return ApiAdminRepository(
-      baseUrl: AppConfig.apiBaseUrl,
-      tokenSource: tokenSource,
-    );
-  }
-  return MockAdminRepository();
+  final AdminTokenSource tokenSource = _devEmail.isNotEmpty
+      ? DevLoginTokenSource(
+          baseUrl: AppConfig.apiBaseUrl,
+          email: _devEmail,
+          password: _devPassword,
+        )
+      : StoredTokenSource();
+  return ApiAdminRepository(
+    baseUrl: AppConfig.apiBaseUrl,
+    tokenSource: tokenSource,
+  );
 });
 
 /// Bộ lọc danh sách khách hàng (tìm kiếm, lọc, trang).
