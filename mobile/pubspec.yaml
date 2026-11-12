@@ -29,6 +29,7 @@ dependencies:
 
   # Dinh dang so / ngay theo locale vi_VN
   intl: ^0.20.3
+  qr_flutter: ^4.1.0
 
   # Tien ich
   equatable: ^2.1.0

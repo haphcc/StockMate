@@ -30,13 +30,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _login() async {
-    // If empty, fill default for easy testing
-    if (_accountController.text.trim().isEmpty) {
-      _accountController.text = '086C123456';
-    }
-    if (_passwordController.text.trim().isEmpty) {
-      _passwordController.text = '12345678';
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     try {
       await ref.read(authProvider.notifier).login(
@@ -114,6 +108,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   labelText: 'Tài khoản / SĐT / CCCD',
                   hintText: 'Nhập 09xx, CCCD hoặc mã 086C...',
                   controller: _accountController,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) => value == null || !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim()) ? 'Email không hợp lệ' : null,
                   prefixIcon: const Icon(
                     Icons.badge_outlined,
                     color: AppColors.darkTextSecondary,
@@ -127,6 +123,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   labelText: 'Mật khẩu PIN / Đăng nhập',
                   hintText: '••••••••••••',
                   controller: _passwordController,
+                  validator: (value) => value == null || value.length < 8 ? 'Mật khẩu tối thiểu 8 ký tự' : null,
                   obscureText: _obscurePassword,
                   prefixIcon: const Icon(
                     Icons.lock_outline_rounded,

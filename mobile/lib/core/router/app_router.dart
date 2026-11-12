@@ -7,6 +7,8 @@ import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/home/screens/home_shell.dart';
 import '../../features/home/screens/dashboard_screen.dart';
+import '../../features/home/screens/deposit_screen.dart';
+import '../../features/home/screens/settings_screen.dart';
 import '../../features/order/screens/order_book_screen.dart';
 import '../../features/order/screens/place_order_screen.dart';
 import '../../features/portfolio/screens/portfolio_screen.dart';
@@ -57,6 +59,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
       ),
+      GoRoute(path: '/deposit', builder: (context, state) => const DepositScreen()),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return HomeShell(navigationShell: navigationShell);
@@ -68,6 +71,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/home/overview',
                 builder: (context, state) => const DashboardScreen(),
+              ),
+              GoRoute(
+                path: '/home/settings',
+                builder: (context, state) => const SettingsScreen(),
               ),
             ],
           ),
