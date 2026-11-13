@@ -2,6 +2,7 @@ import 'market_repository.dart';
 import '../models/stock_model.dart';
 import '../models/account_model.dart';
 import '../models/portfolio_model.dart';
+import '../../core/utils/money.dart';
 
 class MockMarketRepository implements MarketRepository {
   @override
@@ -38,8 +39,8 @@ class MockMarketRepository implements MarketRepository {
     return const AccountModel(
       accountId: 1,
       accountNumber: '086C123456',
-      cashBalance: 1000000000,
-      totalAssetValue: 1000000000,
+      accountType: 'CASH',
+      status: 'ACTIVE',
     );
   }
 
@@ -49,27 +50,37 @@ class MockMarketRepository implements MarketRepository {
     return [
       const PortfolioModel(
         portfolioId: 1,
-        stock: StockModel(
-          id: 2, symbol: 'FPT', companyName: 'CTCP FPT', exchange: 'HOSE',
-          currentPrice: 112000, referencePrice: 110000, ceilingPrice: 117700, floorPrice: 102300, totalVolume: 2500000,
-        ),
+        accountId: 1,
+        stockId: 2,
+        stockSymbol: 'FPT',
+        companyName: 'CTCP FPT',
+        exchange: 'HOSE',
         quantity: 1000,
         availableQuantity: 1000,
-        averagePrice: 100000,
-        currentValue: 112000000,
-        profitLoss: 12000000, // +12%
+        blockedQuantity: 0,
+        pendingQuantity: 0,
+        averagePrice: Money.fromCents(10000000),
+        marketPrice: Money.fromCents(11200000),
+        currentValue: Money.fromCents(11200000000),
+        profitLoss: Money.fromCents(1200000000), // +12%
+        profitLossPercent: Money.fromCents(1200),
       ),
       const PortfolioModel(
         portfolioId: 2,
-        stock: StockModel(
-          id: 3, symbol: 'HPG', companyName: 'CTCP Tập đoàn Hòa Phát', exchange: 'HOSE',
-          currentPrice: 28500, referencePrice: 29000, ceilingPrice: 31000, floorPrice: 27000, totalVolume: 15400000,
-        ),
+        accountId: 1,
+        stockId: 3,
+        stockSymbol: 'HPG',
+        companyName: 'CTCP Tập đoàn Hòa Phát',
+        exchange: 'HOSE',
         quantity: 3000,
         availableQuantity: 3000,
-        averagePrice: 30000,
-        currentValue: 85500000,
-        profitLoss: -4500000, // -5%
+        blockedQuantity: 0,
+        pendingQuantity: 0,
+        averagePrice: Money.fromCents(3000000),
+        marketPrice: Money.fromCents(2850000),
+        currentValue: Money.fromCents(8550000000),
+        profitLoss: Money.fromCents(-450000000), // -5%
+        profitLossPercent: Money.fromCents(-500),
       ),
     ];
   }

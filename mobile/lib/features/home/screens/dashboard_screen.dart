@@ -1,9 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/sparkline_chart.dart';
 import '../../../core/widgets/stockmate_brand.dart';
 import '../providers/dashboard_provider.dart';
+import '../../../providers/selected_account_provider.dart';
+import '../../auth/providers/auth_provider.dart';
+
+enum _ProfileAction { settings, logout }
+
+class _ProfileMenuItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _ProfileMenuItem({
+    required this.icon,
+    required this.label,
+    this.color = Colors.white,
+  });
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(width: 12),
+          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+        ],
+      );
+}
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -48,7 +74,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 const SizedBox(height: 14),
 
                 // 2. Virtual Balance Bar
-                _buildVirtualBalanceBar(),
+                _buildVirtualBalanceBar(dashboardAsync.value),
                 const SizedBox(height: 18),
 
                 // 3. Section: Live Indices HOSE / HNX
@@ -100,6 +126,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   // --- 1. Top Header Bar ---
   Widget _buildTopHeader() {
+    final user = ref.watch(authProvider).value;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -144,24 +171,65 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ],
             ),
             const SizedBox(width: 8),
-            // User Avatar
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5),
+            PopupMenuButton<_ProfileAction>(
+              tooltip: 'Tài khoản',
+              color: AppColors.darkCard,
+              elevation: 10,
+              offset: const Offset(0, 46),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+                side: const BorderSide(color: AppColors.darkCardBorder),
               ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(17),
-                child: Image.network(
-                  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: const Color(0xFF1E293B),
-                    child: const Icon(Icons.person, color: Colors.white70, size: 20),
+              onSelected: (action) => _handleProfileAction(action),
+              itemBuilder: (context) => [
+                PopupMenuItem<_ProfileAction>(
+                  enabled: false,
+                  height: 72,
+                  child: Row(
+                    children: [
+                      _buildAvatar(user?.avatarUrl, size: 42),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              user?.fullName.isNotEmpty == true ? user!.fullName : 'Tài khoản StockMate',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              user?.email ?? '',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 12),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
+                const PopupMenuDivider(),
+                const PopupMenuItem<_ProfileAction>(
+                  value: _ProfileAction.settings,
+                  child: _ProfileMenuItem(icon: Icons.settings_outlined, label: 'Cài đặt'),
+                ),
+                const PopupMenuItem<_ProfileAction>(
+                  value: _ProfileAction.logout,
+                  child: _ProfileMenuItem(
+                    icon: Icons.logout_rounded,
+                    label: 'Đăng xuất',
+                    color: AppColors.priceDown,
+                  ),
+                ),
+              ],
+              child: Padding(
+                padding: const EdgeInsets.all(5),
+                child: _buildAvatar(user?.avatarUrl, size: 34),
               ),
             ),
           ],
@@ -170,8 +238,70 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  Widget _buildAvatar(String? avatarUrl, {required double size}) {
+    final imageUrl = avatarUrl?.trim();
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5),
+      ),
+      child: ClipOval(
+        child: imageUrl == null || imageUrl.isEmpty
+            ? const ColoredBox(
+                color: Color(0xFF1E293B),
+                child: Center(child: Icon(Icons.person, color: Colors.white70, size: 20)),
+              )
+            : Image.network(
+                imageUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => const ColoredBox(
+                  color: Color(0xFF1E293B),
+                  child: Center(child: Icon(Icons.person, color: Colors.white70, size: 20)),
+                ),
+              ),
+      ),
+    );
+  }
+
+  Future<void> _handleProfileAction(_ProfileAction action) async {
+    if (action == _ProfileAction.settings) {
+      context.push('/home/settings');
+      return;
+    }
+
+    final shouldLogout = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.darkCard,
+        title: const Text('Đăng xuất', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'Bạn có chắc muốn đăng xuất khỏi StockMate?',
+          style: TextStyle(color: AppColors.darkTextSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('Đăng xuất', style: TextStyle(color: AppColors.priceDown)),
+          ),
+        ],
+      ),
+    );
+    if (shouldLogout != true || !mounted) return;
+
+    await ref.read(authProvider.notifier).logout();
+    if (mounted) context.go('/login');
+  }
+
   // --- 2. Virtual Balance Bar ---
-  Widget _buildVirtualBalanceBar() {
+  Widget _buildVirtualBalanceBar(DashboardData? data) {
+    final accountLabel = data?.account.accountNumber ?? 'Đang tải...';
+    final cashLabel = data?.assets.cashBalance.formatVnd() ?? 'Đang tải...';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
@@ -191,19 +321,19 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
               const SizedBox(width: 8),
               RichText(
-                text: const TextSpan(
+                text: TextSpan(
                   children: [
                     TextSpan(
-                      text: 'Tài khoản Giả lập: ',
-                      style: TextStyle(
+                      text: 'Tài khoản $accountLabel: ',
+                      style: const TextStyle(
                         color: AppColors.darkTextSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
                       ),
                     ),
                     TextSpan(
-                      text: '1,000,000,000 đ',
-                      style: TextStyle(
+                      text: cashLabel,
+                      style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -216,6 +346,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           Row(
             children: [
+              IconButton(
+                tooltip: 'Nạp tiền',
+                icon: const Icon(Icons.add_circle_outline, color: AppColors.primary, size: 20),
+                onPressed: () => context.push('/deposit'),
+              ),
               const Text(
                 'Thị Trường',
                 style: TextStyle(
@@ -225,6 +360,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
               const SizedBox(width: 6),
+              if (data != null)
+                PopupMenuButton<int>(
+                  icon: const Icon(Icons.swap_horiz, color: AppColors.primary, size: 19),
+                  onSelected: (id) {
+                    ref.read(selectedAccountProvider.notifier).select(id);
+                    ref.invalidate(dashboardProvider);
+                  },
+                  itemBuilder: (context) => data.accounts
+                      .map((a) => PopupMenuItem<int>(value: a.accountId, child: Text(a.accountNumber)))
+                      .toList(),
+                ),
               Container(
                 width: 6,
                 height: 6,

@@ -1,175 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/stockmate_brand.dart';
+import '../../../data/models/account_model.dart';
+import '../../../data/models/portfolio_model.dart';
+import '../../../providers/account_providers.dart';
 
-class PortfolioScreen extends StatelessWidget {
+class PortfolioScreen extends ConsumerWidget {
   const PortfolioScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.darkBackground,
-      appBar: AppBar(
-        title: const Text('Danh mục đầu tư'),
-        centerTitle: false,
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: StockMateBrand(iconSize: 24, fontSize: 16),
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Total Asset Summary Card
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF162232), Color(0xFF131926)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: AppColors.darkCardBorder),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Tổng tài sản ròng', style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 13)),
-                const SizedBox(height: 6),
-                const Text(
-                  '1,000,000,000 đ',
-                  style: TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildAssetStat('Lãi / Lỗ', '+7,500,000 đ (+3.8%)', AppColors.primary),
-                    _buildAssetStat('Sức mua', '500,000,000 đ', Colors.white),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-
-          // Header
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
-              Text(
-                'DANH MỤC NẮM GIỮ',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.5,
-                ),
-              ),
-              Text(
-                '2 mã',
-                style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 12),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Holding 1: FPT
-          _buildHoldingItem(
-            symbol: 'FPT',
-            name: 'Tập đoàn FPT',
-            quantity: '1,000',
-            avgPrice: '120.0',
-            curPrice: '135.2',
-            gainLoss: '+15,200,000 đ',
-            gainLossPercent: '+12.67%',
-            isGain: true,
-          ),
-          const SizedBox(height: 12),
-
-          // Holding 2: HPG
-          _buildHoldingItem(
-            symbol: 'HPG',
-            name: 'Tập đoàn Hòa Phát',
-            quantity: '3,000',
-            avgPrice: '30.0',
-            curPrice: '28.9',
-            gainLoss: '-3,300,000 đ',
-            gainLossPercent: '-3.67%',
-            isGain: false,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAssetStat(String label, String value, Color valueColor) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label, style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 11)),
-        const SizedBox(height: 3),
-        Text(value, style: TextStyle(color: valueColor, fontSize: 13, fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  Widget _buildHoldingItem({
-    required String symbol,
-    required String name,
-    required String quantity,
-    required String avgPrice,
-    required String curPrice,
-    required String gainLoss,
-    required String gainLossPercent,
-    required bool isGain,
-  }) {
-    final color = isGain ? AppColors.primary : AppColors.priceDown;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.darkCard,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.darkCardBorder, width: 0.8),
-      ),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(symbol, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 2),
-                  Text(name, style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 11)),
-                ],
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(gainLoss, style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 2),
-                  Text(gainLossPercent, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
-                ],
-              ),
-            ],
-          ),
-          const Divider(color: AppColors.darkCardBorder, height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Khối lượng: $quantity', style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 12)),
-              Text('Giá vốn: $avgPrice', style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 12)),
-              Text('Giá hiện tại: $curPrice', style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ],
-      ),
-    );
+  Future<void> _refresh(WidgetRef ref) async { ref.invalidate(assetsProvider); ref.invalidate(portfolioProvider); await Future.wait([ref.read(assetsProvider.future), ref.read(portfolioProvider.future)]); }
+  @override Widget build(BuildContext context, WidgetRef ref) {
+    final assets = ref.watch(assetsProvider); final portfolio = ref.watch(portfolioProvider);
+    return Scaffold(backgroundColor: AppColors.darkBackground, appBar: AppBar(title: const Text('Danh mục đầu tư'), actions: const [Padding(padding: EdgeInsets.only(right: 16), child: StockMateBrand(iconSize: 24, fontSize: 16))]), body: RefreshIndicator(onRefresh: () => _refresh(ref), child: ListView(physics: const AlwaysScrollableScrollPhysics(), padding: const EdgeInsets.all(16), children: [
+      assets.when(loading: () => const _LoadingCard(), error: (e, _) => _ErrorCard(message: e.toString()), data: (value) => _AssetCard(asset: value)),
+      const SizedBox(height: 24),
+      portfolio.when(loading: () => const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator())), error: (e, _) => _ErrorCard(message: e.toString()), data: (items) => items.isEmpty ? const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('Danh mục chưa có cổ phiếu', style: TextStyle(color: AppColors.darkTextSecondary)))) : Column(children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('DANH MỤC NẮM GIỮ', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)), Text('${items.length} mã', style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 12))]), const SizedBox(height: 12), ...items.map((item) => Padding(padding: const EdgeInsets.only(bottom: 12), child: _HoldingItem(item: item))) ])),
+    ])));
   }
 }
+
+class _AssetCard extends StatelessWidget { final AssetModel? asset; const _AssetCard({required this.asset}); @override Widget build(BuildContext context) { if (asset == null) return const _ErrorCard(message: 'Không có tài khoản CASH đang hoạt động.'); final a = asset!; final c = a.totalProfitLoss.cents >= 0 ? AppColors.primary : AppColors.priceDown; return Container(padding: const EdgeInsets.all(20), decoration: BoxDecoration(gradient: const LinearGradient(colors: [Color(0xFF162232), Color(0xFF131926)]), borderRadius: BorderRadius.circular(20), border: Border.all(color: AppColors.darkCardBorder)), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('Tổng tài sản ròng', style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 13)), const SizedBox(height: 6), Text(a.totalAssetValue.formatVnd(), style: const TextStyle(color: Colors.white, fontSize: 26, fontWeight: FontWeight.bold)), const SizedBox(height: 16), Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [_Stat('Lãi / Lỗ', a.totalProfitLoss.formatVnd(), c), _Stat('Sức mua', a.cashBalance.formatVnd(), Colors.white)])])); } }
+class _Stat extends StatelessWidget { final String label, value; final Color color; const _Stat(this.label, this.value, this.color); @override Widget build(BuildContext context) => Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(label, style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 11)), const SizedBox(height: 3), Text(value, style: TextStyle(color: color, fontSize: 13, fontWeight: FontWeight.bold))]); }
+class _LoadingCard extends StatelessWidget { const _LoadingCard(); @override Widget build(BuildContext context) => const SizedBox(height: 150, child: Center(child: CircularProgressIndicator())); }
+class _ErrorCard extends StatelessWidget { final String message; const _ErrorCard({required this.message}); @override Widget build(BuildContext context) => Text(message, style: const TextStyle(color: AppColors.priceDown)); }
+class _HoldingItem extends StatelessWidget { final PortfolioModel item; const _HoldingItem({required this.item}); @override Widget build(BuildContext context) { final c = item.profitLoss.cents >= 0 ? AppColors.primary : AppColors.priceDown; final p = item.profitLossPercent?.decimalString ?? '—'; return Container(padding: const EdgeInsets.all(16), decoration: BoxDecoration(color: AppColors.darkCard, borderRadius: BorderRadius.circular(16), border: Border.all(color: AppColors.darkCardBorder)), child: Column(children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(item.stockSymbol, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)), const SizedBox(height: 2), Text(item.companyName, style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 11))]), Column(crossAxisAlignment: CrossAxisAlignment.end, children: [Text(item.profitLoss.formatVnd(), style: TextStyle(color: c, fontSize: 14, fontWeight: FontWeight.bold)), Text('$p%', style: TextStyle(color: c, fontSize: 12, fontWeight: FontWeight.w600))])]), const Divider(color: AppColors.darkCardBorder, height: 20), Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text('Khối lượng: ${item.quantity}', style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 12)), Text('Giá vốn: ${item.averagePrice.decimalString}', style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 12)), Text('Hiện tại: ${item.marketPrice.decimalString}', style: TextStyle(color: c, fontSize: 12, fontWeight: FontWeight.bold))])])); } }

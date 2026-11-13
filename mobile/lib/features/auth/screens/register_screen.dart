@@ -17,8 +17,9 @@ class RegisterScreen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController(text: 'NGUYEN VAN A');
-  final _contactController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _referralController = TextEditingController();
@@ -78,7 +79,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _contactController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _referralController.dispose();
@@ -86,6 +88,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   void _register() async {
+    if (!_formKey.currentState!.validate() || _passwordController.text != _confirmPasswordController.text) {
+      return;
+    }
     if (!_agreeTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -99,11 +104,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     try {
       await ref.read(authProvider.notifier).register({
-        'full_name': _nameController.text.trim().isEmpty ? 'NGUYEN VAN A' : _nameController.text.trim(),
-        'email': _contactController.text.contains('@') ? _contactController.text.trim() : 'investor@stockmate.vn',
-        'phone_number': !_contactController.text.contains('@') && _contactController.text.isNotEmpty
-            ? _contactController.text.trim()
-            : '0912345678',
+        'full_name': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'phone_number': _phoneController.text.trim(),
+        'password': _passwordController.text,
       });
 
       if (mounted) {
@@ -192,7 +196,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     label: 'Số điện thoại hoặc Email nhận mã OTP',
                   ),
                   hintText: '0912 345 678 hoặc investor@stockmate.vn',
-                  controller: _contactController,
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) => value == null || !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim()) ? 'Email không hợp lệ' : null,
+                ),
+                const SizedBox(height: 18),
+
+                AppTextField(
+                  labelText: 'Số điện thoại',
+                  hintText: '0912345678',
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  validator: (value) => value == null || !RegExp(r'^(0|\+84)\d{9,10}$').hasMatch(value.trim()) ? 'Số điện thoại không hợp lệ' : null,
                 ),
                 const SizedBox(height: 18),
 
@@ -217,6 +232,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   hintText: 'Tối thiểu 8 ký tự, 1 số, 1 chữ hoa',
                   controller: _passwordController,
+                  validator: (value) => value == null || value.length < 8 ? 'Mật khẩu tối thiểu 8 ký tự' : null,
                   obscureText: _obscurePassword,
                   onChanged: (_) => setState(() {}),
                   suffixIcon: IconButton(
@@ -269,6 +285,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   hintText: 'Nhập lại mật khẩu',
                   controller: _confirmPasswordController,
+                  validator: (value) => value != _passwordController.text ? 'Mật khẩu xác nhận không khớp' : null,
                   obscureText: _obscureConfirmPassword,
                   suffixIcon: IconButton(
                     icon: Icon(

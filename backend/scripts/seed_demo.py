@@ -24,7 +24,7 @@ if dotenv_path.exists():
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "postgresql://postgres:h%24c4122005@localhost:5432/stock_exchange",
+    "postgresql://postgres:1@localhost:5432/stock_exchange",
 )
 # Convert SQLAlchemy dialect format (postgresql+psycopg://) to standard URI if needed
 if DATABASE_URL.startswith("postgresql+psycopg://"):

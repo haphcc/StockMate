@@ -4,16 +4,25 @@ import '../data/repositories/auth_repository.dart';
 import '../data/repositories/mock_auth_repository.dart';
 import '../data/repositories/market_repository.dart';
 import '../data/repositories/mock_market_repository.dart';
-// import '../data/repositories/api_auth_repository.dart';
-// import '../data/repositories/api_market_repository.dart';
+import '../data/repositories/api_auth_repository.dart';
+import '../data/repositories/account_repository.dart';
+import '../data/repositories/api_account_repository.dart';
+import '../data/repositories/mock_account_repository.dart';
+import '../core/network/dio_client.dart';
+
+final dioClientProvider = Provider<DioClient>((ref) => DioClient());
 
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   if (AppConfig.useMock) {
     return MockAuthRepository();
   } else {
-    // return ApiAuthRepository(dio: ref.watch(dioProvider));
-    throw UnimplementedError('API auth repository chưa được triển khai');
+    return ApiAuthRepository(client: ref.watch(dioClientProvider));
   }
+});
+
+final accountRepositoryProvider = Provider<AccountRepository>((ref) {
+  if (AppConfig.useMock) return MockAccountRepository();
+  return ApiAccountRepository(ref.watch(dioClientProvider));
 });
 
 final marketRepositoryProvider = Provider<MarketRepository>((ref) {
