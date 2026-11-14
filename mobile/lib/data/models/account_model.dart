@@ -14,11 +14,15 @@ class AccountModel extends Equatable {
   });
 
   factory AccountModel.fromJson(Map<String, dynamic> json) {
+    int amount(String key) =>
+        (json[key] as num?)?.toInt() ??
+        int.tryParse('${json[key]}'.split('.').first) ??
+        0;
     return AccountModel(
       accountId: json['account_id'] ?? 0,
       accountNumber: json['account_number'] ?? '',
-      cashBalance: (json['cash_balance'] as num).toInt(),
-      totalAssetValue: (json['total_asset_value'] as num).toInt(),
+      cashBalance: amount('cash_balance'),
+      totalAssetValue: amount('total_asset_value'),
     );
   }
 
@@ -32,5 +36,10 @@ class AccountModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [accountId, accountNumber, cashBalance, totalAssetValue];
+  List<Object?> get props => [
+    accountId,
+    accountNumber,
+    cashBalance,
+    totalAssetValue,
+  ];
 }

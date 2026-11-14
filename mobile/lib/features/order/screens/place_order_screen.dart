@@ -1,239 +1,588 @@
+import 'dart:ui' show FontFeature;
+import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/gradient_button.dart';
-import '../../../core/widgets/stockmate_brand.dart';
+import '../../../core/config/app_config.dart';
+import '../../../core/network/stockmate_api.dart';
+import '../../market/data/market_fixtures.dart';
+import '../../market/widgets/market_components.dart';
 
 class PlaceOrderScreen extends StatefulWidget {
-  const PlaceOrderScreen({super.key});
-
+  const PlaceOrderScreen({super.key, this.symbol, this.side});
+  final String? symbol;
+  final String? side;
   @override
   State<PlaceOrderScreen> createState() => _PlaceOrderScreenState();
 }
 
 class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
-  bool _isBuy = true;
-  final _symbolController = TextEditingController(text: 'MWG');
-  final _priceController = TextEditingController(text: '64.5');
-  final _volumeController = TextEditingController(text: '100');
+  final _api = StockmateApi();
+  late String _symbol;
+  late bool _isBuy;
+  late final TextEditingController _quantity;
+  late final TextEditingController _price;
+  @override
+  void initState() {
+    super.initState();
+    _symbol = widget.symbol?.toUpperCase() ?? 'FPT';
+    _isBuy = widget.side?.toUpperCase() != 'SELL';
+    _quantity = TextEditingController(text: '100');
+    _price = TextEditingController(
+      text: formatBoardPrice(stockFor(_symbol).currentPrice),
+    );
+  }
+
+  @override
+  void dispose() {
+    _quantity.dispose();
+    _price.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
+    final stock = stockFor(_symbol);
+    final quantity = int.tryParse(_quantity.text) ?? 0;
+    final price = double.tryParse(_price.text.replaceAll(',', '.')) ?? 0;
+    final estimate = quantity * price * 1000;
+    final accent = _isBuy ? AppColors.primary : AppColors.priceDown;
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
-      appBar: AppBar(
-        title: const Text('Đặt lệnh nhanh'),
-        centerTitle: false,
-        actions: const [
-          Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: StockMateBrand(iconSize: 24, fontSize: 16),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
           children: [
-            // Buy / Sell Selector
-            Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                color: AppColors.darkCard,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.darkCardBorder),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => setState(() => _isBuy = true),
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: _isBuy ? AppColors.primary : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'LỆNH MUA',
-                            style: TextStyle(
-                              color: _isBuy ? const Color(0xFF032617) : Colors.white70,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: InkWell(
-                      onTap: () => setState(() => _isBuy = false),
-                      borderRadius: BorderRadius.circular(10),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        decoration: BoxDecoration(
-                          color: !_isBuy ? AppColors.priceDown : Colors.transparent,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Center(
-                          child: Text(
-                            'LỆNH BÁN',
-                            style: TextStyle(
-                              color: !_isBuy ? Colors.white : Colors.white70,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Stock Symbol Card
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.darkCard,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.darkCardBorder),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Mã chứng khoán', style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 12)),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Row(
+              children: [
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        _symbolController.text,
-                        style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                        'Giao dịch',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 25,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -.5,
+                        ),
                       ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: const [
-                          Text('64.5', style: TextStyle(color: AppColors.priceCeiling, fontSize: 18, fontWeight: FontWeight.bold)),
-                          Text('+6.97% (Trần)', style: TextStyle(color: AppColors.priceCeiling, fontSize: 11)),
-                        ],
+                      SizedBox(height: 4),
+                      Text(
+                        'Đặt lệnh giới hạn (LO)',
+                        style: TextStyle(
+                          color: AppColors.darkTextSecondary,
+                          fontSize: 12,
+                        ),
                       ),
                     ],
                   ),
-                  const Divider(color: AppColors.darkCardBorder, height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text('Trần: 64.5', style: TextStyle(color: AppColors.priceCeiling, fontSize: 12)),
-                      Text('TC: 60.3', style: TextStyle(color: AppColors.priceRef, fontSize: 12)),
-                      Text('Sàn: 56.1', style: TextStyle(color: AppColors.priceFloor, fontSize: 12)),
-                    ],
+                ),
+                IconButton(
+                  onPressed: () => context.push('/home/orders'),
+                  icon: const Icon(
+                    Icons.receipt_long_rounded,
+                    color: Colors.white,
                   ),
-                ],
-              ),
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.darkCard,
+                  ),
+                ),
+              ],
             ),
+            const SizedBox(height: 20),
+            _sidePicker(),
             const SizedBox(height: 16),
-
-            // Order Price input
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.darkCard,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.darkCardBorder),
-              ),
+            MarketPanel(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Giá đặt (x1,000 đ)', style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 12)),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _priceController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                    decoration: const InputDecoration(
-                      hintText: '64.5',
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
+                  const Text(
+                    'MÃ CỔ PHIẾU',
+                    style: TextStyle(
+                      color: AppColors.darkTextMuted,
+                      fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: .7,
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Volume input
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.darkCard,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppColors.darkCardBorder),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Khối lượng đặt', style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 12)),
-                  const SizedBox(height: 8),
-                  TextFormField(
-                    controller: _volumeController,
-                    keyboardType: TextInputType.number,
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                  const SizedBox(height: 9),
+                  DropdownButtonFormField<String>(
+                    value: _symbol,
+                    dropdownColor: AppColors.darkSurface,
                     decoration: const InputDecoration(
-                      hintText: '100',
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.zero,
+                      prefixIcon: Icon(Icons.search_rounded),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
                     ),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 15,
+                    ),
+                    items: marketStocks
+                        .map(
+                          (item) => DropdownMenuItem(
+                            value: item.symbol,
+                            child: Text(
+                              '${item.symbol}  ·  ${item.companyName}',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null)
+                        setState(() {
+                          _symbol = value;
+                          _price.text = formatBoardPrice(
+                            stockFor(value).currentPrice,
+                          );
+                        });
+                    },
                   ),
                   const SizedBox(height: 12),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [100, 500, 1000, 5000].map((qty) {
-                      return InkWell(
-                        onTap: () => setState(() => _volumeController.text = qty.toString()),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1E293B),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '$qty',
-                            style: const TextStyle(color: Colors.white70, fontSize: 12),
-                          ),
+                    children: [
+                      Text(
+                        'Giá khớp gần nhất',
+                        style: const TextStyle(
+                          color: AppColors.darkTextSecondary,
+                          fontSize: 11,
                         ),
-                      );
-                    }).toList(),
+                      ),
+                      const Spacer(),
+                      Text(
+                        formatBoardPrice(stock.currentPrice),
+                        style: TextStyle(
+                          color: stock.changeAmount >= 0
+                              ? AppColors.priceUp
+                              : AppColors.priceDown,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'nghìn ₫',
+                        style: TextStyle(
+                          color: AppColors.darkTextMuted,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
-
-            // Submit Button
-            GradientButton(
-              text: _isBuy ? 'Xác Nhận Mua MWG' : 'Xác Nhận Bán MWG',
-              gradientColors: _isBuy
-                  ? const [Color(0xFF00E699), Color(0xFF00C078)]
-                  : const [Color(0xFFEF4444), Color(0xFFDC2626)],
-              textColor: _isBuy ? const Color(0xFF032617) : Colors.white,
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Đã gửi lệnh ${_isBuy ? 'MUA' : 'BÁN'} MWG thành công!'),
-                    backgroundColor: _isBuy ? AppColors.primary : AppColors.priceDown,
+            const SizedBox(height: 14),
+            MarketPanel(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _fieldLabel('GIÁ ĐẶT', '× 1.000 ₫'),
+                  const SizedBox(height: 8),
+                  _numberField(
+                    _price,
+                    decimal: true,
+                    onChanged: (_) => setState(() {}),
                   ),
-                );
-              },
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      _priceMark(
+                        'Trần',
+                        formatBoardPrice(stock.ceilingPrice),
+                        AppColors.priceCeiling,
+                      ),
+                      const Spacer(),
+                      _priceMark(
+                        'TC',
+                        formatBoardPrice(stock.referencePrice),
+                        AppColors.priceRef,
+                      ),
+                      const Spacer(),
+                      _priceMark(
+                        'Sàn',
+                        formatBoardPrice(stock.floorPrice),
+                        AppColors.priceFloor,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            MarketPanel(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _fieldLabel('KHỐI LƯỢNG', 'Bội số 100 cổ phiếu'),
+                  const SizedBox(height: 8),
+                  _numberField(_quantity, onChanged: (_) => setState(() {})),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [100, 500, 1000, 5000]
+                        .map(
+                          (value) => Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 7),
+                              child: InkWell(
+                                onTap: () => setState(
+                                  () => _quantity.text = value.toString(),
+                                ),
+                                borderRadius: BorderRadius.circular(9),
+                                child: Container(
+                                  alignment: Alignment.center,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 9,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.darkSurface,
+                                    borderRadius: BorderRadius.circular(9),
+                                    border: Border.all(
+                                      color: AppColors.darkCardBorder,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    value >= 1000
+                                        ? '${value ~/ 1000}k'
+                                        : '$value',
+                                    style: const TextStyle(
+                                      color: AppColors.darkTextSecondary,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            MarketPanel(
+              padding: const EdgeInsets.all(15),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      const Text(
+                        'Giá trị tạm tính',
+                        style: TextStyle(
+                          color: AppColors.darkTextSecondary,
+                          fontSize: 12,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${_money(estimate)} ₫',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 11),
+                  const Row(
+                    children: [
+                      Text(
+                        'Phí giao dịch dự kiến',
+                        style: TextStyle(
+                          color: AppColors.darkTextSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                      Spacer(),
+                      Text(
+                        '0,15%',
+                        style: TextStyle(
+                          color: AppColors.darkTextSecondary,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            FilledButton(
+              onPressed: quantity > 0 && price > 0
+                  ? () => _reviewOrder(stock.symbol, quantity, price, estimate)
+                  : null,
+              style: FilledButton.styleFrom(
+                backgroundColor: accent,
+                foregroundColor: _isBuy
+                    ? const Color(0xFF06251C)
+                    : Colors.white,
+                disabledBackgroundColor: AppColors.darkCard,
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              child: Text(
+                'Xem lại lệnh ${_isBuy ? 'mua' : 'bán'}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Lệnh được kiểm tra giá, sức mua và khối lượng trước khi gửi.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
             ),
           ],
         ),
       ),
     );
   }
+
+  Widget _sidePicker() => Container(
+    padding: const EdgeInsets.all(4),
+    decoration: BoxDecoration(
+      color: AppColors.darkCard,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: AppColors.darkCardBorder),
+    ),
+    child: Row(children: [_sideButton('MUA', true), _sideButton('BÁN', false)]),
+  );
+  Widget _sideButton(String text, bool buy) {
+    final selected = buy == _isBuy;
+    final color = buy ? AppColors.primary : AppColors.priceDown;
+    return Expanded(
+      child: InkWell(
+        onTap: () => setState(() => _isBuy = buy),
+        borderRadius: BorderRadius.circular(10),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: selected ? color.withValues(alpha: .16) : Colors.transparent,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: selected
+                  ? color.withValues(alpha: .55)
+                  : Colors.transparent,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              text,
+              style: TextStyle(
+                color: selected ? color : AppColors.darkTextSecondary,
+                fontSize: 12,
+                fontWeight: FontWeight.w800,
+                letterSpacing: .7,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _fieldLabel(String label, String trailing) => Row(
+    children: [
+      Text(
+        label,
+        style: const TextStyle(
+          color: AppColors.darkTextMuted,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          letterSpacing: .7,
+        ),
+      ),
+      const Spacer(),
+      Text(
+        trailing,
+        style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 9),
+      ),
+    ],
+  );
+  Widget _numberField(
+    TextEditingController controller, {
+    bool decimal = false,
+    ValueChanged<String>? onChanged,
+  }) => TextField(
+    controller: controller,
+    onChanged: onChanged,
+    keyboardType: TextInputType.numberWithOptions(decimal: decimal),
+    inputFormatters: [
+      FilteringTextInputFormatter.allow(
+        RegExp(decimal ? r'[0-9,.]' : r'[0-9]'),
+      ),
+    ],
+    style: const TextStyle(
+      color: Colors.white,
+      fontSize: 20,
+      fontWeight: FontWeight.w800,
+      fontFeatures: [FontFeature.tabularFigures()],
+    ),
+    decoration: const InputDecoration(
+      filled: false,
+      border: InputBorder.none,
+      contentPadding: EdgeInsets.zero,
+      isDense: true,
+    ),
+  );
+  Widget _priceMark(String title, String price, Color color) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        title,
+        style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 9),
+      ),
+      const SizedBox(height: 3),
+      Text(
+        price,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    ],
+  );
+
+  Future<void> _reviewOrder(
+    String symbol,
+    int quantity,
+    double price,
+    double estimate,
+  ) async {
+    final place = await showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: AppColors.darkSurface,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 8, 22, 22),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Xác nhận thông tin lệnh',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 18),
+              _reviewLine('Loại lệnh', '${_isBuy ? 'Mua' : 'Bán'} $symbol'),
+              _reviewLine(
+                'Giá / khối lượng',
+                '${price.toStringAsFixed(1)} × 1.000 ₫  ·  $quantity cp',
+              ),
+              _reviewLine('Giá trị dự kiến', '${_money(estimate)} ₫'),
+              const SizedBox(height: 16),
+              const Text(
+                'Lệnh LO sẽ được gửi lên tài khoản đầu tư đang chọn.',
+                style: TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: const Color(0xFF06251C),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text(
+                    'Xác nhận đặt lệnh',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (place == true && mounted) {
+      try {
+        if (!AppConfig.useMock) {
+          final accountId = await _api.firstAccountId();
+          await _api.placeOrder(accountId, {
+            'client_order_id': _newUuid(),
+            'stock_symbol': symbol,
+            'order_type': _isBuy ? 'BUY' : 'SELL',
+            'order_kind': 'LO',
+            'quantity': quantity,
+            'order_price': (price * 1000).toStringAsFixed(2),
+          });
+        }
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Đã gửi lệnh. Sổ lệnh sẽ được cập nhật từ máy chủ.',
+              ),
+            ),
+          );
+      } catch (error) {
+        if (mounted)
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Không đặt được lệnh: $error')),
+          );
+      }
+    }
+  }
+
+  String _newUuid() {
+    final random = Random.secure();
+    final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+    bytes[6] = (bytes[6] & 0x0f) | 0x40;
+    bytes[8] = (bytes[8] & 0x3f) | 0x80;
+    final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    return '${hex.substring(0, 8)}-${hex.substring(8, 12)}-${hex.substring(12, 16)}-${hex.substring(16, 20)}-${hex.substring(20)}';
+  }
+
+  Widget _reviewLine(String label, String value) => Padding(
+    padding: const EdgeInsets.only(bottom: 11),
+    child: Row(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: AppColors.darkTextSecondary,
+            fontSize: 12,
+          ),
+        ),
+        const Spacer(),
+        Flexible(
+          child: Text(
+            value,
+            textAlign: TextAlign.right,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+  String _money(double value) => value
+      .toStringAsFixed(0)
+      .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (match) => ',');
 }

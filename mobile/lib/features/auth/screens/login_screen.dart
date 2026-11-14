@@ -32,14 +32,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   void _login() async {
     // If empty, fill default for easy testing
     if (_accountController.text.trim().isEmpty) {
-      _accountController.text = '086C123456';
+      _accountController.text = 'an.nguyen@gmail.com';
     }
     if (_passwordController.text.trim().isEmpty) {
-      _passwordController.text = '12345678';
+      _passwordController.text = 'Matkhau@123';
     }
 
     try {
-      await ref.read(authProvider.notifier).login(
+      await ref
+          .read(authProvider.notifier)
+          .login(
             _accountController.text.trim(),
             _passwordController.text.trim(),
           );
@@ -111,8 +113,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Account Field
                 AppTextField(
-                  labelText: 'Tài khoản / SĐT / CCCD',
-                  hintText: 'Nhập 09xx, CCCD hoặc mã 086C...',
+                  labelText: 'Email',
+                  hintText: 'an.nguyen@gmail.com',
                   controller: _accountController,
                   prefixIcon: const Icon(
                     Icons.badge_outlined,
@@ -135,11 +137,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       color: AppColors.darkTextSecondary,
                       size: 20,
                     ),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -158,10 +163,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             width: 18,
                             height: 18,
                             decoration: BoxDecoration(
-                              color: _rememberMe ? AppColors.primary : Colors.transparent,
+                              color: _rememberMe
+                                  ? AppColors.primary
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
-                                color: _rememberMe ? AppColors.primary : AppColors.darkTextMuted,
+                                color: _rememberMe
+                                    ? AppColors.primary
+                                    : AppColors.darkTextMuted,
                                 width: 1.5,
                               ),
                             ),
@@ -232,7 +241,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             decoration: BoxDecoration(
                               color: AppColors.darkInput,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.darkInputBorder, width: 1),
+                              border: Border.all(
+                                color: AppColors.darkInputBorder,
+                                width: 1,
+                              ),
                             ),
                             child: const Center(
                               child: Icon(
@@ -252,7 +264,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             decoration: BoxDecoration(
                               color: AppColors.primary,
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.darkBackground, width: 1.5),
+                              border: Border.all(
+                                color: AppColors.darkBackground,
+                                width: 1.5,
+                              ),
                             ),
                           ),
                         ),

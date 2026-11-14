@@ -26,8 +26,9 @@ class StockModel extends Equatable {
 
   // Derived properties
   int get changeAmount => currentPrice - referencePrice;
-  double get changePercent => referencePrice > 0 ? (changeAmount / referencePrice) * 100 : 0;
-  
+  double get changePercent =>
+      referencePrice > 0 ? (changeAmount / referencePrice) * 100 : 0;
+
   PriceState get priceState {
     if (currentPrice >= ceilingPrice) return PriceState.ceiling;
     if (currentPrice <= floorPrice) return PriceState.floor;
@@ -37,15 +38,19 @@ class StockModel extends Equatable {
   }
 
   factory StockModel.fromJson(Map<String, dynamic> json) {
+    int price(String key) =>
+        (json[key] as num?)?.toInt() ??
+        int.tryParse('${json[key]}'.split('.').first) ??
+        0;
     return StockModel(
       id: json['stock_id'] ?? 0,
       symbol: json['stock_symbol'] ?? '',
       companyName: json['company_name'] ?? '',
       exchange: json['exchange'] ?? 'HOSE',
-      currentPrice: (json['current_price'] as num).toInt(),
-      referencePrice: (json['reference_price'] as num).toInt(),
-      ceilingPrice: (json['ceiling_price'] as num).toInt(),
-      floorPrice: (json['floor_price'] as num).toInt(),
+      currentPrice: price('current_price'),
+      referencePrice: price('reference_price'),
+      ceilingPrice: price('ceiling_price'),
+      floorPrice: price('floor_price'),
       totalVolume: json['total_volume'] ?? 0,
     );
   }

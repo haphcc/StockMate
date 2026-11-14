@@ -13,7 +13,7 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
   @override
   Future<UserModel?> build() async {
     // Kiểm tra token để tự động đăng nhập
-    final token = await _storage.read(key: 'jwt_token');
+    final token = await _storage.read(key: 'access_token');
     if (token != null) {
       return ref.read(authRepositoryProvider).getCurrentUser();
     }
@@ -23,9 +23,9 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
   Future<void> login(String emailOrPhone, String password) async {
     state = const AsyncValue.loading();
     try {
-      final user = await ref.read(authRepositoryProvider).login(emailOrPhone, password);
-      // Giả lập lưu token
-      await _storage.write(key: 'jwt_token', value: 'mock_token_123');
+      final user = await ref
+          .read(authRepositoryProvider)
+          .login(emailOrPhone, password);
       state = AsyncValue.data(user);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -37,8 +37,6 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
     state = const AsyncValue.loading();
     try {
       final user = await ref.read(authRepositoryProvider).register(data);
-      // Giả lập lưu token
-      await _storage.write(key: 'jwt_token', value: 'mock_token_123');
       state = AsyncValue.data(user);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -50,6 +48,8 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
     state = const AsyncValue.loading();
     await ref.read(authRepositoryProvider).logout();
     await _storage.delete(key: 'jwt_token');
+    await _storage.delete(key: 'access_token');
+    await _storage.delete(key: 'refresh_token');
     state = const AsyncValue.data(null);
   }
 }
