@@ -12,8 +12,20 @@ import '../core/network/dio_client.dart';
 
 final dioClientProvider = Provider<DioClient>((ref) => DioClient());
 
+/// Defaults to the build-time setting, but can be changed during a session.
+class DataSourceModeNotifier extends Notifier<bool> {
+  @override
+  bool build() => AppConfig.useMock;
+
+  void setUseMock(bool value) => state = value;
+}
+
+final useMockProvider = NotifierProvider<DataSourceModeNotifier, bool>(
+  DataSourceModeNotifier.new,
+);
+
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  if (AppConfig.useMock) {
+  if (ref.watch(useMockProvider)) {
     return MockAuthRepository();
   } else {
     return ApiAuthRepository(client: ref.watch(dioClientProvider));
@@ -21,17 +33,15 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 final accountRepositoryProvider = Provider<AccountRepository>((ref) {
-  if (AppConfig.useMock) return MockAccountRepository();
+  if (ref.watch(useMockProvider)) return MockAccountRepository();
   return ApiAccountRepository(ref.watch(dioClientProvider));
 });
 
 final marketRepositoryProvider = Provider<MarketRepository>((ref) {
-  if (AppConfig.useMock) {
-    return MockMarketRepository();
-  } else {
-    // return ApiMarketRepository(dio: ref.watch(dioProvider));
-    throw UnimplementedError('API market repository chưa được triển khai');
-  }
+  // The API market repository belongs to TV3 and is not available yet.
+  // Keep the app usable while auth/account data uses the real API.
+  ref.watch(useMockProvider);
+  return MockMarketRepository();
 });
 
 // Chế độ sáng/tối
@@ -43,4 +53,6 @@ class ThemeModeNotifier extends Notifier<bool> {
   void set(bool value) => state = value;
 }
 
-final themeModeProvider = NotifierProvider<ThemeModeNotifier, bool>(ThemeModeNotifier.new);
+final themeModeProvider = NotifierProvider<ThemeModeNotifier, bool>(
+  ThemeModeNotifier.new,
+);

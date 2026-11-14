@@ -33,7 +33,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      await ref.read(authProvider.notifier).login(
+      await ref
+          .read(authProvider.notifier)
+          .login(
             _accountController.text.trim(),
             _passwordController.text.trim(),
           );
@@ -105,13 +107,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Account Field
                 AppTextField(
-                  labelText: 'Tài khoản / SĐT / CCCD',
-                  hintText: 'Nhập 09xx, CCCD hoặc mã 086C...',
+                  labelText: 'Email',
+                  hintText: 'investor@stockmate.vn',
                   controller: _accountController,
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) => value == null || !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim()) ? 'Email không hợp lệ' : null,
+                  validator: (value) =>
+                      value == null ||
+                          !RegExp(
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                          ).hasMatch(value.trim())
+                      ? 'Email không hợp lệ'
+                      : null,
                   prefixIcon: const Icon(
-                    Icons.badge_outlined,
+                    Icons.email_outlined,
                     color: AppColors.darkTextSecondary,
                     size: 20,
                   ),
@@ -123,7 +131,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   labelText: 'Mật khẩu PIN / Đăng nhập',
                   hintText: '••••••••••••',
                   controller: _passwordController,
-                  validator: (value) => value == null || value.length < 8 ? 'Mật khẩu tối thiểu 8 ký tự' : null,
+                  validator: (value) => value == null || value.length < 8
+                      ? 'Mật khẩu tối thiểu 8 ký tự'
+                      : null,
                   obscureText: _obscurePassword,
                   prefixIcon: const Icon(
                     Icons.lock_outline_rounded,
@@ -132,11 +142,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       color: AppColors.darkTextSecondary,
                       size: 20,
                     ),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -155,10 +168,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             width: 18,
                             height: 18,
                             decoration: BoxDecoration(
-                              color: _rememberMe ? AppColors.primary : Colors.transparent,
+                              color: _rememberMe
+                                  ? AppColors.primary
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
-                                color: _rememberMe ? AppColors.primary : AppColors.darkTextMuted,
+                                color: _rememberMe
+                                    ? AppColors.primary
+                                    : AppColors.darkTextMuted,
                                 width: 1.5,
                               ),
                             ),
@@ -229,7 +246,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             decoration: BoxDecoration(
                               color: AppColors.darkInput,
                               borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.darkInputBorder, width: 1),
+                              border: Border.all(
+                                color: AppColors.darkInputBorder,
+                                width: 1,
+                              ),
                             ),
                             child: const Center(
                               child: Icon(
@@ -249,7 +269,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             decoration: BoxDecoration(
                               color: AppColors.primary,
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.darkBackground, width: 1.5),
+                              border: Border.all(
+                                color: AppColors.darkBackground,
+                                width: 1.5,
+                              ),
                             ),
                           ),
                         ),

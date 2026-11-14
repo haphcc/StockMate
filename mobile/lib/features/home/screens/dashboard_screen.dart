@@ -23,12 +23,15 @@ class _ProfileMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Row(
-        children: [
-          Icon(icon, color: color, size: 20),
-          const SizedBox(width: 12),
-          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
-        ],
-      );
+    children: [
+      Icon(icon, color: color, size: 20),
+      const SizedBox(width: 12),
+      Text(
+        label,
+        style: TextStyle(color: color, fontWeight: FontWeight.w600),
+      ),
+    ],
+  );
 }
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -65,7 +68,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           onRefresh: () async => ref.refresh(dashboardProvider.future),
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -104,13 +110,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   loading: () => const Center(
                     child: Padding(
                       padding: EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(color: AppColors.primary),
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
                     ),
                   ),
                   error: (err, _) => Center(
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
-                      child: Text('Lỗi tải dữ liệu: $err', style: const TextStyle(color: AppColors.priceDown)),
+                      child: Text(
+                        'Lỗi tải dữ liệu: $err',
+                        style: const TextStyle(color: AppColors.priceDown),
+                      ),
                     ),
                   ),
                   data: (data) => _buildStockTable(),
@@ -131,17 +142,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         // Left: Logo + LIVE Badge
-        const StockMateBrand(
-          iconSize: 28,
-          fontSize: 19,
-          showLiveBadge: true,
-        ),
+        const StockMateBrand(iconSize: 28, fontSize: 19, showLiveBadge: true),
 
         // Right Actions: Search, Notification with dot, Avatar
         Row(
           children: [
             IconButton(
-              icon: const Icon(Icons.search_rounded, color: Colors.white, size: 22),
+              icon: const Icon(
+                Icons.search_rounded,
+                color: Colors.white,
+                size: 22,
+              ),
               onPressed: () {},
               constraints: const BoxConstraints(),
               padding: const EdgeInsets.all(8),
@@ -151,7 +162,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               clipBehavior: Clip.none,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 22),
+                  icon: const Icon(
+                    Icons.notifications_none_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
                   onPressed: () {},
                   constraints: const BoxConstraints(),
                   padding: const EdgeInsets.all(8),
@@ -195,17 +210,25 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              user?.fullName.isNotEmpty == true ? user!.fullName : 'Tài khoản StockMate',
+                              user?.fullName.isNotEmpty == true
+                                  ? user!.fullName
+                                  : 'Tài khoản StockMate',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
                             const SizedBox(height: 3),
                             Text(
                               user?.email ?? '',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 12),
+                              style: const TextStyle(
+                                color: AppColors.darkTextSecondary,
+                                fontSize: 12,
+                              ),
                             ),
                           ],
                         ),
@@ -216,7 +239,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 const PopupMenuDivider(),
                 const PopupMenuItem<_ProfileAction>(
                   value: _ProfileAction.settings,
-                  child: _ProfileMenuItem(icon: Icons.settings_outlined, label: 'Cài đặt'),
+                  child: _ProfileMenuItem(
+                    icon: Icons.settings_outlined,
+                    label: 'Cài đặt',
+                  ),
                 ),
                 const PopupMenuItem<_ProfileAction>(
                   value: _ProfileAction.logout,
@@ -245,20 +271,27 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.5),
+          width: 1.5,
+        ),
       ),
       child: ClipOval(
         child: imageUrl == null || imageUrl.isEmpty
             ? const ColoredBox(
                 color: Color(0xFF1E293B),
-                child: Center(child: Icon(Icons.person, color: Colors.white70, size: 20)),
+                child: Center(
+                  child: Icon(Icons.person, color: Colors.white70, size: 20),
+                ),
               )
             : Image.network(
                 imageUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => const ColoredBox(
                   color: Color(0xFF1E293B),
-                  child: Center(child: Icon(Icons.person, color: Colors.white70, size: 20)),
+                  child: Center(
+                    child: Icon(Icons.person, color: Colors.white70, size: 20),
+                  ),
                 ),
               ),
       ),
@@ -287,7 +320,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text('Đăng xuất', style: TextStyle(color: AppColors.priceDown)),
+            child: const Text(
+              'Đăng xuất',
+              style: TextStyle(color: AppColors.priceDown),
+            ),
           ),
         ],
       ),
@@ -348,7 +384,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             children: [
               IconButton(
                 tooltip: 'Nạp tiền',
-                icon: const Icon(Icons.add_circle_outline, color: AppColors.primary, size: 20),
+                icon: const Icon(
+                  Icons.add_circle_outline,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
                 onPressed: () => context.push('/deposit'),
               ),
               const Text(
@@ -362,13 +402,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               const SizedBox(width: 6),
               if (data != null)
                 PopupMenuButton<int>(
-                  icon: const Icon(Icons.swap_horiz, color: AppColors.primary, size: 19),
+                  icon: const Icon(
+                    Icons.swap_horiz,
+                    color: AppColors.primary,
+                    size: 19,
+                  ),
                   onSelected: (id) {
                     ref.read(selectedAccountProvider.notifier).select(id);
                     ref.invalidate(dashboardProvider);
                   },
                   itemBuilder: (context) => data.accounts
-                      .map((a) => PopupMenuItem<int>(value: a.accountId, child: Text(a.accountNumber)))
+                      .map(
+                        (a) => PopupMenuItem<int>(
+                          value: a.accountId,
+                          child: Text(a.accountNumber),
+                        ),
+                      )
                       .toList(),
                 ),
               Container(
@@ -415,10 +464,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         const Text(
           'Khớp liên tục',
-          style: TextStyle(
-            color: AppColors.darkTextSecondary,
-            fontSize: 11,
-          ),
+          style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 11),
         ),
       ],
     );
@@ -486,7 +532,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
               Icon(
-                isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                isPositive
+                    ? Icons.trending_up_rounded
+                    : Icons.trending_down_rounded,
                 color: color,
                 size: 16,
               ),
@@ -532,9 +580,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: const [
-                  Icon(Icons.bar_chart_rounded, color: AppColors.primary, size: 20),
+              const Row(
+                children: [
+                  Icon(
+                    Icons.bar_chart_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
                   SizedBox(width: 8),
                   Text(
                     'Độ rộng toàn thị trường',
@@ -547,11 +599,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ],
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 3,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.25), width: 0.8),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.25),
+                    width: 0.8,
+                  ),
                 ),
                 child: const Text(
                   'Tích cực',
@@ -569,19 +627,34 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           // Multi-segmented bar
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
-            child: SizedBox(
+            child: const SizedBox(
               height: 7,
               child: Row(
-                children: const [
-                  Expanded(flex: 12, child: ColoredBox(color: AppColors.priceCeiling)),
+                children: [
+                  Expanded(
+                    flex: 12,
+                    child: ColoredBox(color: AppColors.priceCeiling),
+                  ),
                   SizedBox(width: 2),
-                  Expanded(flex: 245, child: ColoredBox(color: AppColors.primary)),
+                  Expanded(
+                    flex: 245,
+                    child: ColoredBox(color: AppColors.primary),
+                  ),
                   SizedBox(width: 2),
-                  Expanded(flex: 68, child: ColoredBox(color: Color(0xFF06B6D4))),
+                  Expanded(
+                    flex: 68,
+                    child: ColoredBox(color: Color(0xFF06B6D4)),
+                  ),
                   SizedBox(width: 2),
-                  Expanded(flex: 132, child: ColoredBox(color: Color(0xFFF87171))),
+                  Expanded(
+                    flex: 132,
+                    child: ColoredBox(color: Color(0xFFF87171)),
+                  ),
                   SizedBox(width: 2),
-                  Expanded(flex: 3, child: ColoredBox(color: Color(0xFF38BDF8))),
+                  Expanded(
+                    flex: 3,
+                    child: ColoredBox(color: Color(0xFF38BDF8)),
+                  ),
                 ],
               ),
             ),
@@ -624,10 +697,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         Container(
           width: 6,
           height: 6,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
       ],
     );
@@ -645,13 +715,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  children: const [
-                    Icon(Icons.stars_rounded, color: Color(0xFFC084FC), size: 16),
+                  children: [
+                    Icon(
+                      Icons.stars_rounded,
+                      color: Color(0xFFC084FC),
+                      size: 16,
+                    ),
                     SizedBox(width: 6),
                     Text(
                       'ĐIỂM NÓNG HOSE',
@@ -664,8 +738,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                const Text(
+                SizedBox(height: 6),
+                Text(
                   'Dòng tiền lan tỏa nhóm Bán Lẻ & Công Nghệ',
                   style: TextStyle(
                     color: Colors.white,
@@ -674,8 +748,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     height: 1.3,
                   ),
                 ),
-                const SizedBox(height: 6),
-                const Text(
+                SizedBox(height: 6),
+                Text(
                   'Thanh khoản đạt 18.2K tỷ VNĐ, khối ngoại mua ròng SSI & MWG.',
                   style: TextStyle(
                     color: AppColors.darkTextSecondary,
@@ -699,7 +773,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
                   color: const Color(0xFF1E293B),
-                  child: const Icon(Icons.analytics_rounded, color: AppColors.primary, size: 28),
+                  child: const Icon(
+                    Icons.analytics_rounded,
+                    color: AppColors.primary,
+                    size: 28,
+                  ),
                 ),
               ),
             ),
@@ -723,21 +801,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 onTap: () => setState(() => _selectedCategory = cat),
                 borderRadius: BorderRadius.circular(20),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
-                    color: cat == _selectedCategory ? AppColors.primary : AppColors.darkCard,
+                    color: cat == _selectedCategory
+                        ? AppColors.primary
+                        : AppColors.darkCard,
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: cat == _selectedCategory ? AppColors.primary : AppColors.darkCardBorder,
+                      color: cat == _selectedCategory
+                          ? AppColors.primary
+                          : AppColors.darkCardBorder,
                       width: 0.8,
                     ),
                   ),
                   child: Text(
                     cat,
                     style: TextStyle(
-                      color: cat == _selectedCategory ? const Color(0xFF032617) : Colors.white,
+                      color: cat == _selectedCategory
+                          ? const Color(0xFF032617)
+                          : Colors.white,
                       fontSize: 12,
-                      fontWeight: cat == _selectedCategory ? FontWeight.bold : FontWeight.w500,
+                      fontWeight: cat == _selectedCategory
+                          ? FontWeight.bold
+                          : FontWeight.w500,
                     ),
                   ),
                 ),
@@ -771,17 +860,22 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   onTap: () => setState(() => _selectedSort = 'volume'),
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.darkCard,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: _selectedSort == 'volume' ? AppColors.primary.withValues(alpha: 0.5) : AppColors.darkCardBorder,
+                        color: _selectedSort == 'volume'
+                            ? AppColors.primary.withValues(alpha: 0.5)
+                            : AppColors.darkCardBorder,
                         width: 0.8,
                       ),
                     ),
-                    child: Row(
-                      children: const [
+                    child: const Row(
+                      children: [
                         Text(
                           'Top Khối lượng',
                           style: TextStyle(
@@ -791,7 +885,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           ),
                         ),
                         SizedBox(width: 4),
-                        Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.primary, size: 14),
+                        Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: AppColors.primary,
+                          size: 14,
+                        ),
                       ],
                     ),
                   ),
@@ -802,19 +900,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   onTap: () => setState(() => _selectedSort = 'gain'),
                   borderRadius: BorderRadius.circular(8),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.darkCard,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: _selectedSort == 'gain' ? AppColors.primary : AppColors.darkCardBorder,
+                        color: _selectedSort == 'gain'
+                            ? AppColors.primary
+                            : AppColors.darkCardBorder,
                         width: 0.8,
                       ),
                     ),
                     child: Text(
                       'Top Tăng',
                       style: TextStyle(
-                        color: _selectedSort == 'gain' ? AppColors.primary : AppColors.darkTextSecondary,
+                        color: _selectedSort == 'gain'
+                            ? AppColors.primary
+                            : AppColors.darkTextSecondary,
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
@@ -827,9 +932,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         const SizedBox(height: 12),
         // Columns header
-        Row(
+        const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: const [
+          children: [
             Text(
               'MÃ / CÔNG TY',
               style: TextStyle(
@@ -961,7 +1066,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           ),
                           const SizedBox(width: 6),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: stock.badgeBg,
                               borderRadius: BorderRadius.circular(4),
@@ -1029,7 +1137,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ),
                       const SizedBox(height: 4),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: stock.trendColor.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(6),

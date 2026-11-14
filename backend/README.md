@@ -18,19 +18,21 @@ python -m venv .venv
 if (-not (Test-Path .env)) { Copy-Item .env.example .env }
 ```
 
-Sửa `DATABASE_URL` trong `.env` cho đúng PostgreSQL DEV của bạn. Tạo database trống trước.
+Sửa `DATABASE_URL` trong `.env` cho đúng PostgreSQL local của bạn. Tạo database trống trước.
 Thay `SECRET_KEY` bằng khóa tự sinh và giữ riêng `.env`. Không commit khóa/token.
 JWT mặc định: access 15 phút, refresh 14 ngày. Nếu PowerShell đã có biến `DATABASE_URL`,
 biến môi trường đó được ưu tiên hơn `.env`.
 
-Nếu chạy PostgreSQL bằng Compose, biến `POSTGRES_PASSWORD` của Compose phải khớp
-`DATABASE_URL` trong `backend/.env`; Compose không tự đọc `backend/.env`.
+Backend mặc định kết nối trực tiếp PostgreSQL local; không cần chạy database bằng Docker.
+Đặt `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`, `POSTGRES_PASSWORD` và
+`DATABASE_URL` trong `backend/.env` cùng trỏ tới một database local.
 
 ## Dựng database và chạy API
 
 Từ `backend/`, với PostgreSQL đang chạy:
 
 ```powershell
+.\.venv\Scripts\python.exe scripts/create_local_database.py
 .\.venv\Scripts\python.exe -m alembic upgrade head
 .\.venv\Scripts\python.exe scripts/seed_demo.py
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
