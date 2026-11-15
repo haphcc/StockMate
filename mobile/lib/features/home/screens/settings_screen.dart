@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../providers/account_providers.dart';
-import '../../../providers/app_providers.dart';
 import '../../auth/providers/auth_provider.dart';
-import '../providers/dashboard_provider.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -12,7 +9,6 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).value;
-    final useMock = ref.watch(useMockProvider);
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
@@ -31,37 +27,6 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 10),
-          Container(
-            decoration: BoxDecoration(
-              color: AppColors.darkCard,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: AppColors.darkCardBorder),
-            ),
-            child: SwitchListTile(
-              title: const Text(
-                'Sử dụng dữ liệu Mock',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              subtitle: Text(
-                useMock ? 'Dùng dữ liệu mẫu trên thiết bị' : 'Dùng API thật',
-                style: const TextStyle(color: AppColors.darkTextSecondary),
-              ),
-              value: useMock,
-              activeThumbColor: AppColors.primary,
-              onChanged: (value) {
-                ref.read(useMockProvider.notifier).setUseMock(value);
-                ref.invalidate(authProvider);
-                ref.invalidate(accountsProvider);
-                ref.invalidate(assetsProvider);
-                ref.invalidate(portfolioProvider);
-                ref.invalidate(dashboardProvider);
-              },
-            ),
-          ),
-          const SizedBox(height: 16),
           Container(
             decoration: BoxDecoration(
               color: AppColors.darkCard,

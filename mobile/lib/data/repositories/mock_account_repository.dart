@@ -21,10 +21,10 @@ class MockAccountRepository implements AccountRepository {
     accountNumber: _account.accountNumber,
     accountType: _account.accountType,
     status: _account.status,
-    cashBalance: const Money.fromCents(100000000000),
+    cashBalance: const Money.fromCents(10000000),
     blockedBalance: Money.zero(),
     stockValue: Money.zero(),
-    totalAssetValue: const Money.fromCents(100000000000),
+    totalAssetValue: const Money.fromCents(10000000),
     totalProfitLoss: Money.zero(),
     profitLossPercent: Money.zero(),
   );

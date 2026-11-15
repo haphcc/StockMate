@@ -444,7 +444,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                 // CTA Button
                 GradientButton(
-                  text: 'Tạo Tài Khoản & Nhận 1 Tỷ Đ',
+                  text: 'Tạo Tài Khoản & Nhận 100.000đ',
                   isLoading: isLoading,
                   trailingIcon: const Icon(
                     Icons.trending_up_rounded,

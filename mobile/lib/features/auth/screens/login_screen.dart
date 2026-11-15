@@ -214,71 +214,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 26),
 
-                // Login Button + Biometrics Button Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: GradientButton(
-                        text: 'Đăng Nhập Ngay',
-                        isLoading: isLoading,
-                        trailingIcon: const Icon(
-                          Icons.arrow_forward_rounded,
-                          size: 18,
-                          color: Color(0xFF032617),
-                        ),
-                        onPressed: _login,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Biometric button with green status dot
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            // Biometric mock trigger
-                            _login();
-                          },
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              color: AppColors.darkInput,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: AppColors.darkInputBorder,
-                                width: 1,
-                              ),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.face_rounded,
-                                color: AppColors.primary,
-                                size: 28,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: -2,
-                          right: -2,
-                          child: Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.darkBackground,
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                // Login Button
+                GradientButton(
+                  text: 'Đăng Nhập Ngay',
+                  isLoading: isLoading,
+                  trailingIcon: const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 18,
+                    color: Color(0xFF032617),
+                  ),
+                  onPressed: _login,
                 ),
                 const SizedBox(height: 36),
 

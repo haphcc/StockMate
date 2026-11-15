@@ -25,7 +25,7 @@ from app.models.customer import Customer
 from app.models.investment_account import InvestmentAccount
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserResponse
 
-INITIAL_CASH = Decimal("1000000000.00")
+INITIAL_CASH = Decimal("100000.00")
 ACCOUNT_NUMBER_ATTEMPTS = 3
 
 
