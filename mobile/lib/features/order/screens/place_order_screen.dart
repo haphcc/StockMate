@@ -4,17 +4,49 @@ import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/stockmate_brand.dart';
 
 class PlaceOrderScreen extends StatefulWidget {
-  const PlaceOrderScreen({super.key});
+  final String? initialSymbol;
+  final bool? isBuy;
+  final double? initialPrice;
+
+  const PlaceOrderScreen({
+    super.key,
+    this.initialSymbol,
+    this.isBuy,
+    this.initialPrice,
+  });
 
   @override
   State<PlaceOrderScreen> createState() => _PlaceOrderScreenState();
 }
 
 class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
-  bool _isBuy = true;
-  final _symbolController = TextEditingController(text: 'MWG');
-  final _priceController = TextEditingController(text: '64.5');
-  final _volumeController = TextEditingController(text: '100');
+  late bool _isBuy;
+  late final TextEditingController _symbolController;
+  late final TextEditingController _priceController;
+  late final TextEditingController _volumeController;
+
+  @override
+  void initState() {
+    super.initState();
+    _isBuy = widget.isBuy ?? true;
+    _symbolController = TextEditingController(
+      text: widget.initialSymbol?.toUpperCase() ?? 'MWG',
+    );
+    _priceController = TextEditingController(
+      text: widget.initialPrice != null
+          ? widget.initialPrice!.toStringAsFixed(1)
+          : '64.5',
+    );
+    _volumeController = TextEditingController(text: '100');
+  }
+
+  @override
+  void dispose() {
+    _symbolController.dispose();
+    _priceController.dispose();
+    _volumeController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -217,7 +249,9 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
 
             // Submit Button
             GradientButton(
-              text: _isBuy ? 'Xác Nhận Mua MWG' : 'Xác Nhận Bán MWG',
+              text: _isBuy
+                  ? 'Xác Nhận Mua ${_symbolController.text}'
+                  : 'Xác Nhận Bán ${_symbolController.text}',
               gradientColors: _isBuy
                   ? const [Color(0xFF00E699), Color(0xFF00C078)]
                   : const [Color(0xFFEF4444), Color(0xFFDC2626)],
@@ -225,12 +259,16 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Đã gửi lệnh ${_isBuy ? 'MUA' : 'BÁN'} MWG thành công!'),
-                    backgroundColor: _isBuy ? AppColors.primary : AppColors.priceDown,
+                    content: Text(
+                      'Đã gửi lệnh ${_isBuy ? 'MUA' : 'BÁN'} ${_symbolController.text} thành công!',
+                    ),
+                    backgroundColor:
+                        _isBuy ? AppColors.primary : AppColors.priceDown,
                   ),
                 );
               },
             ),
+            const SizedBox(height: 100),
           ],
         ),
       ),

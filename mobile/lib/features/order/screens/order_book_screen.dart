@@ -72,6 +72,7 @@ class OrderBookScreen extends StatelessWidget {
             quantity: '2,000 / 2,000',
             time: '10:32:15',
           ),
+          const SizedBox(height: 100),
         ],
       ),
     );

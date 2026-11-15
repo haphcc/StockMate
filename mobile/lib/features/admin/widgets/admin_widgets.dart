@@ -265,6 +265,7 @@ Future<T?> showAdminSearchPicker<T>(
 }) {
   return showModalBottomSheet<T>(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     backgroundColor: AppColors.darkSurface,
     shape: const RoundedRectangleBorder(

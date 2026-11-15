@@ -212,7 +212,11 @@ def test_buy_order_and_matching_flow(db_session: Session):
     assert stock is not None
     # Temporarily set FPT current price to 99,000 for this test
     original_price = stock.current_price
+    original_ceiling = stock.ceiling_price
+    original_floor = stock.floor_price
     stock.current_price = Decimal("99000.00")
+    stock.ceiling_price = Decimal("110000.00")
+    stock.floor_price = Decimal("90000.00")
     db_session.flush()
 
     client_id = uuid.uuid4()
@@ -262,6 +266,8 @@ def test_buy_order_and_matching_flow(db_session: Session):
 
     # Restore original price
     stock.current_price = original_price
+    stock.ceiling_price = original_ceiling
+    stock.floor_price = original_floor
     db_session.commit()
 
 
@@ -290,7 +296,12 @@ def test_order_cancellation_and_refund(db_session: Session):
     stock = db_session.query(Stock).filter(Stock.stock_symbol == "FPT").first()
     assert stock is not None
     # Set limit price lower than market price so order stays PENDING
+    original_price = stock.current_price
+    original_ceiling = stock.ceiling_price
+    original_floor = stock.floor_price
     stock.current_price = Decimal("105000.00")
+    stock.ceiling_price = Decimal("120000.00")
+    stock.floor_price = Decimal("90000.00")
     db_session.flush()
 
     req = CreateOrderRequest(
@@ -321,6 +332,11 @@ def test_order_cancellation_and_refund(db_session: Session):
     cancelled_again = cancel_order(db=db_session, customer=cust, order_id=order.order_id)
     assert cancelled_again.status == "CANCELLED"
 
+    stock.current_price = original_price
+    stock.ceiling_price = original_ceiling
+    stock.floor_price = original_floor
+    db_session.commit()
+
 
 def test_t_plus_2_settlement_clearing(db_session: Session):
     """Test T+2 settlement releases shares to available_quantity in batches."""
@@ -345,7 +361,12 @@ def test_t_plus_2_settlement_clearing(db_session: Session):
 
     stock = db_session.query(Stock).filter(Stock.stock_symbol == "VNM").first()
     assert stock is not None
+    original_price = stock.current_price
+    original_ceiling = stock.ceiling_price
+    original_floor = stock.floor_price
     stock.current_price = Decimal("60000.00")
+    stock.ceiling_price = Decimal("70000.00")
+    stock.floor_price = Decimal("50000.00")
     db_session.flush()
 
     # Buy 100 VNM at valid in-band price (60,000 VND)
@@ -383,11 +404,21 @@ def test_t_plus_2_settlement_clearing(db_session: Session):
     db_session.refresh(portfolio)
     assert portfolio.available_quantity == 100
 
+    stock.current_price = original_price
+    stock.ceiling_price = original_ceiling
+    stock.floor_price = original_floor
+    db_session.commit()
+
     # 3. Running again -> 0 settled (idempotent, no double crediting)
     settled_again = process_share_settlements(db_session, as_of_date=future_date)
     assert len([s for s in settled_again if s.account_id == acc.account_id]) == 0
     db_session.refresh(portfolio)
     assert portfolio.available_quantity == 100
+
+    stock.current_price = original_price
+    stock.ceiling_price = original_ceiling
+    stock.floor_price = original_floor
+    db_session.commit()
 
 
 # =====================================================================
@@ -406,7 +437,7 @@ def test_api_orders_crud(client: TestClient, customer_auth: tuple[str, int, int]
         "order_type": "BUY",
         "order_kind": "LO",
         "quantity": 100,
-        "order_price": "28000.00",
+        "order_price": "21000.00",
     }
     resp = client.post(
         f"/api/accounts/{acc_id}/orders",
@@ -417,7 +448,7 @@ def test_api_orders_crud(client: TestClient, customer_auth: tuple[str, int, int]
     created = resp.json()
     assert created["stock_symbol"] == "HPG"
     assert created["quantity"] == 100
-    assert created["order_price"] == "28000.00"
+    assert created["order_price"] == "21000.00"
     order_id = created["order_id"]
 
     # 2. List Orders

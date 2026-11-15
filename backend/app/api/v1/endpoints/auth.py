@@ -7,10 +7,12 @@ from fastapi import APIRouter
 
 from app.api.deps import CurrentUserDep, DbDep
 from app.schemas.auth import (
+    ChangePasswordRequest,
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
     TokenResponse,
+    UpdateProfileRequest,
     UserResponse,
 )
 from app.services import auth_service
@@ -37,3 +39,26 @@ def refresh(request: RefreshRequest, db: DbDep) -> TokenResponse:
 def get_me(current_user: CurrentUserDep) -> UserResponse:
     """Return currently authenticated user information."""
     return UserResponse.model_validate(current_user)
+
+
+@router.put("/me", response_model=UserResponse)
+def update_me(
+    request: UpdateProfileRequest,
+    current_user: CurrentUserDep,
+    db: DbDep,
+) -> UserResponse:
+    """Update currently authenticated user information."""
+    updated = auth_service.update_profile(db, current_user, request)
+    return UserResponse.model_validate(updated)
+
+
+@router.put("/password")
+def change_password(
+    request: ChangePasswordRequest,
+    current_user: CurrentUserDep,
+    db: DbDep,
+) -> dict[str, str]:
+    """Change password for currently authenticated user."""
+    auth_service.change_password(db, current_user, request)
+    return {"message": "Đổi mật khẩu thành công."}
+

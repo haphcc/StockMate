@@ -44,9 +44,13 @@ final dashboardProvider = FutureProvider.autoDispose<DashboardData>((ref) async 
   }
   final assets = await accountRepo.getAssets(account.accountId);
   final portfolio = await accountRepo.getPortfolio(account.accountId);
-  // The market board remains owned by TV3 and is still rendered from its
-  // existing local data. TV2 only loads account data here.
-  const marketBoard = <StockModel>[];
+  final marketRepo = ref.watch(marketRepositoryProvider);
+  List<StockModel> marketBoard;
+  try {
+    marketBoard = await marketRepo.getMarketBoard(exchange: 'ALL');
+  } catch (_) {
+    marketBoard = const <StockModel>[];
+  }
 
   return DashboardData(account, assets, portfolio, marketBoard, accounts);
 });

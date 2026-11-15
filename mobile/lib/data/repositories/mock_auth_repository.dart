@@ -7,4 +7,22 @@ class MockAuthRepository implements AuthRepository {
   @override Future<UserModel> register(Map<String, dynamic> data) async { _currentUser = UserModel(id: 2, fullName: data['full_name'] as String? ?? '', email: data['email'] as String? ?? '', phoneNumber: data['phone_number'] as String? ?? '', status: 'ACTIVE', role: 'CUSTOMER'); return _currentUser!; }
   @override Future<void> logout() async { _currentUser = null; }
   @override Future<UserModel?> getCurrentUser() async => _currentUser;
+  @override
+  Future<UserModel> updateProfile({String? fullName, String? phoneNumber, String? avatarUrl}) async {
+    if (_currentUser == null) throw Exception('Not logged in');
+    _currentUser = UserModel(
+      id: _currentUser!.id,
+      fullName: fullName ?? _currentUser!.fullName,
+      email: _currentUser!.email,
+      phoneNumber: phoneNumber ?? _currentUser!.phoneNumber,
+      avatarUrl: avatarUrl ?? _currentUser!.avatarUrl,
+      status: _currentUser!.status,
+      role: _currentUser!.role,
+    );
+    return _currentUser!;
+  }
+  @override
+  Future<void> changePassword({required String oldPassword, required String newPassword}) async {
+    if (_currentUser == null) throw Exception('Not logged in');
+  }
 }

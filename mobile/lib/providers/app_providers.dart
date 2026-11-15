@@ -4,10 +4,12 @@ import '../data/repositories/auth_repository.dart';
 import '../data/repositories/mock_auth_repository.dart';
 import '../data/repositories/market_repository.dart';
 import '../data/repositories/mock_market_repository.dart';
+import '../data/repositories/api_market_repository.dart';
 import '../data/repositories/api_auth_repository.dart';
 import '../data/repositories/account_repository.dart';
 import '../data/repositories/api_account_repository.dart';
 import '../data/repositories/mock_account_repository.dart';
+import '../data/repositories/notification_repository.dart';
 import '../core/network/dio_client.dart';
 
 final dioClientProvider = Provider<DioClient>((ref) => DioClient());
@@ -38,10 +40,13 @@ final accountRepositoryProvider = Provider<AccountRepository>((ref) {
 });
 
 final marketRepositoryProvider = Provider<MarketRepository>((ref) {
-  // The API market repository belongs to TV3 and is not available yet.
-  // Keep the app usable while auth/account data uses the real API.
-  ref.watch(useMockProvider);
-  return MockMarketRepository();
+  if (ref.watch(useMockProvider)) return MockMarketRepository();
+  return ApiMarketRepository(client: ref.watch(dioClientProvider));
+});
+
+final notificationRepositoryProvider = Provider<NotificationRepository>((ref) {
+  if (ref.watch(useMockProvider)) return MockNotificationRepository();
+  return ApiNotificationRepository(client: ref.watch(dioClientProvider));
 });
 
 // Chế độ sáng/tối

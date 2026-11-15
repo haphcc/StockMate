@@ -45,6 +45,37 @@ class RefreshRequest(BaseModel):
     refresh_token: str = Field(min_length=1, max_length=4096)
 
 
+class UpdateProfileRequest(BaseModel):
+    """Payload for updating user profile."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    full_name: str | None = Field(default=None, min_length=1, max_length=100)
+    phone_number: str | None = Field(default=None, pattern=r"^0[35789][0-9]{8}$")
+    avatar_url: str | None = None
+
+    @field_validator("full_name", mode="before")
+    @classmethod
+    def trim_name(cls, value: object) -> object:
+        return value.strip() if isinstance(value, str) else value
+
+
+class ChangePasswordRequest(BaseModel):
+    """Payload for updating user password."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    old_password: str = Field(min_length=1)
+    new_password: str = Field(min_length=8, max_length=72)
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_password_bytes(cls, value: str) -> str:
+        if len(value.encode("utf-8")) > 72:
+            raise ValueError("Mật khẩu tối đa 72 byte UTF-8.")
+        return value
+
+
 class UserResponse(BaseModel):
     """Authenticated user profile response."""
 

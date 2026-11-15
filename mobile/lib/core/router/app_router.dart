@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -14,12 +15,26 @@ import '../../features/order/screens/place_order_screen.dart';
 import '../../features/portfolio/screens/portfolio_screen.dart';
 import '../../features/admin/screens/admin_home_screen.dart';
 
+class RouterRefreshNotifier extends ChangeNotifier {
+  RouterRefreshNotifier(Ref ref) {
+    ref.listen(authProvider, (_, _) {
+      notifyListeners();
+    });
+  }
+}
+
+final routerRefreshProvider = Provider<RouterRefreshNotifier>((ref) {
+  return RouterRefreshNotifier(ref);
+});
+
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final refreshNotifier = ref.watch(routerRefreshProvider);
 
   return GoRouter(
     initialLocation: '/splash',
+    refreshListenable: refreshNotifier,
     redirect: (context, state) {
+      final authState = ref.read(authProvider);
       // Logic điều hướng dựa trên trạng thái xác thực
       final isAuth = authState.value != null;
       final isSplash = state.uri.path == '/splash';
@@ -39,7 +54,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         return '/home/overview'; // Đã đăng nhập nhưng vào login -> về home
       }
 
-            final isAdmin = authState.value?.isAdmin ?? false;
+      final isAdmin = authState.value?.isAdmin ?? false;
       if (state.uri.path.startsWith('/home/admin') && !isAdmin) {
         return '/home/overview';
       }
@@ -92,7 +107,17 @@ final routerProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/home/trade',
-                builder: (context, state) => const PlaceOrderScreen(),
+                builder: (context, state) {
+                  final symbol = state.uri.queryParameters['symbol'];
+                  final side = state.uri.queryParameters['side'];
+                  final priceStr = state.uri.queryParameters['price'];
+                  final price = priceStr != null ? double.tryParse(priceStr) : null;
+                  return PlaceOrderScreen(
+                    initialSymbol: symbol,
+                    isBuy: side == 'sell' ? false : true,
+                    initialPrice: price,
+                  );
+                },
               ),
             ],
           ),

@@ -40,4 +40,34 @@ class AuthDatasource {
       throw ApiException.fromDio(error);
     }
   }
+
+  Future<Map<String, dynamic>> updateProfile(Map<String, dynamic> data) async {
+    try {
+      final response = await _dio.put<dynamic>(
+        ApiEndpoints.authMe,
+        data: data,
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
+  Future<Map<String, dynamic>> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await _dio.put<dynamic>(
+        ApiEndpoints.authPassword,
+        data: {
+          'old_password': oldPassword,
+          'new_password': newPassword,
+        },
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
 }

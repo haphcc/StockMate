@@ -44,4 +44,29 @@ class ApiAuthRepository implements AuthRepository {
       return null;
     }
   }
+
+  @override
+  Future<UserModel> updateProfile({
+    String? fullName,
+    String? phoneNumber,
+    String? avatarUrl,
+  }) async {
+    final body = <String, dynamic>{};
+    if (fullName != null) body['full_name'] = fullName;
+    if (phoneNumber != null) body['phone_number'] = phoneNumber;
+    if (avatarUrl != null) body['avatar_url'] = avatarUrl;
+    final response = await datasource.updateProfile(body);
+    return UserModel.fromJson(response);
+  }
+
+  @override
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    await datasource.changePassword(
+      oldPassword: oldPassword,
+      newPassword: newPassword,
+    );
+  }
 }

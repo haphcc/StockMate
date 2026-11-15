@@ -15,6 +15,7 @@ class PortfolioScreen extends ConsumerWidget {
       assets.when(loading: () => const _LoadingCard(), error: (e, _) => _ErrorCard(message: e.toString()), data: (value) => _AssetCard(asset: value)),
       const SizedBox(height: 24),
       portfolio.when(loading: () => const Center(child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator())), error: (e, _) => _ErrorCard(message: e.toString()), data: (items) => items.isEmpty ? const Padding(padding: EdgeInsets.all(40), child: Center(child: Text('Danh mục chưa có cổ phiếu', style: TextStyle(color: AppColors.darkTextSecondary)))) : Column(children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [const Text('DANH MỤC NẮM GIỮ', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)), Text('${items.length} mã', style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 12))]), const SizedBox(height: 12), ...items.map((item) => Padding(padding: const EdgeInsets.only(bottom: 12), child: _HoldingItem(item: item))) ])),
+      const SizedBox(height: 100),
     ])));
   }
 }
