@@ -139,14 +139,10 @@ def refresh(db: Session, token: str) -> TokenResponse:
     return issue_tokens(customer)
 
 
-def update_profile(
-    db: Session, customer: Customer, request: UpdateProfileRequest
-) -> Customer:
+def update_profile(db: Session, customer: Customer, request: UpdateProfileRequest) -> Customer:
     ensure_active(customer)
     if request.phone_number and request.phone_number != customer.phone_number:
-        existing = db.scalar(
-            select(Customer).where(Customer.phone_number == request.phone_number)
-        )
+        existing = db.scalar(select(Customer).where(Customer.phone_number == request.phone_number))
         if existing and existing.customer_id != customer.customer_id:
             raise ConflictException(
                 "Số điện thoại đã được sử dụng bởi người dùng khác.",
@@ -164,9 +160,7 @@ def update_profile(
     return customer
 
 
-def change_password(
-    db: Session, customer: Customer, request: ChangePasswordRequest
-) -> None:
+def change_password(db: Session, customer: Customer, request: ChangePasswordRequest) -> None:
     ensure_active(customer)
     is_valid = verify_password(request.old_password, customer.password_hash)
     if (
@@ -180,4 +174,3 @@ def change_password(
 
     customer.password_hash = get_password_hash(request.new_password)
     db.commit()
-

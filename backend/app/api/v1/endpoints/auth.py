@@ -61,4 +61,3 @@ def change_password(
     """Change password for currently authenticated user."""
     auth_service.change_password(db, current_user, request)
     return {"message": "Đổi mật khẩu thành công."}
-

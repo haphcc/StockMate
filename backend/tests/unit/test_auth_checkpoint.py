@@ -168,4 +168,3 @@ def test_update_profile_and_change_password_schema_validation():
 
     with pytest.raises(ValidationError):
         ChangePasswordRequest(old_password="old", new_password="short")
-
