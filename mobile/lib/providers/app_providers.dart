@@ -17,10 +17,9 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 final marketRepositoryProvider = Provider<MarketRepository>((ref) {
   if (AppConfig.useMock) {
-    return ApiMarketRepository();
-  } else {
     return MockMarketRepository();
   }
+  return ApiMarketRepository();
 });
 
 // Chế độ sáng/tối

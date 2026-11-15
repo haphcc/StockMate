@@ -23,12 +23,60 @@ class StockmateApi {
           if (token != null) options.headers['Authorization'] = 'Bearer $token';
           handler.next(options);
         },
+        onError: (error, handler) async {
+          final options = error.requestOptions;
+          final publicAuthCall =
+              options.path.endsWith('/auth/login') ||
+              options.path.endsWith('/auth/register') ||
+              options.path.endsWith('/auth/refresh');
+          if (error.response?.statusCode == 401 &&
+              !publicAuthCall &&
+              options.extra['auth_retry'] != true) {
+            try {
+              final token = await _refreshAccessToken();
+              options.extra['auth_retry'] = true;
+              options.headers['Authorization'] = 'Bearer $token';
+              final retryClient = Dio(
+                BaseOptions(baseUrl: AppConfig.apiBaseUrl),
+              );
+              handler.resolve(await retryClient.fetch(options));
+              return;
+            } catch (_) {
+              await logout();
+            }
+          }
+          handler.next(error);
+        },
       ),
     );
   }
 
   late final Dio dio;
   final storage = const FlutterSecureStorage();
+  Future<String>? _refreshing;
+
+  Future<String> _refreshAccessToken() {
+    final current = _refreshing;
+    if (current != null) return current;
+    final next = _doRefresh();
+    _refreshing = next;
+    return next.whenComplete(() => _refreshing = null);
+  }
+
+  Future<String> _doRefresh() async {
+    final refresh = await storage.read(key: 'refresh_token');
+    if (refresh == null) throw StateError('Phiên đăng nhập đã hết hạn.');
+    final response = await Dio(
+      BaseOptions(baseUrl: AppConfig.apiBaseUrl),
+    ).post('/api/auth/refresh', data: {'refresh_token': refresh});
+    final result = Map<String, dynamic>.from(response.data as Map);
+    final access = result['access_token'] as String;
+    await storage.write(key: 'access_token', value: access);
+    final rotated = result['refresh_token'];
+    if (rotated is String)
+      await storage.write(key: 'refresh_token', value: rotated);
+    return access;
+  }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
     final response = await dio.post(
@@ -67,9 +115,20 @@ class StockmateApi {
       _list((await dio.get('/api/accounts')).data);
   Future<int> firstAccountId() async {
     final rows = await accounts();
+    final selected = int.tryParse(
+      await storage.read(key: 'selected_account_id') ?? '',
+    );
+    if (selected != null &&
+        rows.any((row) => (row['account_id'] as num).toInt() == selected))
+      return selected;
+    if (rows.isNotEmpty)
+      await selectAccount((rows.first['account_id'] as num).toInt());
     if (rows.isEmpty) throw Exception('Tài khoản chưa có tài khoản đầu tư.');
     return (rows.first['account_id'] as num).toInt();
   }
+
+  Future<void> selectAccount(int accountId) =>
+      storage.write(key: 'selected_account_id', value: '$accountId');
 
   Future<Map<String, dynamic>> assets(int accountId) async =>
       _map((await dio.get('/api/accounts/$accountId/assets')).data);

@@ -52,6 +52,7 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
   @override
   void initState() {
     super.initState();
+    if (!AppConfig.useMock) _orders.clear();
     _loadOrders();
   }
 
@@ -99,6 +100,7 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
     } catch (error) {
       if (mounted)
         setState(() {
+          _orders.clear();
           _loading = false;
           _error = error.toString();
         });
@@ -253,7 +255,7 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
               ),
             const SizedBox(height: 12),
             const Text(
-              'Bản xem trước · dữ liệu khớp theo OrderResponse của backend',
+              'Lệnh của tài khoản đang chọn · cập nhật từ máy chủ',
               style: TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
             ),
           ],

@@ -3,7 +3,7 @@ import '../models/account_model.dart';
 import '../models/portfolio_model.dart';
 
 abstract class MarketRepository {
-  Future<List<StockModel>> getMarketBoard({String exchange = 'HOSE'});
+  Future<List<StockModel>> getMarketBoard({String exchange = 'Tất cả'});
   Future<AccountModel> getAccountSummary(int userId);
   Future<List<PortfolioModel>> getPortfolio(int accountId);
 }

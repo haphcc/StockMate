@@ -22,6 +22,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
   StockModel? _stock;
   final _api = StockmateApi();
   List<Map<String, dynamic>> _candles = [];
+  String? _chartError;
   bool _loading = true;
   String? _error;
 
@@ -30,15 +31,62 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
     super.initState();
     _loadStock();
     _loadCandles();
+    _loadSavedState();
+  }
+
+  Future<void> _loadSavedState() async {
+    if (AppConfig.useMock) return;
+    try {
+      final entries = await _api.watchlist();
+      final saved = entries.any(
+        (entry) =>
+            (entry['stock'] as Map)['stock_symbol'] ==
+            widget.symbol.toUpperCase(),
+      );
+      if (mounted) setState(() => _saved = saved);
+    } catch (_) {
+      // Quote/chart remain usable if watchlist lookup is temporarily unavailable.
+    }
+  }
+
+  Future<void> _toggleSaved() async {
+    final next = !_saved;
+    try {
+      if (!AppConfig.useMock) {
+        if (next) {
+          await _api.addWatch(widget.symbol);
+        } else {
+          await _api.removeWatch(widget.symbol);
+        }
+      }
+      if (mounted) setState(() => _saved = next);
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Không cập nhật được danh sách theo dõi: $error'),
+          ),
+        );
+    }
   }
 
   Future<void> _loadCandles() async {
     if (AppConfig.useMock) return;
     try {
       final rows = await _api.chart(widget.symbol, _range);
-      if (mounted) setState(() => _candles = rows);
+      if (mounted)
+        setState(() {
+          _candles = rows;
+          _chartError = rows.isEmpty
+              ? 'Chưa có dữ liệu nến cho khoảng này.'
+              : null;
+        });
     } catch (_) {
-      if (mounted) setState(() => _candles = []);
+      if (mounted)
+        setState(() {
+          _candles = [];
+          _chartError = 'Không tải được dữ liệu nến.';
+        });
     }
   }
 
@@ -129,7 +177,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                       ),
                     ),
                     IconButton(
-                      onPressed: () => setState(() => _saved = !_saved),
+                      onPressed: _toggleSaved,
                       icon: Icon(
                         _saved
                             ? Icons.bookmark_rounded
@@ -233,12 +281,12 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                       children: [
                         _depthHeader(),
                         const SizedBox(height: 10),
-                        ...const [
-                          ('34.60', '18,200', '34.50', '11,400'),
-                          ('34.50', '12,500', '34.40', '8,600'),
-                          ('34.40', '9,800', '34.30', '6,200'),
-                        ].map(
-                          (row) => _depthRow(row.$1, row.$2, row.$3, row.$4),
+                        const Text(
+                          'Backend hiện chưa cung cấp dữ liệu độ sâu lệnh mua/bán.',
+                          style: TextStyle(
+                            color: AppColors.darkTextMuted,
+                            fontSize: 10,
+                          ),
                         ),
                       ],
                     ),
@@ -291,79 +339,97 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
     );
   }
 
-  Widget _chartSection(StockModel stock) => MarketPanel(
-    padding: const EdgeInsets.fromLTRB(14, 14, 12, 12),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              'Biểu đồ nến',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
+  Widget _chartSection(StockModel stock) {
+    String dateAt(double fraction) {
+      if (_candles.isEmpty) return '—';
+      final index = ((_candles.length - 1) * fraction).round();
+      final date = DateTime.tryParse('${_candles[index]['recorded_date']}');
+      return date == null ? '' : '${date.day}/${date.month}';
+    }
+
+    return MarketPanel(
+      padding: const EdgeInsets.fromLTRB(14, 14, 12, 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                'Biểu đồ nến',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              const Icon(
+                Icons.tune_rounded,
+                color: AppColors.darkTextMuted,
+                size: 18,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: ['1M', '3M', '6M']
+                .map(
+                  (range) => Padding(
+                    padding: const EdgeInsets.only(right: 7),
+                    child: FilterChipPill(
+                      label: range,
+                      selected: _range == range,
+                      onTap: () {
+                        setState(() => _range = range);
+                        _loadCandles();
+                      },
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 195,
+            width: double.infinity,
+            child: CustomPaint(
+              painter: _CandlesPainter(
+                seed: widget.symbol.hashCode,
+                positive: stock.changeAmount >= 0,
+                candles: _candles,
+                preview: AppConfig.useMock,
               ),
             ),
-            const Spacer(),
-            const Icon(
-              Icons.tune_rounded,
-              color: AppColors.darkTextMuted,
-              size: 18,
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: ['1M', '3M', '6M']
-              .map(
-                (range) => Padding(
-                  padding: const EdgeInsets.only(right: 7),
-                  child: FilterChipPill(
-                    label: range,
-                    selected: _range == range,
-                    onTap: () {
-                      setState(() => _range = range);
-                      _loadCandles();
-                    },
-                  ),
-                ),
-              )
-              .toList(),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 195,
-          width: double.infinity,
-          child: CustomPaint(
-            painter: _CandlesPainter(
-              seed: widget.symbol.hashCode,
-              positive: stock.changeAmount >= 0,
-              candles: _candles,
-            ),
           ),
-        ),
-        const Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              '14/10',
-              style: TextStyle(color: AppColors.darkTextMuted, fontSize: 9),
+          if (_chartError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text(
+                _chartError!,
+                style: const TextStyle(
+                  color: AppColors.darkTextMuted,
+                  fontSize: 10,
+                ),
+              ),
             ),
-            Text(
-              '28/10',
-              style: TextStyle(color: AppColors.darkTextMuted, fontSize: 9),
-            ),
-            Text(
-              '14/11',
-              style: TextStyle(color: AppColors.darkTextMuted, fontSize: 9),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [0.0, 0.5, 1.0]
+                .map(
+                  (fraction) => Text(
+                    dateAt(fraction),
+                    style: const TextStyle(
+                      color: AppColors.darkTextMuted,
+                      fontSize: 9,
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _priceLine(
     String label,
@@ -420,65 +486,6 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
       ),
     ],
   );
-
-  Widget _depthRow(
-    String buyPrice,
-    String buyQty,
-    String sellPrice,
-    String sellQty,
-  ) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 5),
-    child: Row(
-      children: [
-        Expanded(
-          child: Row(
-            children: [
-              Text(
-                buyPrice,
-                style: const TextStyle(
-                  color: AppColors.priceUp,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                buyQty,
-                style: const TextStyle(
-                  color: AppColors.darkTextSecondary,
-                  fontSize: 10,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 20),
-        Expanded(
-          child: Row(
-            children: [
-              Text(
-                sellPrice,
-                style: const TextStyle(
-                  color: AppColors.priceDown,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                sellQty,
-                style: const TextStyle(
-                  color: AppColors.darkTextSecondary,
-                  fontSize: 10,
-                ),
-              ),
-            ],
-            mainAxisAlignment: MainAxisAlignment.end,
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 class _CandlesPainter extends CustomPainter {
@@ -486,10 +493,12 @@ class _CandlesPainter extends CustomPainter {
     required this.seed,
     required this.positive,
     required this.candles,
+    required this.preview,
   });
   final int seed;
   final bool positive;
   final List<Map<String, dynamic>> candles;
+  final bool preview;
   @override
   void paint(Canvas canvas, Size size) {
     final grid = Paint()
@@ -499,6 +508,7 @@ class _CandlesPainter extends CustomPainter {
       final y = i * (size.height - 30) / 3;
       canvas.drawLine(Offset(0, y), Offset(size.width, y), grid);
     }
+    if (candles.isEmpty && !preview) return;
     if (candles.isNotEmpty) {
       final rows = candles;
       double value(Map<String, dynamic> row, String key) =>
@@ -600,5 +610,6 @@ class _CandlesPainter extends CustomPainter {
   bool shouldRepaint(covariant _CandlesPainter old) =>
       old.seed != seed ||
       old.positive != positive ||
+      old.preview != preview ||
       !identical(old.candles, candles);
 }

@@ -5,29 +5,64 @@ import '../models/portfolio_model.dart';
 
 class MockMarketRepository implements MarketRepository {
   @override
-  Future<List<StockModel>> getMarketBoard({String exchange = 'HOSE'}) async {
+  Future<List<StockModel>> getMarketBoard({String exchange = 'Tất cả'}) async {
     await Future.delayed(const Duration(milliseconds: 800));
     // Dữ liệu giả lập, giá x1000 đồng
     return [
       const StockModel(
-        id: 1, symbol: 'MWG', companyName: 'Thế Giới Di Động', exchange: 'HOSE',
-        currentPrice: 64500, referencePrice: 60300, ceilingPrice: 64500, floorPrice: 56100, totalVolume: 8900000,
+        id: 1,
+        symbol: 'MWG',
+        companyName: 'Thế Giới Di Động',
+        exchange: 'HOSE',
+        currentPrice: 64500,
+        referencePrice: 60300,
+        ceilingPrice: 64500,
+        floorPrice: 56100,
+        totalVolume: 8900000,
       ),
       const StockModel(
-        id: 2, symbol: 'FPT', companyName: 'Tập đoàn FPT', exchange: 'HOSE',
-        currentPrice: 135200, referencePrice: 130400, ceilingPrice: 139500, floorPrice: 121300, totalVolume: 4200000,
+        id: 2,
+        symbol: 'FPT',
+        companyName: 'Tập đoàn FPT',
+        exchange: 'HOSE',
+        currentPrice: 135200,
+        referencePrice: 130400,
+        ceilingPrice: 139500,
+        floorPrice: 121300,
+        totalVolume: 4200000,
       ),
       const StockModel(
-        id: 3, symbol: 'SSI', companyName: 'Chứng khoán SSI', exchange: 'HOSE',
-        currentPrice: 34600, referencePrice: 33400, ceilingPrice: 35700, floorPrice: 31100, totalVolume: 12100000,
+        id: 3,
+        symbol: 'SSI',
+        companyName: 'Chứng khoán SSI',
+        exchange: 'HOSE',
+        currentPrice: 34600,
+        referencePrice: 33400,
+        ceilingPrice: 35700,
+        floorPrice: 31100,
+        totalVolume: 12100000,
       ),
       const StockModel(
-        id: 4, symbol: 'HPG', companyName: 'Tập đoàn Hòa Phát', exchange: 'HOSE',
-        currentPrice: 28900, referencePrice: 29300, ceilingPrice: 31300, floorPrice: 27200, totalVolume: 15700000,
+        id: 4,
+        symbol: 'HPG',
+        companyName: 'Tập đoàn Hòa Phát',
+        exchange: 'HOSE',
+        currentPrice: 28900,
+        referencePrice: 29300,
+        ceilingPrice: 31300,
+        floorPrice: 27200,
+        totalVolume: 15700000,
       ),
       const StockModel(
-        id: 5, symbol: 'VCB', companyName: 'NHTMCP Ngoại thương VN', exchange: 'HOSE',
-        currentPrice: 91500, referencePrice: 90000, ceilingPrice: 96300, floorPrice: 83700, totalVolume: 1250000,
+        id: 5,
+        symbol: 'VCB',
+        companyName: 'NHTMCP Ngoại thương VN',
+        exchange: 'HOSE',
+        currentPrice: 91500,
+        referencePrice: 90000,
+        ceilingPrice: 96300,
+        floorPrice: 83700,
+        totalVolume: 1250000,
       ),
     ];
   }
@@ -50,8 +85,15 @@ class MockMarketRepository implements MarketRepository {
       const PortfolioModel(
         portfolioId: 1,
         stock: StockModel(
-          id: 2, symbol: 'FPT', companyName: 'CTCP FPT', exchange: 'HOSE',
-          currentPrice: 112000, referencePrice: 110000, ceilingPrice: 117700, floorPrice: 102300, totalVolume: 2500000,
+          id: 2,
+          symbol: 'FPT',
+          companyName: 'CTCP FPT',
+          exchange: 'HOSE',
+          currentPrice: 112000,
+          referencePrice: 110000,
+          ceilingPrice: 117700,
+          floorPrice: 102300,
+          totalVolume: 2500000,
         ),
         quantity: 1000,
         availableQuantity: 1000,
@@ -62,8 +104,15 @@ class MockMarketRepository implements MarketRepository {
       const PortfolioModel(
         portfolioId: 2,
         stock: StockModel(
-          id: 3, symbol: 'HPG', companyName: 'CTCP Tập đoàn Hòa Phát', exchange: 'HOSE',
-          currentPrice: 28500, referencePrice: 29000, ceilingPrice: 31000, floorPrice: 27000, totalVolume: 15400000,
+          id: 3,
+          symbol: 'HPG',
+          companyName: 'CTCP Tập đoàn Hòa Phát',
+          exchange: 'HOSE',
+          currentPrice: 28500,
+          referencePrice: 29000,
+          ceilingPrice: 31000,
+          floorPrice: 27000,
+          totalVolume: 15400000,
         ),
         quantity: 3000,
         availableQuantity: 3000,

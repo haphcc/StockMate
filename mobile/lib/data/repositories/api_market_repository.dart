@@ -10,15 +10,12 @@ class ApiMarketRepository implements MarketRepository {
   int? _accountId;
 
   @override
-  Future<List<StockModel>> getMarketBoard({String exchange = 'HOSE'}) async =>
+  Future<List<StockModel>> getMarketBoard({String exchange = 'Tất cả'}) async =>
       (await _api.market(exchange: exchange)).map(StockModel.fromJson).toList();
 
   @override
   Future<AccountModel> getAccountSummary(int userId) async {
-    final accounts = await _api.accounts();
-    if (accounts.isEmpty)
-      throw Exception('Tài khoản chưa có tài khoản đầu tư.');
-    _accountId = (accounts.first['account_id'] as num).toInt();
+    _accountId = await _api.firstAccountId();
     final asset = await _api.assets(_accountId!);
     return AccountModel.fromJson(asset);
   }

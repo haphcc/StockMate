@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/stockmate_api.dart';
 import '../../../core/theme/app_colors.dart';
@@ -53,6 +54,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   @override
   void initState() {
     super.initState();
+    if (!AppConfig.useMock) _transactions.clear();
     _loadTransactions();
   }
 
@@ -95,6 +97,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     } catch (error) {
       if (mounted)
         setState(() {
+          _transactions.clear();
           _loading = false;
           _error = error.toString();
         });
@@ -106,6 +109,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     final shown = _transactions
         .where((item) => _filter == 'Tất cả' || item.side == _filter)
         .toList();
+    final displayedTotal = _transactions.fold<int>(
+      0,
+      (sum, item) =>
+          sum +
+          (int.tryParse(item.total.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0),
+    );
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       body: SafeArea(
@@ -185,12 +194,12 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     size: 19,
                   ),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Tổng giá trị khớp hôm nay',
+                          'Tổng giá trị trong danh sách',
                           style: TextStyle(
                             color: AppColors.darkTextSecondary,
                             fontSize: 10,
@@ -198,7 +207,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          '37.070.000 ₫',
+                          '${NumberFormat('#,##0', 'vi_VN').format(displayedTotal)} ₫',
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,
@@ -217,8 +226,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       color: AppColors.primary.withValues(alpha: .1),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
-                      '+2 lệnh',
+                    child: Text(
+                      '${_transactions.length} GD',
                       style: TextStyle(
                         color: AppColors.primary,
                         fontSize: 10,
@@ -252,7 +261,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               ),
             ),
             const SizedBox(height: 18),
-            const SectionTitle('Hôm nay · 14/11/2026'),
+            const SectionTitle('Giao dịch gần nhất'),
             const SizedBox(height: 10),
             ...shown.map(
               (trade) => Padding(
@@ -265,7 +274,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             ),
             const SizedBox(height: 12),
             const Text(
-              'Bản xem trước · trường dữ liệu theo TransactionResponse',
+              'Lịch sử giao dịch từ tài khoản đang chọn',
               style: TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
             ),
           ],

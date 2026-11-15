@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/sparkline_chart.dart';
 import '../../market/data/market_fixtures.dart';
 import '../../market/widgets/market_components.dart';
 import '../providers/dashboard_provider.dart';
@@ -50,15 +49,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ),
                     const SizedBox(height: 4),
                     const Text(
-                      'Thứ Hai, 14 tháng 11  ·  Đóng cửa',
+                      'Bảng giá mẫu · Dữ liệu từ máy chủ',
                       style: TextStyle(
                         color: AppColors.darkTextSecondary,
                         fontSize: 12,
                       ),
                     ),
                     const SizedBox(height: 18),
-                    _indexCard(),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
                     const SectionTitle('Bảng giá'),
                     const SizedBox(height: 12),
                     _exchangeFilters(),
@@ -104,9 +102,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ),
                       error: (error, _) => _loadError(error.toString()),
                       data: (data) {
-                        final all = data.marketBoard.isEmpty
-                            ? marketStocks
-                            : data.marketBoard;
+                        final all = data.marketBoard;
                         final stocks = all
                             .where(
                               (stock) =>
@@ -171,113 +167,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       ),
     );
   }
-
-  Widget _indexCard() => MarketPanel(
-    padding: const EdgeInsets.all(18),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            const Text(
-              'VN-INDEX',
-              style: TextStyle(
-                color: AppColors.darkTextSecondary,
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                letterSpacing: .8,
-              ),
-            ),
-            const Spacer(),
-            Container(
-              width: 7,
-              height: 7,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                shape: BoxShape.circle,
-              ),
-            ),
-            const SizedBox(width: 6),
-            const Text(
-              'ĐANG GIAO DỊCH',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontSize: 9,
-                fontWeight: FontWeight.w800,
-                letterSpacing: .5,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 9),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            const Text(
-              '1,284.50',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 31,
-                fontWeight: FontWeight.w800,
-                letterSpacing: -1,
-                fontFeatures: [FontFeature.tabularFigures()],
-              ),
-            ),
-            const SizedBox(width: 10),
-            const Padding(
-              padding: EdgeInsets.only(bottom: 6),
-              child: Text(
-                '+12.35  (+0.97%)',
-                style: TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        const SparklineChart(
-          width: double.infinity,
-          height: 54,
-          color: AppColors.primary,
-          data: [
-            0.35,
-            .39,
-            .31,
-            .48,
-            .43,
-            .56,
-            .51,
-            .63,
-            .58,
-            .71,
-            .68,
-            .84,
-            .78,
-            .92,
-          ],
-        ),
-        const SizedBox(height: 12),
-        const Row(
-          children: [
-            _Breadth(label: 'Tăng', count: '182', color: AppColors.priceUp),
-            SizedBox(width: 16),
-            _Breadth(label: 'Đứng', count: '74', color: AppColors.priceRef),
-            SizedBox(width: 16),
-            _Breadth(label: 'Giảm', count: '96', color: AppColors.priceDown),
-            Spacer(),
-            Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.darkTextMuted,
-              size: 18,
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
 
   Widget _exchangeFilters() => SingleChildScrollView(
     scrollDirection: Axis.horizontal,
@@ -424,34 +313,5 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
       ],
     ),
-  );
-}
-
-class _Breadth extends StatelessWidget {
-  const _Breadth({
-    required this.label,
-    required this.count,
-    required this.color,
-  });
-  final String label;
-  final String count;
-  final Color color;
-  @override
-  Widget build(BuildContext context) => Row(
-    children: [
-      Container(
-        width: 6,
-        height: 6,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-      ),
-      const SizedBox(width: 5),
-      Text(
-        '$label $count',
-        style: const TextStyle(
-          color: AppColors.darkTextSecondary,
-          fontSize: 10,
-        ),
-      ),
-    ],
   );
 }

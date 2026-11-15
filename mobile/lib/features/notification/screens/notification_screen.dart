@@ -58,6 +58,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
   @override
   void initState() {
     super.initState();
+    if (!AppConfig.useMock) _items.clear();
     _loadNotifications();
   }
 
@@ -74,7 +75,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ..clear()
           ..addAll(
             rows.map((row) {
-              final type = '${row['notification_type']}';
+              final rawType = '${row['notification_type']}';
+              final type = switch (rawType) {
+                'ORDER' => 'Lệnh',
+                'PRICE_ALERT' => 'Thị trường',
+                'SYSTEM' => 'Hệ thống',
+                _ => rawType,
+              };
               final created = DateTime.tryParse(
                 '${row['created_at']}',
               )?.toLocal();
@@ -97,6 +104,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     } catch (error) {
       if (mounted)
         setState(() {
+          _items.clear();
           _loading = false;
           _error = error.toString();
         });
@@ -207,18 +215,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: ['Tất cả', 'Chưa đọc', 'Lệnh', 'Tài khoản']
-                    .map(
-                      (filter) => Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: FilterChipPill(
-                          label: filter,
-                          selected: _filter == filter,
-                          onTap: () => setState(() => _filter = filter),
-                        ),
-                      ),
-                    )
-                    .toList(),
+                children:
+                    ['Tất cả', 'Chưa đọc', 'Lệnh', 'Thị trường', 'Hệ thống']
+                        .map(
+                          (filter) => Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: FilterChipPill(
+                              label: filter,
+                              selected: _filter == filter,
+                              onTap: () => setState(() => _filter = filter),
+                            ),
+                          ),
+                        )
+                        .toList(),
               ),
             ),
             const SizedBox(height: 18),
@@ -345,7 +354,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               ),
             const SizedBox(height: 12),
             const Text(
-              'Bản xem trước · giao diện theo NotificationResponse',
+              'Thông báo của tài khoản đang đăng nhập',
               style: TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
             ),
           ],
