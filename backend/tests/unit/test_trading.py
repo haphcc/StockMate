@@ -430,6 +430,19 @@ def test_api_orders_crud(client: TestClient, customer_auth: tuple[str, int, int]
     token, cust_id, acc_id = customer_auth
     headers = {"Authorization": f"Bearer {token}"}
 
+    from app.db.session import SessionLocal
+
+    with SessionLocal() as db:
+        hpg = db.query(Stock).filter(Stock.stock_symbol == "HPG").first()
+        assert hpg is not None
+        tick = Decimal("50.00") if hpg.reference_price < Decimal("50000.00") else Decimal("100.00")
+        target_price = (hpg.reference_price // tick) * tick
+        if target_price < hpg.floor_price:
+            target_price = hpg.floor_price
+        elif target_price > hpg.ceiling_price:
+            target_price = hpg.ceiling_price
+        order_price_str = f"{target_price:.2f}"
+
     # 1. Place Order via API
     order_payload = {
         "client_order_id": str(uuid.uuid4()),
@@ -437,7 +450,7 @@ def test_api_orders_crud(client: TestClient, customer_auth: tuple[str, int, int]
         "order_type": "BUY",
         "order_kind": "LO",
         "quantity": 100,
-        "order_price": "21000.00",
+        "order_price": order_price_str,
     }
     resp = client.post(
         f"/api/accounts/{acc_id}/orders",
@@ -448,7 +461,7 @@ def test_api_orders_crud(client: TestClient, customer_auth: tuple[str, int, int]
     created = resp.json()
     assert created["stock_symbol"] == "HPG"
     assert created["quantity"] == 100
-    assert created["order_price"] == "21000.00"
+    assert created["order_price"] == order_price_str
     order_id = created["order_id"]
 
     # 2. List Orders
