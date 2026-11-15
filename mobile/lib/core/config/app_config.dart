@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
+
 class AppConfig {
-  static const bool useMock = bool.fromEnvironment('USE_MOCK', defaultValue: true);
+  static const bool useMock = bool.fromEnvironment('USE_MOCK', defaultValue: false);
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://10.0.2.2:8000',
+    defaultValue: kIsWeb ? 'http://127.0.0.1:8000' : 'http://10.0.2.2:8000',
   );
 }

@@ -15,10 +15,13 @@
 
 Dành cho các thành viên (**LB, Tuệ, Sơn, Châu...**) khi mới tải project về:
 
-### Bước 1: Dùng PostgreSQL cài trên máy
-
-StockMate kết nối trực tiếp tới PostgreSQL local, không dùng container database.
-Tạo database `stock_exchange` trên PostgreSQL local của bạn (xem lệnh ở bước 2).
+### Bước 1: Khởi động PostgreSQL (Chọn 1 trong 2 cách)
+* **Cách 1 (Dùng Docker - Khuyên dùng):**
+  ```powershell
+  docker compose up -d postgres
+  ```
+* **Cách 2 (Dùng PostgreSQL cài trên máy):**
+  Tạo database tên `stock_exchange` trên PostgreSQL của bạn.
 
 ### Bước 2: Cấu hình biến môi trường
 Vào thư mục `backend/` và copy file cấu hình mẫu (nếu chưa có):
@@ -26,25 +29,7 @@ Vào thư mục `backend/` và copy file cấu hình mẫu (nếu chưa có):
 cd backend
 copy .env.example .env
 ```
-Thiết lập `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`,
-`POSTGRES_PASSWORD` và `DATABASE_URL` khớp với PostgreSQL local của bạn.
-Ví dụ PostgreSQL local chạy ở cổng `55432`:
-
-```dotenv
-POSTGRES_HOST=127.0.0.1
-POSTGRES_PORT=55432
-POSTGRES_DB=stock_exchange
-POSTGRES_USER=postgres
-POSTGRES_PASSWORD=<mat-khau-postgres-local>
-DATABASE_URL=postgresql+psycopg://postgres:<mat-khau-postgres-local>@127.0.0.1:55432/stock_exchange
-```
-
-Tạo database (đổi host, port, user nếu cần):
-
-```powershell
-cd backend
-.\.venv\Scripts\python.exe scripts\create_local_database.py
-```
+*(Mở file `backend/.env` để chỉnh sửa `POSTGRES_PASSWORD` và `DATABASE_URL` khớp với mật khẩu PostgreSQL máy bạn nếu không dùng mặc định).*
 
 ### Bước 3: Cài đặt thư viện Python backend
 Từ thư mục `backend/`:

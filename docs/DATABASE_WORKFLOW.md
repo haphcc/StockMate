@@ -16,7 +16,7 @@ Việc gỡ code khỏi repo không xóa database/volume đã tồn tại trên 
 ## ENV-01 — Phuoc tự triển khai
 
 1. Đọc prototype; thống nhất tên bảng/cột, kiểu tiền và mối quan hệ với LB/Tuệ.
-2. Tạo PostgreSQL DEV local riêng và viết cấu hình connection.
+2. Tạo PostgreSQL DEV riêng và viết cấu hình Docker/connection.
 3. Khởi tạo Alembic thật; điền env/template/config và revision 0001 có upgrade/downgrade.
 4. Tự viết SQL ban đầu sau review; chặn chạy baseline lên DB đã có bảng app.
 5. Tự viết seed an toàn: một transaction, chống chạy đồng thời, từ chối DB có dữ liệu, bcrypt hash thật.
