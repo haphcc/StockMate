@@ -355,7 +355,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                     }),
                   const SizedBox(height: 12),
                   const Text(
-                    'Giá mô phỏng · HOSE · Đơn vị: nghìn đồng',
+                    'Đơn vị: nghìn đồng',
                     style: TextStyle(
                       color: AppColors.darkTextMuted,
                       fontSize: 10,
