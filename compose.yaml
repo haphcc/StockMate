@@ -8,9 +8,9 @@ services:
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-stock_exchange}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-h$c4122005}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-h$$c4122005}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -30,7 +30,7 @@ services:
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB:-stock_exchange}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-h$c4122005}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-h$$c4122005}
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-h$$c4122005}@postgres:5432/${POSTGRES_DB:-stock_exchange}
       SECRET_KEY: ${SECRET_KEY:-3oUJPMRBS-ma3JFIViu_6KMCTGXNnXRLKlr3crraKuAjFWJ1E_nQnBKbpN6hHrNb}
       ENVIRONMENT: ${ENVIRONMENT:-development}

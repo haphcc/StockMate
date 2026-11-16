@@ -182,6 +182,25 @@ abstract final class DashboardDialogs {
                 ),
               ],
             ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(sheetCtx).pop();
+                  context.push('/home/overview/stock/${stock.symbol}');
+                },
+                icon: const Icon(Icons.candlestick_chart_rounded, size: 18),
+                label: const Text('Xem biểu đồ nến & chi tiết'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: AppColors.darkCardBorder),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                ),
+              ),
+            ),
           ],
         ),
       ),

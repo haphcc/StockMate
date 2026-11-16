@@ -28,8 +28,9 @@ class StockModel extends Equatable {
 
   // Derived properties
   int get changeAmount => currentPrice - referencePrice;
-  double get changePercent => referencePrice > 0 ? (changeAmount / referencePrice) * 100 : 0;
-  
+  double get changePercent =>
+      referencePrice > 0 ? (changeAmount / referencePrice) * 100 : 0;
+
   PriceState get priceState {
     if (currentPrice >= ceilingPrice) return PriceState.ceiling;
     if (currentPrice <= floorPrice) return PriceState.floor;

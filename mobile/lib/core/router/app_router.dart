@@ -10,9 +10,13 @@ import '../../features/home/screens/home_shell.dart';
 import '../../features/home/screens/dashboard_screen.dart';
 import '../../features/home/screens/deposit_screen.dart';
 import '../../features/home/screens/settings_screen.dart';
+import '../../features/market/screens/stock_detail_screen.dart';
+import '../../features/notification/screens/notification_screen.dart';
+import '../../features/watchlist/screens/watchlist_screen.dart';
 import '../../features/order/screens/order_book_screen.dart';
 import '../../features/order/screens/place_order_screen.dart';
 import '../../features/portfolio/screens/portfolio_screen.dart';
+import '../../features/transaction/screens/transaction_history_screen.dart';
 import '../../features/admin/screens/admin_home_screen.dart';
 
 class RouterRefreshNotifier extends ChangeNotifier {
@@ -35,23 +39,23 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refreshNotifier,
     redirect: (context, state) {
       final authState = ref.read(authProvider);
-      // Logic điều hướng dựa trên trạng thái xác thực
       final isAuth = authState.value != null;
       final isSplash = state.uri.path == '/splash';
-      final isLoggingIn = state.uri.path == '/login' || state.uri.path == '/register';
+      final isLoggingIn =
+          state.uri.path == '/login' || state.uri.path == '/register';
 
-      if (authState.isLoading) return null; // Đợi load xong
+      if (authState.isLoading) return null;
 
       if (isSplash) {
         return isAuth ? '/home/overview' : '/login';
       }
 
       if (!isAuth && !isLoggingIn) {
-        return '/login'; // Chưa đăng nhập -> về login
+        return '/login';
       }
 
       if (isAuth && isLoggingIn) {
-        return '/home/overview'; // Đã đăng nhập nhưng vào login -> về home
+        return '/home/overview';
       }
 
       final isAdmin = authState.value?.isAdmin ?? false;
@@ -74,18 +78,33 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
       ),
-      GoRoute(path: '/deposit', builder: (context, state) => const DepositScreen()),
+      GoRoute(
+        path: '/deposit',
+        builder: (context, state) => const DepositScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return HomeShell(navigationShell: navigationShell);
         },
         branches: [
-          // Tab 0: Thị trường (Dashboard)
+          // Branch 0: Thị trường (Dashboard)
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: '/home/overview',
                 builder: (context, state) => const DashboardScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'stock/:symbol',
+                    builder: (context, state) => StockDetailScreen(
+                      symbol: state.pathParameters['symbol']!,
+                    ),
+                  ),
+                  GoRoute(
+                    path: 'notifications',
+                    builder: (context, state) => const NotificationScreen(),
+                  ),
+                ],
               ),
               GoRoute(
                 path: '/home/settings',
@@ -93,16 +112,16 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Tab 1: Sổ lệnh
+          // Branch 1: Theo dõi (Watchlist)
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/home/orders',
-                builder: (context, state) => const OrderBookScreen(),
+                path: '/home/watchlist',
+                builder: (context, state) => const WatchlistScreen(),
               ),
             ],
           ),
-          // Tab 2: Đặt lệnh
+          // Branch 2: Đặt lệnh
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -111,17 +130,36 @@ final routerProvider = Provider<GoRouter>((ref) {
                   final symbol = state.uri.queryParameters['symbol'];
                   final side = state.uri.queryParameters['side'];
                   final priceStr = state.uri.queryParameters['price'];
-                  final price = priceStr != null ? double.tryParse(priceStr) : null;
+                  final price =
+                      priceStr != null ? double.tryParse(priceStr) : null;
                   return PlaceOrderScreen(
+                    symbol: symbol,
+                    side: side,
                     initialSymbol: symbol,
-                    isBuy: side == 'sell' ? false : true,
+                    isBuy: side?.toLowerCase() == 'sell' ? false : true,
                     initialPrice: price,
                   );
                 },
               ),
             ],
           ),
-          // Tab 3: Danh mục
+          // Branch 3: Sổ lệnh
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/home/orders',
+                builder: (context, state) => const OrderBookScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'transactions',
+                    builder: (context, state) =>
+                        const TransactionHistoryScreen(),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          // Branch 4: Danh mục (Portfolio)
           StatefulShellBranch(
             routes: [
               GoRoute(
@@ -130,8 +168,8 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ],
           ),
-          // Tab 4: Quản trị (Admin)
-           StatefulShellBranch(
+          // Branch 5: Quản trị (Admin)
+          StatefulShellBranch(
             routes: [
               GoRoute(
                 path: '/home/admin',

@@ -36,28 +36,36 @@ class PortfolioModel extends Equatable {
     required this.profitLossPercent,
   });
 
-  factory PortfolioModel.fromJson(Map<String, dynamic> json) {
-    return PortfolioModel(
-      portfolioId: json['portfolio_id'] ?? 0,
-      accountId: json['account_id'] ?? 0,
-      stockId: json['stock_id'] ?? 0,
-      stockSymbol: json['stock_symbol']?.toString() ?? '',
-      companyName: json['company_name']?.toString() ?? '',
-      exchange: json['exchange']?.toString() ?? '',
-      quantity: json['quantity'] ?? 0,
-      availableQuantity: json['available_quantity'] ?? 0,
-      blockedQuantity: json['blocked_quantity'] ?? 0,
-      pendingQuantity: json['pending_quantity'] ?? 0,
-      averagePrice: Money.parse(json['average_price']),
-      marketPrice: Money.parse(json['market_price']),
-      currentValue: Money.parse(json['current_value']),
-      profitLoss: Money.parse(json['profit_loss']),
-      profitLossPercent: json['profit_loss_percent'] == null
-          ? null
-          : Money.parse(json['profit_loss_percent']),
-    );
-  }
+  factory PortfolioModel.fromJson(Map<String, dynamic> json) => PortfolioModel(
+        portfolioId: json['portfolio_id'] ?? 0,
+        accountId: json['account_id'] ?? 0,
+        stockId: json['stock_id'] ?? 0,
+        stockSymbol: json['stock_symbol']?.toString() ?? '',
+        companyName: json['company_name']?.toString() ?? '',
+        exchange: json['exchange']?.toString() ?? '',
+        quantity: json['quantity'] ?? 0,
+        availableQuantity: json['available_quantity'] ?? 0,
+        blockedQuantity: json['blocked_quantity'] ?? 0,
+        pendingQuantity: json['pending_quantity'] ?? 0,
+        averagePrice: Money.parse(json['average_price']),
+        marketPrice: Money.parse(json['market_price']),
+        currentValue: Money.parse(json['current_value']),
+        profitLoss: Money.parse(json['profit_loss']),
+        profitLossPercent: json['profit_loss_percent'] == null
+            ? null
+            : Money.parse(json['profit_loss_percent']),
+      );
 
   @override
-  List<Object?> get props => [portfolioId, accountId, stockId, quantity, averagePrice];
+  List<Object?> get props => [
+        portfolioId,
+        accountId,
+        stockId,
+        stockSymbol,
+        quantity,
+        averagePrice,
+        marketPrice,
+        currentValue,
+        profitLoss,
+      ];
 }
