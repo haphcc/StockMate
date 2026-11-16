@@ -403,7 +403,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                 seed: widget.symbol.hashCode,
                 positive: stock.changeAmount >= 0,
                 candles: _candles,
-                preview: AppConfig.useMock,
+                preview: AppConfig.useMock || _candles.isEmpty,
               ),
             ),
           ),

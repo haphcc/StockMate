@@ -5,7 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/price_colors.dart';
 import '../../../data/models/stock_model.dart';
 import '../../../providers/app_providers.dart';
-import 'dashboard_dialogs.dart';
+import 'package:go_router/go_router.dart';
 
 class StockSearchDialog extends ConsumerStatefulWidget {
   const StockSearchDialog({super.key});
@@ -250,7 +250,7 @@ class _StockSearchDialogState extends ConsumerState<StockSearchDialog> {
                                   ),
                                   onTap: () {
                                     Navigator.of(context).pop();
-                                    DashboardDialogs.showStockActionSheet(context, stock);
+                                    context.push('/home/overview/stock/${stock.symbol}');
                                   },
                                 );
                               },

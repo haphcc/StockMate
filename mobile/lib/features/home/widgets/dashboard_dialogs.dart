@@ -149,7 +149,7 @@ abstract final class DashboardDialogs {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       Navigator.of(sheetCtx).pop();
-                      context.push('/home/trade?symbol=${stock.symbol}&side=buy&price=$priceFormatted');
+                      context.go('/home/trade?symbol=${stock.symbol}&side=buy&price=$priceFormatted');
                     },
                     icon: const Icon(Icons.arrow_upward_rounded, size: 18),
                     label: Text('MUA ${stock.symbol}'),
@@ -167,7 +167,7 @@ abstract final class DashboardDialogs {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       Navigator.of(sheetCtx).pop();
-                      context.push('/home/trade?symbol=${stock.symbol}&side=sell&price=$priceFormatted');
+                      context.go('/home/trade?symbol=${stock.symbol}&side=sell&price=$priceFormatted');
                     },
                     icon: const Icon(Icons.arrow_downward_rounded, size: 18),
                     label: Text('BÁN ${stock.symbol}'),

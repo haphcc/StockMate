@@ -1496,7 +1496,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           return Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () => DashboardDialogs.showStockActionSheet(context, stock),
+              onTap: () => context.push('/home/overview/stock/${stock.symbol}'),
+              onLongPress: () => DashboardDialogs.showStockActionSheet(context, stock),
               borderRadius: BorderRadius.vertical(
                 top: index == 0 ? const Radius.circular(16) : Radius.zero,
                 bottom: isLast ? const Radius.circular(16) : Radius.zero,

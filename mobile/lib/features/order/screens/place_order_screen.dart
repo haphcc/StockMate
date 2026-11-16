@@ -42,6 +42,8 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
   bool _priceEdited = false;
   String? _intentFingerprint;
   String? _intentUuid;
+  List<Map<String, dynamic>> _userAccounts = [];
+  int? _selectedAccountId;
 
   @override
   void initState() {
@@ -58,6 +60,73 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
         : formatBoardPrice(stockFor(_symbol).currentPrice);
     _price = TextEditingController(text: initialPriceStr);
     _loadStocks();
+    _loadAccounts();
+  }
+
+  @override
+  void didUpdateWidget(covariant PlaceOrderScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    var changed = false;
+    if (widget.symbol != null && widget.symbol!.toUpperCase() != _symbol) {
+      _symbol = widget.symbol!.toUpperCase();
+      changed = true;
+    }
+    if (widget.side != null) {
+      final newIsBuy = widget.side!.toUpperCase() != 'SELL';
+      if (newIsBuy != _isBuy) {
+        _isBuy = newIsBuy;
+        changed = true;
+      }
+    }
+    if (widget.initialPrice != null) {
+      final newPriceStr = widget.initialPrice! >= 1000
+          ? formatBoardPrice(widget.initialPrice!.round())
+          : widget.initialPrice!.toStringAsFixed(1);
+      if (_price.text != newPriceStr) {
+        _price.text = newPriceStr;
+        _priceEdited = true;
+        changed = true;
+      }
+    } else if (changed && _stocks.any((s) => s.symbol == _symbol)) {
+      _price.text = formatBoardPrice(
+        _stocks.firstWhere((s) => s.symbol == _symbol).currentPrice,
+      );
+      _priceEdited = false;
+    }
+    if (changed && mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _loadAccounts() async {
+    if (AppConfig.useMock) return;
+    try {
+      final rows = await _api.accounts();
+      if (!mounted) return;
+      final savedId = int.tryParse(await _api.storage.read(key: 'selected_account_id') ?? '');
+      int? targetId;
+      if (savedId != null && rows.any((r) => (r['account_id'] as num).toInt() == savedId)) {
+        targetId = savedId;
+      } else {
+        final cashAcc = rows.firstWhere(
+          (r) => r['account_type'] == 'CASH' && r['status'] == 'ACTIVE',
+          orElse: () => rows.firstWhere(
+            (r) => r['status'] == 'ACTIVE',
+            orElse: () => rows.isNotEmpty ? rows.first : <String, dynamic>{},
+          ),
+        );
+        if (cashAcc.isNotEmpty) {
+          targetId = (cashAcc['account_id'] as num).toInt();
+        }
+      }
+      setState(() {
+        _userAccounts = rows;
+        _selectedAccountId = targetId;
+      });
+      if (targetId != null) {
+        await _api.selectAccount(targetId);
+      }
+    } catch (_) {}
   }
 
   StockModel get _selectedStock => _stocks.firstWhere(
@@ -156,6 +225,16 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
     final validPrice = priceDong >= stock.floorPrice &&
         priceDong <= stock.ceilingPrice &&
         priceDong % tick == 0;
+    String? priceError;
+    if (_price.text.isNotEmpty && price > 0) {
+      if (priceDong < stock.floorPrice) {
+        priceError = 'Giá thấp hơn sàn (${formatBoardPrice(stock.floorPrice)})';
+      } else if (priceDong > stock.ceilingPrice) {
+        priceError = 'Giá cao hơn trần (${formatBoardPrice(stock.ceilingPrice)})';
+      } else if (priceDong % tick != 0) {
+        priceError = 'Bước giá sàn ${stock.exchange} là $tick đ (chạm vào Sàn/TC/Trần bên dưới để chọn nhanh)';
+      }
+    }
     final accent = _isBuy ? AppColors.primary : AppColors.priceDown;
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
@@ -190,7 +269,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                   ),
                 ),
                 IconButton(
-                  onPressed: () => context.push('/home/orders'),
+                  onPressed: () => context.go('/home/orders'),
                   icon: const Icon(
                     Icons.receipt_long_rounded,
                     color: Colors.white,
@@ -201,6 +280,47 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                 ),
               ],
             ),
+            if (_userAccounts.length > 1) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.darkCard,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: AppColors.darkCardBorder),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.account_balance_wallet_outlined, size: 16, color: AppColors.darkTextSecondary),
+                    const SizedBox(width: 8),
+                    const Text('Tài khoản: ', style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 12)),
+                    const Spacer(),
+                    DropdownButton<int>(
+                      value: _selectedAccountId,
+                      dropdownColor: AppColors.darkSurface,
+                      underline: const SizedBox.shrink(),
+                      isDense: true,
+                      style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold, fontSize: 12),
+                      items: _userAccounts.map((acc) {
+                        final id = (acc['account_id'] as num).toInt();
+                        final type = acc['account_type'] ?? '';
+                        final numStr = acc['account_number'] ?? '';
+                        return DropdownMenuItem<int>(
+                          value: id,
+                          child: Text('$numStr ($type)'),
+                        );
+                      }).toList(),
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _selectedAccountId = val);
+                          _api.selectAccount(val);
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 20),
             _sidePicker(),
             const SizedBox(height: 16),
@@ -315,6 +435,18 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                     decimal: true,
                     onChanged: (_) => setState(() => _priceEdited = true),
                   ),
+                  if (priceError != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        priceError,
+                        style: const TextStyle(
+                          color: AppColors.priceDown,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -322,18 +454,30 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                         'Trần',
                         formatBoardPrice(stock.ceilingPrice),
                         AppColors.priceCeiling,
+                        () => setState(() {
+                          _price.text = formatBoardPrice(stock.ceilingPrice);
+                          _priceEdited = true;
+                        }),
                       ),
                       const Spacer(),
                       _priceMark(
                         'TC',
                         formatBoardPrice(stock.referencePrice),
                         AppColors.priceRef,
+                        () => setState(() {
+                          _price.text = formatBoardPrice(stock.referencePrice);
+                          _priceEdited = true;
+                        }),
                       ),
                       const Spacer(),
                       _priceMark(
                         'Sàn',
                         formatBoardPrice(stock.floorPrice),
                         AppColors.priceFloor,
+                        () => setState(() {
+                          _price.text = formatBoardPrice(stock.floorPrice);
+                          _priceEdited = true;
+                        }),
                       ),
                     ],
                   ),
@@ -584,23 +728,32 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
         ),
       );
 
-  Widget _priceMark(String title, String price, Color color) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 9),
+  Widget _priceMark(String title, String price, Color color, VoidCallback onTap) => InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 9),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                price,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  decoration: TextDecoration.underline,
+                  decorationStyle: TextDecorationStyle.dotted,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 3),
-          Text(
-            price,
-            style: TextStyle(
-              color: color,
-              fontSize: 10,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
+        ),
       );
 
   Future<void> _reviewOrder(
@@ -665,7 +818,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
       setState(() => _submitting = true);
       try {
         if (!AppConfig.useMock) {
-          final accountId = await _api.firstAccountId();
+          final accountId = _selectedAccountId ?? await _api.firstAccountId();
           await _api.placeOrder(accountId, {
             'client_order_id': _orderIntentId(symbol, _isBuy, quantity, price),
             'stock_symbol': symbol,
@@ -684,7 +837,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
               action: SnackBarAction(
                 label: 'Xem sổ lệnh',
                 textColor: AppColors.primary,
-                onPressed: () => context.push('/home/orders'),
+                onPressed: () => context.go('/home/orders'),
               ),
             ),
           );

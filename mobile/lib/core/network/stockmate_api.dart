@@ -123,8 +123,19 @@ class StockmateApi {
         rows.any((row) => (row['account_id'] as num).toInt() == selected)) {
       return selected;
     }
-    if (rows.isNotEmpty) {
-      await selectAccount((rows.first['account_id'] as num).toInt());
+    // Ưu tiên tài khoản CASH đang ACTIVE để đồng bộ với Danh mục đầu tư và Dashboard
+    final cashAccount = rows.firstWhere(
+      (row) =>
+          row['account_type'] == 'CASH' && row['status'] == 'ACTIVE',
+      orElse: () => rows.firstWhere(
+        (row) => row['status'] == 'ACTIVE',
+        orElse: () => rows.isNotEmpty ? rows.first : <String, dynamic>{},
+      ),
+    );
+    if (cashAccount.isNotEmpty) {
+      final id = (cashAccount['account_id'] as num).toInt();
+      await selectAccount(id);
+      return id;
     }
     if (rows.isEmpty) throw Exception('Tài khoản chưa có tài khoản đầu tư.');
     return (rows.first['account_id'] as num).toInt();
