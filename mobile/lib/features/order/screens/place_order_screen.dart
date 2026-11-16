@@ -44,6 +44,8 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
   String? _intentUuid;
   List<Map<String, dynamic>> _userAccounts = [];
   int? _selectedAccountId;
+  double _cashBalance = 0;
+  Map<String, int> _availableSharesBySymbol = {};
 
   @override
   void initState() {
@@ -61,6 +63,26 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
     _price = TextEditingController(text: initialPriceStr);
     _loadStocks();
     _loadAccounts();
+  }
+
+  Future<void> _loadAccountBalances(int accountId) async {
+    if (AppConfig.useMock) return;
+    try {
+      final assets = await _api.assets(accountId);
+      final port = await _api.portfolio(accountId);
+      if (!mounted) return;
+      final rawCash = double.tryParse('${assets['cash_balance']}') ?? 0;
+      final sharesMap = <String, int>{};
+      for (final p in port) {
+        final sym = '${p['stock_symbol']}'.toUpperCase();
+        final avail = (p['available_quantity'] as num?)?.toInt() ?? 0;
+        sharesMap[sym] = avail;
+      }
+      setState(() {
+        _cashBalance = rawCash;
+        _availableSharesBySymbol = sharesMap;
+      });
+    } catch (_) {}
   }
 
   @override
@@ -125,6 +147,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
       });
       if (targetId != null) {
         await _api.selectAccount(targetId);
+        await _loadAccountBalances(targetId);
       }
     } catch (_) {}
   }
@@ -235,6 +258,14 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
         priceError = 'Bước giá sàn ${stock.exchange} là $tick đ (chạm vào Sàn/TC/Trần bên dưới để chọn nhanh)';
       }
     }
+    final feeEstimate = estimate * 0.0015;
+    final totalBuyRequired = estimate + feeEstimate;
+    final availableShares = _availableSharesBySymbol[_symbol] ?? 0;
+
+    final validCash = !_isBuy || (estimate == 0 || totalBuyRequired <= _cashBalance);
+    final validShares = _isBuy || (quantity > 0 && quantity <= availableShares);
+    final canSubmit = validQuantity && validPrice && validCash && validShares && !_submitting;
+
     final accent = _isBuy ? AppColors.primary : AppColors.priceDown;
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
@@ -314,6 +345,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                         if (val != null) {
                           setState(() => _selectedAccountId = val);
                           _api.selectAccount(val);
+                          _loadAccountBalances(val);
                         }
                       },
                     ),
@@ -340,6 +372,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                   const SizedBox(height: 9),
                   DropdownButtonFormField<String>(
                     initialValue: _symbol,
+                    isExpanded: true,
                     dropdownColor: AppColors.darkSurface,
                     decoration: const InputDecoration(
                       prefixIcon: Icon(Icons.search_rounded),
@@ -351,14 +384,32 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
-                      fontSize: 15,
+                      fontSize: 14,
                     ),
+                    selectedItemBuilder: (context) => _stocks
+                        .map(
+                          (item) => Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '${item.symbol}  ·  ${item.companyName}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
                     items: _stocks
                         .map(
                           (item) => DropdownMenuItem(
                             value: item.symbol,
                             child: Text(
                               '${item.symbol}  ·  ${item.companyName}',
+                              maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -489,7 +540,12 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _fieldLabel('KHỐI LƯỢNG', 'Bội số 100 cổ phiếu'),
+                  _fieldLabel(
+                    'KHỐI LƯỢNG',
+                    _isBuy
+                        ? 'Sức mua: ${_money(_cashBalance)} ₫'
+                        : 'Khả dụng: ${_number(availableShares)} cp',
+                  ),
                   const SizedBox(height: 8),
                   _numberField(_quantity, onChanged: (_) => setState(() {})),
                   if (_quantity.text.isNotEmpty &&
@@ -505,46 +561,119 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                         ),
                       ),
                     ),
+                  if (_isBuy && estimate > 0 && !validCash)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Số dư tiền không đủ. Cần ${_money(totalBuyRequired)} ₫ (gồm phí), hiện có ${_money(_cashBalance)} ₫.',
+                        style: const TextStyle(
+                          color: AppColors.priceDown,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  if (!_isBuy && availableShares <= 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Tài khoản hiện không có cổ phiếu $_symbol khả dụng trong danh mục để bán.',
+                        style: const TextStyle(
+                          color: AppColors.priceDown,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  if (!_isBuy && quantity > availableShares && availableShares > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        'Khối lượng bán ($quantity cp) vượt quá số lượng khả dụng ($availableShares cp).',
+                        style: const TextStyle(
+                          color: AppColors.priceDown,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 12),
                   Row(
-                    children: [100, 500, 1000, 5000]
-                        .map(
-                          (value) => Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 7),
-                              child: InkWell(
-                                onTap: () => setState(
-                                  () => _quantity.text = value.toString(),
+                    children: [
+                      ...[100, 500, 1000].map(
+                        (value) => Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.only(right: 7),
+                            child: InkWell(
+                              onTap: () => setState(
+                                () => _quantity.text = value.toString(),
+                              ),
+                              borderRadius: BorderRadius.circular(9),
+                              child: Container(
+                                alignment: Alignment.center,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 9,
                                 ),
-                                borderRadius: BorderRadius.circular(9),
-                                child: Container(
-                                  alignment: Alignment.center,
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 9,
+                                decoration: BoxDecoration(
+                                  color: AppColors.darkSurface,
+                                  borderRadius: BorderRadius.circular(9),
+                                  border: Border.all(
+                                    color: AppColors.darkCardBorder,
                                   ),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.darkSurface,
-                                    borderRadius: BorderRadius.circular(9),
-                                    border: Border.all(
-                                      color: AppColors.darkCardBorder,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    value >= 1000
-                                        ? '${value ~/ 1000}k'
-                                        : '$value',
-                                    style: const TextStyle(
-                                      color: AppColors.darkTextSecondary,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                    ),
+                                ),
+                                child: Text(
+                                  value >= 1000
+                                      ? '${value ~/ 1000}k'
+                                      : '$value',
+                                  style: const TextStyle(
+                                    color: AppColors.darkTextSecondary,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                             ),
                           ),
-                        )
-                        .toList(),
+                        ),
+                      ),
+                      Expanded(
+                        child: InkWell(
+                          onTap: () {
+                            if (_isBuy) {
+                              if (price > 0) {
+                                final maxLot = ((_cashBalance / (price * 1000 * 1.0015)) ~/ 100) * 100;
+                                setState(() => _quantity.text = maxLot > 0 ? '$maxLot' : '100');
+                              }
+                            } else {
+                              final maxLot = (availableShares ~/ 100) * 100;
+                              setState(() => _quantity.text = maxLot > 0 ? '$maxLot' : '$availableShares');
+                            }
+                          },
+                          borderRadius: BorderRadius.circular(9),
+                          child: Container(
+                            alignment: Alignment.center,
+                            padding: const EdgeInsets.symmetric(vertical: 9),
+                            decoration: BoxDecoration(
+                              color: AppColors.darkSurface,
+                              borderRadius: BorderRadius.circular(9),
+                              border: Border.all(
+                                color: _isBuy
+                                    ? AppColors.primary.withValues(alpha: 0.6)
+                                    : AppColors.priceDown.withValues(alpha: 0.6),
+                              ),
+                            ),
+                            child: Text(
+                              _isBuy ? 'Tối đa' : 'Tất cả',
+                              style: TextStyle(
+                                color: _isBuy ? AppColors.primary : AppColors.priceDown,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -575,19 +704,19 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                     ],
                   ),
                   const SizedBox(height: 11),
-                  const Row(
+                  Row(
                     children: [
-                      Text(
+                      const Text(
                         'Phí giao dịch dự kiến',
                         style: TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 11,
                         ),
                       ),
-                      Spacer(),
+                      const Spacer(),
                       Text(
-                        '0,15%',
-                        style: TextStyle(
+                        '0,15% (${_money(feeEstimate)} ₫)',
+                        style: const TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 11,
                         ),
@@ -599,7 +728,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
             ),
             const SizedBox(height: 14),
             FilledButton(
-              onPressed: validQuantity && validPrice && !_submitting
+              onPressed: canSubmit
                   ? () => _reviewOrder(stock.symbol, quantity, price, estimate)
                   : null,
               style: FilledButton.styleFrom(
@@ -616,7 +745,17 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
               child: Text(
                 _submitting
                     ? 'Đang gửi lệnh…'
-                    : 'Xem lại lệnh ${_isBuy ? 'mua' : 'bán'}',
+                    : !validQuantity
+                        ? 'Khối lượng phải là bội số của 100'
+                        : !validPrice
+                            ? 'Vui lòng kiểm tra lại giá đặt'
+                            : _isBuy && !validCash
+                                ? 'Số dư tiền không đủ đặt mua'
+                                : !_isBuy && availableShares <= 0
+                                    ? 'Không có cổ phiếu $_symbol để bán'
+                                    : !_isBuy && !validShares
+                                        ? 'Khối lượng bán vượt quá khả dụng'
+                                        : 'Xem lại lệnh ${_isBuy ? 'mua' : 'bán'}',
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
@@ -827,6 +966,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
             'quantity': quantity,
             'order_price': (price * 1000).toStringAsFixed(2),
           });
+          await _loadAccountBalances(accountId);
         }
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -902,5 +1042,9 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
 
   String _money(double value) => value
       .toStringAsFixed(0)
+      .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (match) => ',');
+
+  String _number(int value) => value
+      .toString()
       .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (match) => ',');
 }
