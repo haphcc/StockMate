@@ -54,6 +54,7 @@ class _AdminTransactionsScreenState
   void _showDetail(AdminTransactionModel t) {
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: AppColors.darkSurface,
       builder: (_) => SingleChildScrollView(

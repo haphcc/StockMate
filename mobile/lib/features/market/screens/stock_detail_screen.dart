@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui' show FontFeature;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
@@ -61,12 +60,13 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
       }
       if (mounted) setState(() => _saved = next);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Không cập nhật được danh sách theo dõi: $error'),
           ),
         );
+      }
     }
   }
 
@@ -74,19 +74,21 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
     if (AppConfig.useMock) return;
     try {
       final rows = await _api.chart(widget.symbol, _range);
-      if (mounted)
+      if (mounted) {
         setState(() {
           _candles = rows;
           _chartError = rows.isEmpty
               ? 'Chưa có dữ liệu nến cho khoảng này.'
               : null;
         });
+      }
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _candles = [];
           _chartError = 'Không tải được dữ liệu nến.';
         });
+      }
     }
   }
 
@@ -95,30 +97,33 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
       final stock = AppConfig.useMock
           ? stockFor(widget.symbol)
           : StockModel.fromJson(await StockmateApi().stock(widget.symbol));
-      if (mounted)
+      if (mounted) {
         setState(() {
           _stock = stock;
           _loading = false;
           _error = null;
         });
+      }
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _error = error.toString();
         });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final stock = _stock;
-    if (_loading)
+    if (_loading) {
       return const Scaffold(
         backgroundColor: AppColors.darkBackground,
         body: Center(child: CircularProgressIndicator()),
       );
-    if (stock == null)
+    }
+    if (stock == null) {
       return Scaffold(
         backgroundColor: AppColors.darkBackground,
         body: Center(
@@ -128,6 +133,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
           ),
         ),
       );
+    }
     final up = stock.changeAmount >= 0;
     final color = up ? AppColors.priceUp : AppColors.priceDown;
     return Scaffold(
@@ -352,9 +358,9 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Text(
+              Text(
                 'Biểu đồ nến',
                 style: TextStyle(
                   color: Colors.white,
@@ -362,8 +368,8 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const Spacer(),
-              const Icon(
+              Spacer(),
+              Icon(
                 Icons.tune_rounded,
                 color: AppColors.darkTextMuted,
                 size: 18,

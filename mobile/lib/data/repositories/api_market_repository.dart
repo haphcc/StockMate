@@ -1,28 +1,36 @@
-import '../../core/network/stockmate_api.dart';
+import '../../core/network/dio_client.dart';
+import '../datasources/market_datasource.dart';
 import '../models/account_model.dart';
 import '../models/portfolio_model.dart';
 import '../models/stock_model.dart';
 import 'market_repository.dart';
 
 class ApiMarketRepository implements MarketRepository {
-  ApiMarketRepository({StockmateApi? api}) : _api = api ?? StockmateApi();
-  final StockmateApi _api;
-  int? _accountId;
+  final MarketDatasource datasource;
+
+  ApiMarketRepository({required DioClient client})
+      : datasource = MarketDatasource(client);
 
   @override
-  Future<List<StockModel>> getMarketBoard({String exchange = 'Tất cả'}) async =>
-      (await _api.market(exchange: exchange)).map(StockModel.fromJson).toList();
-
-  @override
-  Future<AccountModel> getAccountSummary(int userId) async {
-    _accountId = await _api.firstAccountId();
-    final asset = await _api.assets(_accountId!);
-    return AccountModel.fromJson(asset);
+  Future<List<StockModel>> getMarketBoard({
+    String? exchange = 'ALL',
+    String? q,
+  }) async {
+    return datasource.getMarketBoard(exchange: exchange, q: q);
   }
 
   @override
-  Future<List<PortfolioModel>> getPortfolio(int accountId) async =>
-      (await _api.portfolio(
-        _accountId ?? accountId,
-      )).map(PortfolioModel.fromJson).toList();
+  Future<StockModel> getStockDetail(String symbol) async {
+    return datasource.getStockDetail(symbol);
+  }
+
+  @override
+  Future<AccountModel> getAccountSummary(int userId) async {
+    throw UnimplementedError('Handled via AccountRepository');
+  }
+
+  @override
+  Future<List<PortfolioModel>> getPortfolio(int accountId) async {
+    throw UnimplementedError('Handled via AccountRepository');
+  }
 }

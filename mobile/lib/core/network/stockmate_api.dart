@@ -73,8 +73,9 @@ class StockmateApi {
     final access = result['access_token'] as String;
     await storage.write(key: 'access_token', value: access);
     final rotated = result['refresh_token'];
-    if (rotated is String)
+    if (rotated is String) {
       await storage.write(key: 'refresh_token', value: rotated);
+    }
     return access;
   }
 
@@ -119,10 +120,12 @@ class StockmateApi {
       await storage.read(key: 'selected_account_id') ?? '',
     );
     if (selected != null &&
-        rows.any((row) => (row['account_id'] as num).toInt() == selected))
+        rows.any((row) => (row['account_id'] as num).toInt() == selected)) {
       return selected;
-    if (rows.isNotEmpty)
+    }
+    if (rows.isNotEmpty) {
       await selectAccount((rows.first['account_id'] as num).toInt());
+    }
     if (rows.isEmpty) throw Exception('Tài khoản chưa có tài khoản đầu tư.');
     return (rows.first['account_id'] as num).toInt();
   }
@@ -178,7 +181,7 @@ class StockmateApi {
       queryParameters: {
         'page': 1,
         'page_size': 100,
-        if (status != null) 'status': status,
+        'status': ?status,
       },
     )).data,
   );

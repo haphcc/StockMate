@@ -19,7 +19,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   String? _error;
   String _filter = 'Tất cả';
   final _transactions = <_TradePreview>[
-    _TradePreview(
+    const _TradePreview(
       symbol: 'FPT',
       side: 'MUA',
       qty: 200,
@@ -29,7 +29,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       time: '14:32 · 14/11/2026',
       settlement: 'T+2 · 18/11/2026',
     ),
-    _TradePreview(
+    const _TradePreview(
       symbol: 'SSI',
       side: 'BÁN',
       qty: 300,
@@ -39,7 +39,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
       time: '10:06 · 14/11/2026',
       settlement: 'Đã thanh toán',
     ),
-    _TradePreview(
+    const _TradePreview(
       symbol: 'HPG',
       side: 'MUA',
       qty: 500,
@@ -76,7 +76,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 '${row['transaction_date']}',
               )?.toLocal();
               final settle = row['settlement_date']?.toString();
-              final amount = (key) => double.tryParse('${row[key]}') ?? 0;
+              double amount(key) => double.tryParse('${row[key]}') ?? 0;
               return _TradePreview(
                 symbol: '${row['stock_symbol']}',
                 side: row['transaction_type'] == 'BUY' ? 'MUA' : 'BÁN',
@@ -95,12 +95,13 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         _error = null;
       });
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _transactions.clear();
           _loading = false;
           _error = error.toString();
         });
+      }
     }
   }
 
@@ -118,8 +119,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 110),
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: _loadTransactions,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 110),
           children: [
             Row(
               children: [
@@ -198,17 +202,17 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
+                        const Text(
                           'Tổng giá trị trong danh sách',
                           style: TextStyle(
                             color: AppColors.darkTextSecondary,
                             fontSize: 10,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
                           '${NumberFormat('#,##0', 'vi_VN').format(displayedTotal)} ₫',
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.w800,
@@ -228,7 +232,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     ),
                     child: Text(
                       '${_transactions.length} GD',
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 10,
                         fontWeight: FontWeight.w700,
@@ -280,7 +284,8 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _tradeCard(_TradePreview trade) {

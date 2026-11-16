@@ -1,4 +1,3 @@
-import 'dart:ui' show FontFeature;
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/stockmate_brand.dart';
@@ -15,7 +14,7 @@ class MarketHeader extends StatelessWidget {
       children: [
         const StockMateBrand(iconSize: 26, fontSize: 17),
         const Spacer(),
-        if (trailing != null) trailing!,
+        ?trailing,
         if (onNotifications != null)
           IconButton(
             visualDensity: VisualDensity.compact,

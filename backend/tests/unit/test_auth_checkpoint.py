@@ -154,3 +154,17 @@ def test_http_validation_error_does_not_echo_password_or_token():
             assert client.get("/api/accounts").json()["error"]["code"] == "UNAUTHORIZED"
     finally:
         app.dependency_overrides.pop(get_db, None)
+
+
+def test_update_profile_and_change_password_schema_validation():
+    from app.schemas.auth import ChangePasswordRequest, UpdateProfileRequest
+
+    req = UpdateProfileRequest(full_name="  Nguyen Van Test  ", phone_number="0912345678")
+    assert req.full_name == "Nguyen Van Test"
+    assert req.phone_number == "0912345678"
+
+    with pytest.raises(ValidationError):
+        UpdateProfileRequest(phone_number="123456")
+
+    with pytest.raises(ValidationError):
+        ChangePasswordRequest(old_password="old", new_password="short")

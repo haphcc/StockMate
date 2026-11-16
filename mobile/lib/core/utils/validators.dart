@@ -14,7 +14,7 @@ class Validators {
     if (value == null || value.isEmpty) {
       return 'Vui lòng nhập số điện thoại';
     }
-    final phoneRegExp = RegExp(r"^(0|\+84)[3|5|7|8|9][0-9]{8}$");
+    final phoneRegExp = RegExp(r'^0[35789][0-9]{8}$');
     if (!phoneRegExp.hasMatch(value)) {
       return 'Số điện thoại không hợp lệ';
     }

@@ -19,3 +19,5 @@ build/
 # Dump / backup cua database
 *.dump
 *.bak
+
+/dump

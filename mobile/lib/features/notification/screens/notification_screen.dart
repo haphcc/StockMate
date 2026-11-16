@@ -102,12 +102,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
         _error = null;
       });
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _items.clear();
           _loading = false;
           _error = error.toString();
         });
+      }
     }
   }
 
@@ -116,10 +117,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
       if (!AppConfig.useMock && item.id != null) await _api.markRead(item.id!);
       if (mounted) setState(() => item.unread = false);
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Không cập nhật được thông báo: $error')),
         );
+      }
     }
   }
 
@@ -136,8 +138,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 36),
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: _loadNotifications,
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 36),
           children: [
             Row(
               children: [
@@ -156,9 +161,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'Thông báo',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: Colors.white,
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
@@ -360,7 +365,8 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

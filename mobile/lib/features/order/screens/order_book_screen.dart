@@ -98,12 +98,13 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
         _error = null;
       });
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _orders.clear();
           _loading = false;
           _error = error.toString();
         });
+      }
     }
   }
 
@@ -122,7 +123,10 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       body: SafeArea(
-        child: ListView(
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: _loadOrders,
+          child: ListView(
           padding: const EdgeInsets.fromLTRB(20, 14, 20, 110),
           children: [
             Row(
@@ -261,7 +265,8 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _miniStat(String label, String value, Color color) => Column(
@@ -368,14 +373,16 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
             child: TextButton(
               onPressed: () async {
                 try {
-                  if (!AppConfig.useMock)
+                  if (!AppConfig.useMock) {
                     await _api.cancelOrder(int.parse(order.id));
+                  }
                   if (mounted) await _loadOrders();
                 } catch (error) {
-                  if (mounted)
+                  if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text('Không hủy được lệnh: $error')),
                     );
+                  }
                 }
               },
               style: TextButton.styleFrom(

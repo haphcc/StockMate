@@ -62,11 +62,29 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
         _loadError = null;
       });
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _loadError = error.toString();
         });
+      }
+    }
+  }
+
+  Future<void> _removeWatch(String symbol) async {
+    try {
+      if (!AppConfig.useMock) {
+        await _api.removeWatch(symbol);
+      }
+      if (mounted) {
+        setState(() => _symbols.remove(symbol));
+      }
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error.toString())),
+        );
+      }
     }
   }
 
@@ -85,8 +103,11 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.only(bottom: 110),
+        child: RefreshIndicator(
+          color: AppColors.primary,
+          onRefresh: _loadWatchlist,
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 110),
           children: [
             MarketHeader(
               onNotifications: () =>
@@ -195,8 +216,8 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                   ),
                   const SizedBox(height: 12),
                   if (stocks.isEmpty)
-                    MarketPanel(
-                      child: const Padding(
+                    const MarketPanel(
+                      child: Padding(
                         padding: EdgeInsets.all(20),
                         child: Center(
                           child: Text(
@@ -306,32 +327,16 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                                     size: 19,
                                   ),
                                   color: AppColors.darkSurface,
-                                  onSelected: (value) async {
-                                    if (value == 'remove') {
-                                      try {
-                                        if (!AppConfig.useMock)
-                                          await _api.removeWatch(stock.symbol);
-                                        if (mounted)
-                                          setState(
-                                            () => _symbols.remove(stock.symbol),
-                                          );
-                                      } catch (error) {
-                                        if (mounted)
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(error.toString()),
-                                            ),
-                                          );
-                                      }
-                                    }
-                                    if (value == 'trade')
+                                  onSelected: (value) {
+                                    if (value == 'trade') {
                                       context.go(
                                         '/home/trade?symbol=${stock.symbol}&side=BUY',
                                       );
+                                    } else if (value == 'remove') {
+                                      _removeWatch(stock.symbol);
+                                    }
                                   },
-                                  itemBuilder: (context) => const [
+                                  itemBuilder: (menuContext) => const [
                                     PopupMenuItem(
                                       value: 'trade',
                                       child: Text('Đặt lệnh mua'),
@@ -362,7 +367,8 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Future<void> _showAddDialog() async {
@@ -405,16 +411,18 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
       } else {
         stock = stockFor(symbol);
       }
-      if (mounted)
+      if (mounted) {
         setState(() {
           if (!_symbols.contains(symbol)) _symbols.insert(0, symbol);
           _quotes[symbol] = stock;
         });
+      }
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(error.toString())));
+      }
     }
   }
 }

@@ -75,7 +75,13 @@ StockModel stockFor(String symbol) => marketStocks.firstWhere(
   orElse: () => marketStocks.first,
 );
 
-String formatBoardPrice(int dong) => (dong / 1000).toStringAsFixed(1);
+String formatBoardPrice(int dong) {
+  final k = dong / 1000.0;
+  if ((dong % 100) != 0) {
+    return k.toStringAsFixed(2);
+  }
+  return k.toStringAsFixed(1);
+}
 
 String formatVolume(int volume) {
   if (volume >= 1000000) return '${(volume / 1000000).toStringAsFixed(1)} tr';

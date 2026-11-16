@@ -17,8 +17,9 @@ class RegisterScreen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController(text: 'NGUYEN VAN A');
-  final _contactController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _referralController = TextEditingController();
@@ -32,7 +33,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool get _hasMinLength => _passwordController.text.length >= 8;
   bool get _hasUppercase => _passwordController.text.contains(RegExp(r'[A-Z]'));
   bool get _hasNumber => _passwordController.text.contains(RegExp(r'[0-9]'));
-  bool get _hasSpecialChar => _passwordController.text.contains(RegExp(r'[!@#\$%\^&\*\(\),\.\?":{}|<>]'));
+  bool get _hasSpecialChar => _passwordController.text.contains(
+    RegExp(r'[!@#\$%\^&\*\(\),\.\?":{}|<>]'),
+  );
 
   int get _passwordStrength {
     if (_passwordController.text.isEmpty) return 0;
@@ -78,7 +81,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _contactController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _referralController.dispose();
@@ -86,6 +90,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   void _register() async {
+    if (!_formKey.currentState!.validate() ||
+        _passwordController.text != _confirmPasswordController.text) {
+      return;
+    }
     if (!_agreeTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -99,11 +107,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     try {
       await ref.read(authProvider.notifier).register({
-        'full_name': _nameController.text.trim().isEmpty ? 'NGUYEN VAN A' : _nameController.text.trim(),
-        'email': _contactController.text.contains('@') ? _contactController.text.trim() : 'investor@stockmate.vn',
-        'phone_number': !_contactController.text.contains('@') && _contactController.text.isNotEmpty
-            ? _contactController.text.trim()
-            : '0912345678',
+        'full_name': _nameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'phone_number': _phoneController.text.trim(),
+        'password': _passwordController.text,
       });
 
       if (mounted) {
@@ -185,14 +192,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 18),
 
-                // Contact (Phone or Email)
+                // Email
                 AppTextField(
                   labelWidget: _buildFieldLabel(
                     icon: Icons.contact_mail_outlined,
-                    label: 'Số điện thoại hoặc Email nhận mã OTP',
+                    label: 'Email',
                   ),
-                  hintText: '0912 345 678 hoặc investor@stockmate.vn',
-                  controller: _contactController,
+                  hintText: 'investor@stockmate.vn',
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) =>
+                      value == null ||
+                          !RegExp(
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                          ).hasMatch(value.trim())
+                      ? 'Email không hợp lệ'
+                      : null,
+                ),
+                const SizedBox(height: 18),
+
+                AppTextField(
+                  labelText: 'Số điện thoại',
+                  hintText: '0912345678',
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  validator: (value) =>
+                      value == null ||
+                          !RegExp(r'^0[35789]\d{8}$').hasMatch(value.trim())
+                      ? 'Số điện thoại không hợp lệ'
+                      : null,
                 ),
                 const SizedBox(height: 18),
 
@@ -217,15 +245,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   hintText: 'Tối thiểu 8 ký tự, 1 số, 1 chữ hoa',
                   controller: _passwordController,
+                  validator: (value) => value == null || value.length < 8
+                      ? 'Mật khẩu tối thiểu 8 ký tự'
+                      : null,
                   obscureText: _obscurePassword,
                   onChanged: (_) => setState(() {}),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       color: AppColors.darkTextSecondary,
                       size: 20,
                     ),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -239,7 +273,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         height: 3,
                         margin: EdgeInsets.only(right: index < 3 ? 6 : 0),
                         decoration: BoxDecoration(
-                          color: isActive ? _strengthColor : AppColors.darkBorder,
+                          color: isActive
+                              ? _strengthColor
+                              : AppColors.darkBorder,
                           borderRadius: BorderRadius.circular(2),
                         ),
                       ),
@@ -269,30 +305,42 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   hintText: 'Nhập lại mật khẩu',
                   controller: _confirmPasswordController,
+                  validator: (value) => value != _passwordController.text
+                      ? 'Mật khẩu xác nhận không khớp'
+                      : null,
                   obscureText: _obscureConfirmPassword,
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscureConfirmPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscureConfirmPassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       color: AppColors.darkTextSecondary,
                       size: 20,
                     ),
-                    onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                    onPressed: () => setState(
+                      () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 14),
 
                 // Referral Code Accordion
                 InkWell(
-                  onTap: () => setState(() => _showReferralField = !_showReferralField),
+                  onTap: () =>
+                      setState(() => _showReferralField = !_showReferralField),
                   borderRadius: BorderRadius.circular(8),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          children: const [
-                            Icon(Icons.group_outlined, color: AppColors.darkTextSecondary, size: 18),
+                        const Row(
+                          children: [
+                            Icon(
+                              Icons.group_outlined,
+                              color: AppColors.darkTextSecondary,
+                              size: 18,
+                            ),
                             SizedBox(width: 8),
                             Text(
                               'Mã giới thiệu (tùy chọn)',
@@ -305,7 +353,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           ],
                         ),
                         Icon(
-                          _showReferralField ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                          _showReferralField
+                              ? Icons.keyboard_arrow_up_rounded
+                              : Icons.keyboard_arrow_down_rounded,
                           color: AppColors.darkTextSecondary,
                           size: 20,
                         ),
@@ -334,10 +384,14 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         height: 18,
                         margin: const EdgeInsets.only(top: 2),
                         decoration: BoxDecoration(
-                          color: _agreeTerms ? AppColors.primary : Colors.transparent,
+                          color: _agreeTerms
+                              ? AppColors.primary
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
-                            color: _agreeTerms ? AppColors.primary : AppColors.darkTextMuted,
+                            color: _agreeTerms
+                                ? AppColors.primary
+                                : AppColors.darkTextMuted,
                             width: 1.5,
                           ),
                         ),
@@ -370,13 +424,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ),
                             TextSpan(text: ' và hiểu rõ đây là '),
                             TextSpan(
-                              text: 'môi trường giao dịch chứng khoán giả lập rủi ro 0 đồng',
+                              text:
+                                  'môi trường giao dịch chứng khoán giả lập rủi ro 0 đồng',
                               style: TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            TextSpan(text: ' phục vụ học tập, rèn luyện kỹ năng.'),
+                            TextSpan(
+                              text: ' phục vụ học tập, rèn luyện kỹ năng.',
+                            ),
                           ],
                         ),
                       ),
@@ -387,7 +444,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                 // CTA Button
                 GradientButton(
-                  text: 'Tạo Tài Khoản & Nhận 1 Tỷ Đ',
+                  text: 'Tạo Tài Khoản & Nhận 100.000đ',
                   isLoading: isLoading,
                   trailingIcon: const Icon(
                     Icons.trending_up_rounded,
@@ -470,7 +527,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
-          isSatisfied ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+          isSatisfied
+              ? Icons.check_circle_rounded
+              : Icons.radio_button_unchecked_rounded,
           size: 14,
           color: isSatisfied ? AppColors.primary : AppColors.darkTextMuted,
         ),

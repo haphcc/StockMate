@@ -1,34 +1,25 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/user_model.dart';
 import '../../../providers/app_providers.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../../../providers/selected_account_provider.dart';
 
 final authProvider = AsyncNotifierProvider<AuthNotifier, UserModel?>(() {
   return AuthNotifier();
 });
 
 class AuthNotifier extends AsyncNotifier<UserModel?> {
-  final _storage = const FlutterSecureStorage();
-
   @override
   Future<UserModel?> build() async {
-    // Kiểm tra token để tự động đăng nhập
-    final token = await _storage.read(key: 'access_token');
-    if (token != null) {
-      return ref.read(authRepositoryProvider).getCurrentUser();
-    }
-    return null;
+    return ref.read(authRepositoryProvider).getCurrentUser();
   }
 
   Future<void> login(String emailOrPhone, String password) async {
     state = const AsyncValue.loading();
     try {
-      final user = await ref
-          .read(authRepositoryProvider)
-          .login(emailOrPhone, password);
+      final user = await ref.read(authRepositoryProvider).login(emailOrPhone, password);
       state = AsyncValue.data(user);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
+    } catch (_) {
+      state = const AsyncValue.data(null);
       rethrow;
     }
   }
@@ -38,8 +29,8 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
     try {
       final user = await ref.read(authRepositoryProvider).register(data);
       state = AsyncValue.data(user);
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
+    } catch (_) {
+      state = const AsyncValue.data(null);
       rethrow;
     }
   }
@@ -47,9 +38,30 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
   Future<void> logout() async {
     state = const AsyncValue.loading();
     await ref.read(authRepositoryProvider).logout();
-    await _storage.delete(key: 'jwt_token');
-    await _storage.delete(key: 'access_token');
-    await _storage.delete(key: 'refresh_token');
+    ref.read(selectedAccountProvider.notifier).select(null);
     state = const AsyncValue.data(null);
+  }
+
+  Future<void> updateProfile({
+    String? fullName,
+    String? phoneNumber,
+    String? avatarUrl,
+  }) async {
+    final updated = await ref.read(authRepositoryProvider).updateProfile(
+      fullName: fullName,
+      phoneNumber: phoneNumber,
+      avatarUrl: avatarUrl,
+    );
+    state = AsyncValue.data(updated);
+  }
+
+  Future<void> changePassword({
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    await ref.read(authRepositoryProvider).changePassword(
+      oldPassword: oldPassword,
+      newPassword: newPassword,
+    );
   }
 }

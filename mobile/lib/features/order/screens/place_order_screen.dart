@@ -1,4 +1,3 @@
-import 'dart:ui' show FontFeature;
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -11,9 +10,21 @@ import '../../market/data/market_fixtures.dart';
 import '../../market/widgets/market_components.dart';
 
 class PlaceOrderScreen extends StatefulWidget {
-  const PlaceOrderScreen({super.key, this.symbol, this.side});
   final String? symbol;
   final String? side;
+  final String? initialSymbol;
+  final bool? isBuy;
+  final double? initialPrice;
+
+  const PlaceOrderScreen({
+    super.key,
+    this.symbol,
+    this.side,
+    this.initialSymbol,
+    this.isBuy,
+    this.initialPrice,
+  });
+
   @override
   State<PlaceOrderScreen> createState() => _PlaceOrderScreenState();
 }
@@ -31,22 +42,28 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
   bool _priceEdited = false;
   String? _intentFingerprint;
   String? _intentUuid;
+
   @override
   void initState() {
     super.initState();
-    _symbol = widget.symbol?.toUpperCase() ?? 'FPT';
-    _isBuy = widget.side?.toUpperCase() != 'SELL';
+    _symbol = widget.symbol?.toUpperCase() ??
+        widget.initialSymbol?.toUpperCase() ??
+        'FPT';
+    _isBuy = widget.isBuy ?? (widget.side?.toUpperCase() != 'SELL');
     _quantity = TextEditingController(text: '100');
-    _price = TextEditingController(
-      text: formatBoardPrice(stockFor(_symbol).currentPrice),
-    );
+    final initialPriceStr = widget.initialPrice != null
+        ? (widget.initialPrice! >= 1000
+            ? formatBoardPrice(widget.initialPrice!.round())
+            : widget.initialPrice!.toStringAsFixed(1))
+        : formatBoardPrice(stockFor(_symbol).currentPrice);
+    _price = TextEditingController(text: initialPriceStr);
     _loadStocks();
   }
 
   StockModel get _selectedStock => _stocks.firstWhere(
-    (stock) => stock.symbol == _symbol,
-    orElse: () => _stocks.first,
-  );
+        (stock) => stock.symbol == _symbol,
+        orElse: () => _stocks.first,
+      );
 
   Future<void> _loadStocks() async {
     if (AppConfig.useMock) return;
@@ -75,11 +92,12 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
         }
       });
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _marketLoading = false;
           _marketError = 'Không tải được danh sách mã cổ phiếu.';
         });
+      }
     }
   }
 
@@ -122,10 +140,20 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
     final price = double.tryParse(_price.text.replaceAll(',', '.')) ?? 0;
     final estimate = quantity * price * 1000;
     final priceDong = (price * 1000).round();
-    final tick = stock.exchange == 'HOSE' && priceDong < 50000 ? 50 : 100;
+    final int tick;
+    if (stock.exchange == 'HOSE') {
+      if (priceDong < 10000) {
+        tick = 10;
+      } else if (priceDong < 50000) {
+        tick = 50;
+      } else {
+        tick = 100;
+      }
+    } else {
+      tick = 100;
+    }
     final validQuantity = quantity > 0 && quantity % 100 == 0;
-    final validPrice =
-        priceDong >= stock.floorPrice &&
+    final validPrice = priceDong >= stock.floorPrice &&
         priceDong <= stock.ceilingPrice &&
         priceDong % tick == 0;
     final accent = _isBuy ? AppColors.primary : AppColors.priceDown;
@@ -191,7 +219,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                   ),
                   const SizedBox(height: 9),
                   DropdownButtonFormField<String>(
-                    value: _symbol,
+                    initialValue: _symbol,
                     dropdownColor: AppColors.darkSurface,
                     decoration: const InputDecoration(
                       prefixIcon: Icon(Icons.search_rounded),
@@ -217,7 +245,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                         )
                         .toList(),
                     onChanged: (value) {
-                      if (value != null)
+                      if (value != null) {
                         setState(() {
                           _symbol = value;
                           _price.text = formatBoardPrice(
@@ -227,6 +255,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                           );
                           _priceEdited = false;
                         });
+                      }
                     },
                   ),
                   if (price > 0 && !validPrice)
@@ -243,9 +272,9 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      Text(
+                      const Text(
                         'Giá khớp gần nhất',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 11,
                         ),
@@ -463,14 +492,16 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
   }
 
   Widget _sidePicker() => Container(
-    padding: const EdgeInsets.all(4),
-    decoration: BoxDecoration(
-      color: AppColors.darkCard,
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: AppColors.darkCardBorder),
-    ),
-    child: Row(children: [_sideButton('MUA', true), _sideButton('BÁN', false)]),
-  );
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: AppColors.darkCard,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.darkCardBorder),
+        ),
+        child: Row(
+            children: [_sideButton('MUA', true), _sideButton('BÁN', false)]),
+      );
+
   Widget _sideButton(String text, bool buy) {
     final selected = buy == _isBuy;
     final color = buy ? AppColors.primary : AppColors.priceDown;
@@ -507,67 +538,70 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
   }
 
   Widget _fieldLabel(String label, String trailing) => Row(
-    children: [
-      Text(
-        label,
-        style: const TextStyle(
-          color: AppColors.darkTextMuted,
-          fontSize: 9,
-          fontWeight: FontWeight.w700,
-          letterSpacing: .7,
-        ),
-      ),
-      const Spacer(),
-      Text(
-        trailing,
-        style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 9),
-      ),
-    ],
-  );
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.darkTextMuted,
+              fontSize: 9,
+              fontWeight: FontWeight.w700,
+              letterSpacing: .7,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            trailing,
+            style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 9),
+          ),
+        ],
+      );
+
   Widget _numberField(
     TextEditingController controller, {
     bool decimal = false,
     ValueChanged<String>? onChanged,
-  }) => TextField(
-    controller: controller,
-    onChanged: onChanged,
-    keyboardType: TextInputType.numberWithOptions(decimal: decimal),
-    inputFormatters: [
-      FilteringTextInputFormatter.allow(
-        RegExp(decimal ? r'[0-9,.]' : r'[0-9]'),
-      ),
-    ],
-    style: const TextStyle(
-      color: Colors.white,
-      fontSize: 20,
-      fontWeight: FontWeight.w800,
-      fontFeatures: [FontFeature.tabularFigures()],
-    ),
-    decoration: const InputDecoration(
-      filled: false,
-      border: InputBorder.none,
-      contentPadding: EdgeInsets.zero,
-      isDense: true,
-    ),
-  );
-  Widget _priceMark(String title, String price, Color color) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        title,
-        style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 9),
-      ),
-      const SizedBox(height: 3),
-      Text(
-        price,
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.w700,
+  }) =>
+      TextField(
+        controller: controller,
+        onChanged: onChanged,
+        keyboardType: TextInputType.numberWithOptions(decimal: decimal),
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(
+            RegExp(decimal ? r'[0-9,.]' : r'[0-9]'),
+          ),
+        ],
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 20,
+          fontWeight: FontWeight.w800,
+          fontFeatures: [FontFeature.tabularFigures()],
         ),
-      ),
-    ],
-  );
+        decoration: const InputDecoration(
+          filled: false,
+          border: InputBorder.none,
+          contentPadding: EdgeInsets.zero,
+          isDense: true,
+        ),
+      );
+
+  Widget _priceMark(String title, String price, Color color) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 9),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            price,
+            style: TextStyle(
+              color: color,
+              fontSize: 10,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      );
 
   Future<void> _reviewOrder(
     String symbol,
@@ -641,19 +675,26 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
             'order_price': (price * 1000).toStringAsFixed(2),
           });
         }
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Đã gửi lệnh. Sổ lệnh sẽ được cập nhật từ máy chủ.',
+            SnackBar(
+              content: const Text(
+                'Đã gửi lệnh thành công! Vào Sổ lệnh để theo dõi trạng thái.',
+              ),
+              action: SnackBarAction(
+                label: 'Xem sổ lệnh',
+                textColor: AppColors.primary,
+                onPressed: () => context.push('/home/orders'),
               ),
             ),
           );
+        }
       } catch (error) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text('Không đặt được lệnh: $error')),
           );
+        }
       } finally {
         if (mounted) setState(() => _submitting = false);
       }
@@ -680,31 +721,32 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
   }
 
   Widget _reviewLine(String label, String value) => Padding(
-    padding: const EdgeInsets.only(bottom: 11),
-    child: Row(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: AppColors.darkTextSecondary,
-            fontSize: 12,
-          ),
-        ),
-        const Spacer(),
-        Flexible(
-          child: Text(
-            value,
-            textAlign: TextAlign.right,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
+        padding: const EdgeInsets.only(bottom: 11),
+        child: Row(
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.darkTextSecondary,
+                fontSize: 12,
+              ),
             ),
-          ),
+            const Spacer(),
+            Flexible(
+              child: Text(
+                value,
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
-    ),
-  );
+      );
+
   String _money(double value) => value
       .toStringAsFixed(0)
       .replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (match) => ',');

@@ -30,13 +30,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _login() async {
-    // If empty, fill default for easy testing
-    if (_accountController.text.trim().isEmpty) {
-      _accountController.text = 'an.nguyen@gmail.com';
-    }
-    if (_passwordController.text.trim().isEmpty) {
-      _passwordController.text = 'Matkhau@123';
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     try {
       await ref
@@ -50,11 +44,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString().replaceAll('Exception: ', '')),
             backgroundColor: AppColors.priceDown,
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -114,10 +110,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // Account Field
                 AppTextField(
                   labelText: 'Email',
-                  hintText: 'an.nguyen@gmail.com',
+                  hintText: 'investor@stockmate.vn',
                   controller: _accountController,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) =>
+                      value == null ||
+                          !RegExp(
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                          ).hasMatch(value.trim())
+                      ? 'Email không hợp lệ'
+                      : null,
                   prefixIcon: const Icon(
-                    Icons.badge_outlined,
+                    Icons.email_outlined,
                     color: AppColors.darkTextSecondary,
                     size: 20,
                   ),
@@ -129,6 +133,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   labelText: 'Mật khẩu PIN / Đăng nhập',
                   hintText: '••••••••••••',
                   controller: _passwordController,
+                  validator: (value) => value == null || value.length < 8
+                      ? 'Mật khẩu tối thiểu 8 ký tự'
+                      : null,
                   obscureText: _obscurePassword,
                   prefixIcon: const Icon(
                     Icons.lock_outline_rounded,
@@ -209,71 +216,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 26),
 
-                // Login Button + Biometrics Button Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: GradientButton(
-                        text: 'Đăng Nhập Ngay',
-                        isLoading: isLoading,
-                        trailingIcon: const Icon(
-                          Icons.arrow_forward_rounded,
-                          size: 18,
-                          color: Color(0xFF032617),
-                        ),
-                        onPressed: _login,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Biometric button with green status dot
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            // Biometric mock trigger
-                            _login();
-                          },
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              color: AppColors.darkInput,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: AppColors.darkInputBorder,
-                                width: 1,
-                              ),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.face_rounded,
-                                color: AppColors.primary,
-                                size: 28,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: -2,
-                          right: -2,
-                          child: Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: AppColors.darkBackground,
-                                width: 1.5,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                // Login Button
+                GradientButton(
+                  text: 'Đăng Nhập Ngay',
+                  isLoading: isLoading,
+                  trailingIcon: const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 18,
+                    color: Color(0xFF032617),
+                  ),
+                  onPressed: _login,
                 ),
                 const SizedBox(height: 36),
 
