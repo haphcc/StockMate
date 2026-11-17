@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/stockmate_brand.dart';
+import '../../../core/services/google_sign_in_service.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/social_login_buttons.dart';
 
@@ -48,6 +49,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString().replaceAll('Exception: ', '')),
+            backgroundColor: AppColors.priceDown,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  void _googleSignIn() async {
+    try {
+      final idToken = await GoogleSignInService().signIn();
+      await ref.read(authProvider.notifier).googleLogin(idToken);
+      if (mounted) {
+        context.go('/home/overview');
+      }
+    } catch (e) {
+      if (mounted) {
+        final msg = e.toString().replaceAll('Exception: ', '');
+        if (msg.contains('Đã hủy')) return;
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
             backgroundColor: AppColors.priceDown,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 4),
@@ -232,7 +257,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 // Social logins
                 SocialAuthSection(
                   dividerText: 'HOẶC ĐĂNG NHẬP QUA',
-                  onGoogleTap: () => _login(),
+                  onGoogleTap: _googleSignIn,
                   onAppleTap: () => _login(),
                 ),
                 const SizedBox(height: 36),

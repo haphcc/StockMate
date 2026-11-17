@@ -20,6 +20,18 @@ class AuthDatasource {
     }
   }
 
+  Future<Map<String, dynamic>> googleLogin(String idToken) async {
+    try {
+      final response = await _dio.post<dynamic>(
+        ApiEndpoints.authGoogle,
+        data: {'id_token': idToken},
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } on DioException catch (error) {
+      throw ApiException.fromDio(error);
+    }
+  }
+
   Future<Map<String, dynamic>> register(Map<String, dynamic> data) async {
     try {
       final response = await _dio.post<dynamic>(

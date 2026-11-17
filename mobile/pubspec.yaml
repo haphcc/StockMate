@@ -34,6 +34,9 @@ dependencies:
   # Tien ich
   equatable: ^2.1.0
 
+  # Google Sign-In
+  google_sign_in: ^6.2.2
+
   # Thong bao tren thiet bi / may ao (Push Notification banner)
   flutter_local_notifications: ^18.0.1
 

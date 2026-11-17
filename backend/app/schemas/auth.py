@@ -18,6 +18,14 @@ class LoginRequest(BaseModel):
         return value.strip().lower() if isinstance(value, str) else value
 
 
+class GoogleLoginRequest(BaseModel):
+    """Payload for Google OAuth 2.0 ID Token sign-in / sign-up."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id_token: str = Field(min_length=1, description="Google ID Token issued by Google Sign-In SDK")
+
+
 class RegisterRequest(LoginRequest):
     """Public registration always creates a regular customer and a CASH account."""
 

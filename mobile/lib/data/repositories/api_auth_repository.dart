@@ -26,6 +26,11 @@ class ApiAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<UserModel> googleLogin(String idToken) async {
+    return _saveAndReadUser(await datasource.googleLogin(idToken));
+  }
+
+  @override
   Future<UserModel> register(Map<String, dynamic> data) async {
     return _saveAndReadUser(await datasource.register(data));
   }

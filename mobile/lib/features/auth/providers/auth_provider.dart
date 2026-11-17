@@ -24,6 +24,17 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
     }
   }
 
+  Future<void> googleLogin(String idToken) async {
+    state = const AsyncValue.loading();
+    try {
+      final user = await ref.read(authRepositoryProvider).googleLogin(idToken);
+      state = AsyncValue.data(user);
+    } catch (_) {
+      state = const AsyncValue.data(null);
+      rethrow;
+    }
+  }
+
   Future<void> register(Map<String, dynamic> data) async {
     state = const AsyncValue.loading();
     try {

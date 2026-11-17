@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
 import '../../../core/widgets/stockmate_brand.dart';
+import '../../../core/services/google_sign_in_service.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/social_login_buttons.dart';
 
@@ -123,6 +124,30 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             content: Text(e.toString()),
             backgroundColor: AppColors.priceDown,
             behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
+  void _googleSignIn() async {
+    try {
+      final idToken = await GoogleSignInService().signIn();
+      await ref.read(authProvider.notifier).googleLogin(idToken);
+      if (mounted) {
+        context.go('/home/overview');
+      }
+    } catch (e) {
+      if (mounted) {
+        final msg = e.toString().replaceAll('Exception: ', '');
+        if (msg.contains('Đã hủy')) return;
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: AppColors.priceDown,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -458,7 +483,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 // Social registration
                 SocialAuthSection(
                   dividerText: 'HOẶC ĐĂNG KÝ NHANH',
-                  onGoogleTap: () => _register(),
+                  onGoogleTap: _googleSignIn,
                   onAppleTap: () => _register(),
                 ),
                 const SizedBox(height: 28),
