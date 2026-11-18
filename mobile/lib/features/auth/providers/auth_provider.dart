@@ -16,6 +16,7 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
 
   Future<void> login(String emailOrPhone, String password) async {
     state = const AsyncValue.loading();
+    ref.read(selectedAccountProvider.notifier).select(null);
     try {
       final user = await ref.read(authRepositoryProvider).login(emailOrPhone, password);
       state = AsyncValue.data(user);
@@ -27,6 +28,7 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
 
   Future<void> googleLogin({String? idToken, String? accessToken}) async {
     state = const AsyncValue.loading();
+    ref.read(selectedAccountProvider.notifier).select(null);
     try {
       final user = await ref.read(authRepositoryProvider).googleLogin(
             idToken: idToken,
@@ -41,6 +43,7 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
 
   Future<void> register(Map<String, dynamic> data) async {
     state = const AsyncValue.loading();
+    ref.read(selectedAccountProvider.notifier).select(null);
     try {
       final user = await ref.read(authRepositoryProvider).register(data);
       state = AsyncValue.data(user);

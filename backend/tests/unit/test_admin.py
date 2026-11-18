@@ -329,7 +329,11 @@ def test_orders_oversight(client: TestClient, admin_token: str) -> None:
 
 def test_notifications_crud(client: TestClient, admin_token: str) -> None:
     """Test administrative notification creation (targeted and broadcast)."""
+    from app.db.session import SessionLocal
+    from app.models.notification import Notification
+
     headers = {"Authorization": f"Bearer {admin_token}"}
+    bcast_title = f"Thông báo test {uuid.uuid4().hex[:8]}"
 
     # 1. Targeted notification to Customer 1
     targeted_payload = {
@@ -342,20 +346,31 @@ def test_notifications_crud(client: TestClient, admin_token: str) -> None:
     assert t_res.status_code == 201
     notif_id = t_res.json()["notification_id"]
 
-    # 2. Broadcast notification to all customers
-    bcast_payload = {
-        "customer_id": None,
-        "title": "Thông báo toàn sàn",
-        "content": "Chúc mừng phiên giao dịch đầu năm mới!",
-        "notification_type": "NEWS",
-    }
-    b_res = client.post("/api/admin/notifications", json=bcast_payload, headers=headers)
-    assert b_res.status_code == 201
-    assert "[Broadcast" in b_res.json()["content"]
+    try:
+        # 2. Broadcast notification to all customers
+        bcast_payload = {
+            "customer_id": None,
+            "title": bcast_title,
+            "content": "Chúc mừng phiên giao dịch đầu năm mới!",
+            "notification_type": "NEWS",
+        }
+        b_res = client.post("/api/admin/notifications", json=bcast_payload, headers=headers)
+        assert b_res.status_code == 201
+        assert "[Broadcast" in b_res.json()["content"]
 
-    # 3. Delete notification
-    del_res = client.delete(f"/api/admin/notifications/{notif_id}", headers=headers)
-    assert del_res.status_code == 204
+        # 3. Delete targeted notification
+        del_res = client.delete(f"/api/admin/notifications/{notif_id}", headers=headers)
+        assert del_res.status_code == 204
+    finally:
+        # Clean up broadcast notifications created during test so real users are not spammed
+        db = SessionLocal()
+        try:
+            db.query(Notification).filter(Notification.title == bcast_title).delete(
+                synchronize_session=False
+            )
+            db.commit()
+        finally:
+            db.close()
 
 
 # =====================================================================
@@ -892,3 +907,105 @@ def test_price_history_ohlc_validation(client: TestClient, admin_token: str) -> 
         assert bad_upd.json()["error"]["code"] == "INVALID_CANDLE_PRICES"
     finally:
         client.delete(f"/api/admin/price-history/{hid}", headers=headers)
+
+
+def test_admin_sync_price_history_upserts_live_candles(
+    client: TestClient, admin_token: str
+) -> None:
+    """POST /api/admin/price-history/sync upserts DNSE + SSI intraday candles."""
+    from datetime import date as dt_date
+    from unittest.mock import patch
+
+    from app.schemas.market import CandleResponse
+
+    headers = {"Authorization": f"Bearer {admin_token}"}
+    sym = f"S{uuid.uuid4().hex[:4].upper()}"
+    create_res = client.post(
+        "/api/admin/stocks",
+        json={
+            "stock_symbol": sym,
+            "company_name": "CTCP Test Live Sync",
+            "exchange": "HOSE",
+            "reference_price": "30000.00",
+            "current_price": "30000.00",
+        },
+        headers=headers,
+    )
+    assert create_res.status_code == 201, create_res.text
+    stock_id = create_res.json()["stock_id"]
+
+    mock_candles = [
+        CandleResponse(
+            recorded_date=dt_date(2026, 11, 17),
+            open_price=Decimal("31100.00"),
+            close_price=Decimal("31000.00"),
+            highest_price=Decimal("31200.00"),
+            lowest_price=Decimal("30900.00"),
+            trading_volume=1500000,
+        )
+    ]
+    mock_quote = {
+        "symbol": sym,
+        "current_price": Decimal("30550.00"),
+        "reference_price": Decimal("31000.00"),
+        "ceiling_price": Decimal("33150.00"),
+        "floor_price": Decimal("28850.00"),
+        "total_volume": 2158900,
+        "open_price": Decimal("30750.00"),
+        "highest_price": Decimal("30800.00"),
+        "lowest_price": Decimal("30500.00"),
+        "trading_value": Decimal("66075600000.00"),
+        "trading_date": dt_date(2026, 11, 18),
+    }
+
+    try:
+        with (
+            patch("app.services.realtime_market.fetch_live_candles", return_value=mock_candles),
+            patch("app.services.realtime_market.fetch_live_stock_quote", return_value=mock_quote),
+        ):
+            sync_res = client.post(
+                "/api/admin/price-history/sync",
+                json={"stock_symbol": sym, "limit": 30},
+                headers=headers,
+            )
+        assert sync_res.status_code == 200, sync_res.text
+        body = sync_res.json()
+        assert body["total_stocks"] == 1
+        assert body["synced_stocks"] == 1
+        assert body["inserted_candles"] == 2
+        assert body["updated_candles"] == 0
+        assert body["latest_date"] == "2026-11-18"
+
+        # Verify persisted in /api/admin/price-history
+        list_res = client.get(
+            "/api/admin/price-history",
+            params={"stock_symbol": sym, "page": 1, "page_size": 10},
+            headers=headers,
+        )
+        assert list_res.status_code == 200
+        dates = [item["recorded_date"] for item in list_res.json()["items"]]
+        assert dates[:2] == ["2026-11-18", "2026-11-17"]
+
+        # Running sync again updates existing rows without duplicates
+        with (
+            patch("app.services.realtime_market.fetch_live_candles", return_value=mock_candles),
+            patch("app.services.realtime_market.fetch_live_stock_quote", return_value=mock_quote),
+        ):
+            sync_again = client.post(
+                "/api/admin/price-history/sync",
+                json={"stock_symbol": sym, "limit": 30},
+                headers=headers,
+            )
+        assert sync_again.status_code == 200
+        assert sync_again.json()["inserted_candles"] == 0
+        assert sync_again.json()["updated_candles"] == 2
+
+        # Unknown symbol -> 404
+        missing = client.post(
+            "/api/admin/price-history/sync",
+            json={"stock_symbol": "NOPE999"},
+            headers=headers,
+        )
+        assert missing.status_code == 404
+    finally:
+        client.delete(f"/api/admin/stocks/{stock_id}", headers=headers)

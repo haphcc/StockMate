@@ -21,6 +21,7 @@ class _AdminPriceHistoryScreenState
     extends ConsumerState<AdminPriceHistoryScreen> {
   AdminStockModel? _stock;
   int _page = 1;
+  bool _syncing = false;
 
   Future<void> _pickStock() async {
     final repo = ref.read(adminRepositoryProvider);
@@ -38,6 +39,73 @@ class _AdminPriceHistoryScreenState
         _stock = picked;
         _page = 1;
       });
+    }
+  }
+
+  Future<void> _syncLiveHistory() async {
+    if (_syncing) return;
+    final stock = _stock;
+    if (stock == null) {
+      final confirm = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.darkSurface,
+          title: const Text(
+            'Đồng bộ giá thực toàn thị trường',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: const Text(
+            'Kéo dữ liệu nến ngày từ DNSE và giá trong phiên từ SSI cho toàn bộ mã cổ phiếu đang hoạt động?',
+            style: TextStyle(color: AppColors.darkTextSecondary),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Hủy'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Đồng bộ'),
+            ),
+          ],
+        ),
+      );
+      if (confirm != true || !mounted) return;
+    }
+
+    setState(() => _syncing = true);
+    try {
+      final result = await ref
+          .read(adminRepositoryProvider)
+          .syncPriceHistory(stockSymbol: stock?.stockSymbol);
+      if (!mounted) return;
+      setState(() => _page = 1);
+      ref.invalidate(adminCandlesProvider);
+      ref.invalidate(adminStocksProvider);
+
+      final targetLabel =
+          stock != null ? stock.stockSymbol : '${result.syncedStocks}/${result.totalStocks} mã';
+      final latestPart = result.displayLatestDate != null
+          ? ' · mới nhất ${result.displayLatestDate}'
+          : '';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Đã đồng bộ $targetLabel: +${result.insertedCandles} mới, '
+            '${result.updatedCandles} cập nhật$latestPart',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.priceDown,
+          content: Text('Đồng bộ giá thực thất bại: $e'),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _syncing = false);
     }
   }
 
@@ -71,6 +139,25 @@ class _AdminPriceHistoryScreenState
         elevation: 0,
         title: const Text('Lịch sử giá'),
         actions: [
+          if (_syncing)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 14),
+              child: Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          else
+            IconButton(
+              tooltip: stock == null
+                  ? 'Đồng bộ giá thực tất cả mã'
+                  : 'Đồng bộ giá thực ${stock.stockSymbol}',
+              icon: const Icon(Icons.sync_rounded),
+              onPressed: _syncLiveHistory,
+            ),
           IconButton(
             tooltip: 'Thêm phiên giá',
             icon: const Icon(Icons.post_add_rounded),

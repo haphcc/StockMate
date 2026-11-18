@@ -253,4 +253,39 @@ void main() {
     expect(captured?.path, '/api/admin/price-history');
     expect(captured?.method, 'POST');
   });
+
+  test('syncPriceHistory gọi endpoint đồng bộ giá thực và phân giải kết quả', () async {
+    final tokenSource = _FakeTokenSource();
+    RequestOptions? captured;
+    final dio = Dio(BaseOptions(baseUrl: 'http://test.local'))
+      ..httpClientAdapter = _FakeAdapter((options) async {
+        captured = options;
+        return _jsonResponse({
+          'total_stocks': 1,
+          'synced_stocks': 1,
+          'failed_stocks': 0,
+          'inserted_candles': 30,
+          'updated_candles': 2,
+          'latest_date': '2026-11-18',
+          'synced_symbols': ['BID'],
+          'failed_symbols': [],
+        });
+      });
+
+    final repo = ApiAdminRepository(
+      baseUrl: 'http://test.local',
+      tokenSource: tokenSource,
+      dio: dio,
+    );
+
+    final result = await repo.syncPriceHistory(stockSymbol: 'BID', limit: 60);
+    expect(result.syncedStocks, 1);
+    expect(result.insertedCandles, 30);
+    expect(result.updatedCandles, 2);
+    expect(result.displayLatestDate, '18/11/2026');
+    expect(captured?.path, '/api/admin/price-history/sync');
+    expect(captured?.method, 'POST');
+    expect((captured?.data as Map)['stock_symbol'], 'BID');
+    expect((captured?.data as Map)['limit'], 60);
+  });
 }

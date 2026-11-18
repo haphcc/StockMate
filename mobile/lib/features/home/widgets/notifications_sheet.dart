@@ -24,6 +24,16 @@ class NotificationsSheet extends ConsumerStatefulWidget {
 class _NotificationsSheetState extends ConsumerState<NotificationsSheet> {
   bool _unreadOnly = false;
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        ref.read(notificationsProvider.notifier).refresh(showLoading: false);
+      }
+    });
+  }
+
   String _formatTime(DateTime time) {
     final diff = DateTime.now().difference(time);
     if (diff.inMinutes < 1) return 'Vừa xong';

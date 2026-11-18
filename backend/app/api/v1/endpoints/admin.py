@@ -54,6 +54,8 @@ from app.schemas.admin import (
     AdminPortfolioUpdate,
     AdminPriceHistoryCreate,
     AdminPriceHistoryResponse,
+    AdminPriceHistorySyncRequest,
+    AdminPriceHistorySyncResponse,
     AdminPriceHistoryUpdate,
     AdminStockCreate,
     AdminStockResponse,
@@ -66,6 +68,7 @@ from app.schemas.admin import (
 from app.services.matching_service import compute_trading_fee, recalc_account_asset
 from app.services.notification_service import send_notification
 from app.services.order_service import get_price_tick
+from app.services.realtime_market import sync_price_history_for_stocks
 
 router = APIRouter()
 
@@ -1988,6 +1991,32 @@ def delete_price_history(
 
     db.delete(candle)
     db.commit()
+
+
+@router.post("/price-history/sync", response_model=AdminPriceHistorySyncResponse)
+def sync_price_history(
+    _: CurrentAdminDep,
+    payload: AdminPriceHistorySyncRequest | None = None,
+    db: Session = Depends(get_db),
+) -> AdminPriceHistorySyncResponse:
+    """Sync live daily OHLCV candles from DNSE & intraday quote from SSI into PostgreSQL."""
+    symbol = (
+        payload.stock_symbol.strip().upper()
+        if payload and payload.stock_symbol and payload.stock_symbol.strip()
+        else None
+    )
+    limit = payload.limit if payload else 132
+
+    if symbol:
+        stock = db.query(Stock).filter(Stock.stock_symbol == symbol).first()
+        if stock is None:
+            raise NotFoundException(message=f"Không tìm thấy mã cổ phiếu {symbol}.")
+        stocks = [stock]
+    else:
+        stocks = db.query(Stock).filter(Stock.status == "ACTIVE").all()
+
+    summary = sync_price_history_for_stocks(db, stocks, limit=limit)
+    return AdminPriceHistorySyncResponse(**summary)
 
 
 # =====================================================================

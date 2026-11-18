@@ -374,6 +374,26 @@ class AdminPriceHistoryResponse(BaseModel):
     trading_value: str
 
 
+class AdminPriceHistorySyncRequest(BaseModel):
+    """Request payload for syncing live OHLCV candles into stock_price_history."""
+
+    stock_symbol: str | None = None
+    limit: int = Field(default=132, ge=1, le=260)
+
+
+class AdminPriceHistorySyncResponse(BaseModel):
+    """Summary of live OHLCV candle synchronization into PostgreSQL."""
+
+    total_stocks: int
+    synced_stocks: int
+    failed_stocks: int
+    inserted_candles: int
+    updated_candles: int
+    latest_date: date | None = None
+    synced_symbols: list[str]
+    failed_symbols: list[str]
+
+
 # =====================================================================
 # 8. NOTIFICATIONS
 # =====================================================================

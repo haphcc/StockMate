@@ -14,6 +14,7 @@ class MarketDatasource {
     String? q,
     int page = 1,
     int pageSize = 100,
+    bool live = true,
   }) async {
     try {
       final response = await _dio.get<dynamic>(
@@ -23,6 +24,7 @@ class MarketDatasource {
           if (q != null && q.trim().isNotEmpty) 'q': q.trim(),
           'page': page,
           'page_size': pageSize,
+          'live': live,
         },
       );
       final data = response.data;
@@ -37,10 +39,11 @@ class MarketDatasource {
     }
   }
 
-  Future<StockModel> getStockDetail(String symbol) async {
+  Future<StockModel> getStockDetail(String symbol, {bool live = true}) async {
     try {
       final response = await _dio.get<dynamic>(
         ApiEndpoints.stockDetail(symbol),
+        queryParameters: {'live': live},
       );
       return StockModel.fromJson(Map<String, dynamic>.from(response.data as Map));
     } on DioException catch (error) {

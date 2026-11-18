@@ -1786,6 +1786,93 @@
         "title": "AdminPriceHistoryResponse",
         "type": "object"
       },
+      "AdminPriceHistorySyncRequest": {
+        "description": "Request payload for syncing live OHLCV candles into stock_price_history.",
+        "properties": {
+          "limit": {
+            "default": 132,
+            "maximum": 260.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "stock_symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stock Symbol"
+          }
+        },
+        "title": "AdminPriceHistorySyncRequest",
+        "type": "object"
+      },
+      "AdminPriceHistorySyncResponse": {
+        "description": "Summary of live OHLCV candle synchronization into PostgreSQL.",
+        "properties": {
+          "failed_stocks": {
+            "title": "Failed Stocks",
+            "type": "integer"
+          },
+          "failed_symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Failed Symbols",
+            "type": "array"
+          },
+          "inserted_candles": {
+            "title": "Inserted Candles",
+            "type": "integer"
+          },
+          "latest_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Latest Date"
+          },
+          "synced_stocks": {
+            "title": "Synced Stocks",
+            "type": "integer"
+          },
+          "synced_symbols": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Synced Symbols",
+            "type": "array"
+          },
+          "total_stocks": {
+            "title": "Total Stocks",
+            "type": "integer"
+          },
+          "updated_candles": {
+            "title": "Updated Candles",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_stocks",
+          "synced_stocks",
+          "failed_stocks",
+          "inserted_candles",
+          "updated_candles",
+          "synced_symbols",
+          "failed_symbols"
+        ],
+        "title": "AdminPriceHistorySyncResponse",
+        "type": "object"
+      },
       "AdminPriceHistoryUpdate": {
         "description": "Schema for updating OHLCV candlestick data.",
         "properties": {
@@ -3506,6 +3593,18 @@
       },
       "SyncLiveRequest": {
         "properties": {
+          "history_limit": {
+            "default": 132,
+            "maximum": 260.0,
+            "minimum": 1.0,
+            "title": "History Limit",
+            "type": "integer"
+          },
+          "include_history": {
+            "default": false,
+            "title": "Include History",
+            "type": "boolean"
+          },
           "symbols": {
             "anyOf": [
               {
@@ -3526,6 +3625,11 @@
       },
       "SyncLiveResponse": {
         "properties": {
+          "candles_synced": {
+            "default": 0,
+            "title": "Candles Synced",
+            "type": "integer"
+          },
           "failed_count": {
             "title": "Failed Count",
             "type": "integer"
@@ -7361,6 +7465,110 @@
         ]
       }
     },
+    "/api/admin/price-history/sync": {
+      "post": {
+        "description": "Sync live daily OHLCV candles from DNSE & intraday quote from SSI into PostgreSQL.",
+        "operationId": "sync_price_history_api_admin_price_history_sync_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/AdminPriceHistorySyncRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminPriceHistorySyncResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Sync Price History",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/api/admin/price-history/{history_id}": {
       "delete": {
         "description": "Delete a daily candlestick record.",
@@ -9767,7 +9975,7 @@
     },
     "/api/market/sync-live": {
       "post": {
-        "description": "Sync real-time stock prices from live exchange feed into database.",
+        "description": "Sync real-time stock prices (and optionally daily candle history) into database.",
         "operationId": "sync_live_market_api_market_sync_live_post",
         "requestBody": {
           "content": {

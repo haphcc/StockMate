@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../data/models/notification_model.dart';
 import '../../../providers/app_providers.dart';
+import '../../auth/providers/auth_provider.dart';
 
 final notificationsProvider =
     AsyncNotifierProvider<NotificationsNotifier, List<NotificationModel>>(
@@ -10,6 +11,12 @@ final notificationsProvider =
 class NotificationsNotifier extends AsyncNotifier<List<NotificationModel>> {
   @override
   Future<List<NotificationModel>> build() async {
+    final userId = ref.watch(
+      authProvider.select((state) => state.value?.id),
+    );
+    if (userId == null) {
+      return const [];
+    }
     return _fetch();
   }
 
@@ -18,8 +25,15 @@ class NotificationsNotifier extends AsyncNotifier<List<NotificationModel>> {
     return repo.getNotifications(unreadOnly: unreadOnly);
   }
 
-  Future<void> refresh() async {
-    state = const AsyncValue.loading();
+  Future<void> refresh({bool showLoading = true}) async {
+    final userId = ref.read(authProvider).value?.id;
+    if (userId == null) {
+      state = const AsyncValue.data([]);
+      return;
+    }
+    if (showLoading) {
+      state = const AsyncValue.loading();
+    }
     state = await AsyncValue.guard(() => _fetch());
   }
 

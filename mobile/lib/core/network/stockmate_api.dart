@@ -152,6 +152,7 @@ class StockmateApi {
   Future<List<Map<String, dynamic>>> market({
     String? exchange,
     String? query,
+    bool live = true,
   }) async => _page(
     (await dio.get(
       '/api/market/board',
@@ -160,18 +161,27 @@ class StockmateApi {
         if (query != null && query.isNotEmpty) 'q': query,
         'page': 1,
         'page_size': 100,
+        'live': live,
       },
     )).data,
   );
-  Future<Map<String, dynamic>> stock(String symbol) async =>
-      _map((await dio.get('/api/stocks/$symbol')).data);
-  Future<List<Map<String, dynamic>>> chart(String symbol, String range) async =>
-      _list(
+  Future<Map<String, dynamic>> stock(String symbol, {bool live = true}) async =>
+      _map(
         (await dio.get(
-          '/api/stocks/$symbol/chart',
-          queryParameters: {'range': range},
+          '/api/stocks/$symbol',
+          queryParameters: {'live': live},
         )).data,
       );
+  Future<List<Map<String, dynamic>>> chart(
+    String symbol,
+    String range, {
+    bool live = true,
+  }) async => _list(
+    (await dio.get(
+      '/api/stocks/$symbol/chart',
+      queryParameters: {'range': range, 'live': live},
+    )).data,
+  );
 
   Future<List<Map<String, dynamic>>> watchlist() async =>
       _list((await dio.get('/api/watchlist')).data);
@@ -227,6 +237,7 @@ class StockmateApi {
     await storage.delete(key: 'access_token');
     await storage.delete(key: 'refresh_token');
     await storage.delete(key: 'jwt_token');
+    await storage.delete(key: 'selected_account_id');
   }
 
   static Map<String, dynamic> _map(dynamic value) =>

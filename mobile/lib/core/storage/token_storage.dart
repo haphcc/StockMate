@@ -28,6 +28,7 @@ class TokenStorage {
       _storage.delete(key: accessKey),
       _storage.delete(key: refreshKey),
       _storage.delete(key: 'access_token'),
+      _storage.delete(key: 'selected_account_id'),
     ]);
   }
 }

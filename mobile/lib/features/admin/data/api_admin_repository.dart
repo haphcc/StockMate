@@ -39,6 +39,7 @@ class ApiAdminRepository implements AdminRepository {
     String path, {
     Map<String, dynamic>? query,
     Object? body,
+    Duration? receiveTimeout,
   }) async {
     for (var attempt = 0; attempt < 2; attempt++) {
       final token = await _tokenSource.getToken();
@@ -49,6 +50,7 @@ class ApiAdminRepository implements AdminRepository {
           queryParameters: query,
           options: Options(
             method: method,
+            receiveTimeout: receiveTimeout,
             headers: {if (token != null) 'Authorization': 'Bearer $token'},
           ),
         );
@@ -482,6 +484,24 @@ class ApiAdminRepository implements AdminRepository {
   @override
   Future<void> deleteCandle(int candleId) async {
     await _request('DELETE', '/api/admin/price-history/$candleId');
+  }
+
+  @override
+  Future<AdminPriceHistorySyncResult> syncPriceHistory({
+    String? stockSymbol,
+    int limit = 132,
+  }) async {
+    final result = await _request(
+      'POST',
+      '/api/admin/price-history/sync',
+      body: {
+        if (stockSymbol != null && stockSymbol.isNotEmpty)
+          'stock_symbol': stockSymbol,
+        'limit': limit,
+      },
+      receiveTimeout: const Duration(seconds: 60),
+    );
+    return AdminPriceHistorySyncResult.fromJson(_asMap(result));
   }
 
   // ---------------- Dashboard ----------------

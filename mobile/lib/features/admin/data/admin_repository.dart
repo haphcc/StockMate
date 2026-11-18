@@ -116,4 +116,8 @@ abstract class AdminRepository {
     Map<String, dynamic> data,
   );
   Future<void> deleteCandle(int candleId);
+  Future<AdminPriceHistorySyncResult> syncPriceHistory({
+    String? stockSymbol,
+    int limit = 132,
+  });
 }
