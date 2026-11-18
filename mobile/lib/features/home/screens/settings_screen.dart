@@ -82,12 +82,20 @@ class SettingsScreen extends ConsumerWidget {
                 _InfoRow(
                   icon: Icons.phone_outlined,
                   label: 'Số điện thoại',
-                  value: user?.phoneNumber ?? '—',
+                  value: user?.displayPhoneNumber ?? '—',
                   onTap: () => ProfileDialogs.showEditProfileDialog(
                     context: context,
                     ref: ref,
                     user: user,
                   ),
+                ),
+                const Divider(color: AppColors.darkCardBorder, height: 1),
+                _InfoRow(
+                  icon: Icons.verified_user_outlined,
+                  label: 'Đăng nhập',
+                  value: (user?.isGoogleAccount ?? false)
+                      ? 'Tài khoản Google'
+                      : 'Email & Mật khẩu',
                 ),
                 const Divider(color: AppColors.darkCardBorder, height: 1),
                 _InfoRow(
@@ -121,28 +129,31 @@ class SettingsScreen extends ConsumerWidget {
                 onTap: () => ProfileDialogs.showChangePasswordDialog(
                   context: context,
                   ref: ref,
+                  hasPassword: user?.hasPassword ?? true,
                 ),
-                child: const Padding(
-                  padding: EdgeInsets.all(16),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
                   child: Row(
                     children: [
-                      Icon(Icons.lock_outline_rounded, color: AppColors.primary, size: 20),
-                      SizedBox(width: 12),
+                      const Icon(Icons.lock_outline_rounded, color: AppColors.primary, size: 20),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Đổi mật khẩu',
-                              style: TextStyle(
+                              (user?.hasPassword ?? true) ? 'Đổi mật khẩu' : 'Đặt mật khẩu',
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            SizedBox(height: 2),
+                            const SizedBox(height: 2),
                             Text(
-                              'Cập nhật mật khẩu tài khoản',
-                              style: TextStyle(
+                              (user?.hasPassword ?? true)
+                                  ? 'Cập nhật mật khẩu tài khoản'
+                                  : 'Đặt mật khẩu để có thể đăng nhập bằng email',
+                              style: const TextStyle(
                                 color: AppColors.darkTextSecondary,
                                 fontSize: 12,
                               ),
@@ -150,7 +161,7 @@ class SettingsScreen extends ConsumerWidget {
                           ],
                         ),
                       ),
-                      Icon(
+                      const Icon(
                         Icons.chevron_right_rounded,
                         color: AppColors.darkTextSecondary,
                         size: 20,

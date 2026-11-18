@@ -8,6 +8,8 @@ class AdminCustomerModel extends Equatable {
   final String phoneNumber;
   final String role; // CUSTOMER | ADMIN
   final String status; // PENDING | ACTIVE | LOCKED | CLOSED
+  final String authProvider; // LOCAL | GOOGLE
+  final String? googleId;
   final String? dateOfBirth;
   final String? idCardNumber;
   final String? address;
@@ -23,6 +25,8 @@ class AdminCustomerModel extends Equatable {
     required this.phoneNumber,
     required this.role,
     required this.status,
+    this.authProvider = 'LOCAL',
+    this.googleId,
     this.dateOfBirth,
     this.idCardNumber,
     this.address,
@@ -33,6 +37,12 @@ class AdminCustomerModel extends Equatable {
   });
 
   bool get isAdmin => role == 'ADMIN';
+  bool get isGoogleAccount =>
+      authProvider.toUpperCase() == 'GOOGLE' ||
+      (googleId != null && googleId!.isNotEmpty);
+  bool get hasPlaceholderPhone => phoneNumber.startsWith('G');
+  String get displayPhoneNumber =>
+      hasPlaceholderPhone ? 'Chưa cập nhật (Google)' : phoneNumber;
 
   factory AdminCustomerModel.fromJson(Map<String, dynamic> json) {
     final rawAccounts = json['accounts'] as List<dynamic>? ?? [];
@@ -43,6 +53,8 @@ class AdminCustomerModel extends Equatable {
       phoneNumber: json['phone_number'] ?? '',
       role: json['role'] ?? 'CUSTOMER',
       status: json['status'] ?? 'ACTIVE',
+      authProvider: json['auth_provider'] ?? 'LOCAL',
+      googleId: json['google_id'],
       dateOfBirth: json['date_of_birth'],
       idCardNumber: json['id_card_number'],
       address: json['address'],
@@ -61,6 +73,8 @@ class AdminCustomerModel extends Equatable {
     String? phoneNumber,
     String? role,
     String? status,
+    String? authProvider,
+    String? googleId,
     String? dateOfBirth,
     String? idCardNumber,
     String? address,
@@ -75,6 +89,8 @@ class AdminCustomerModel extends Equatable {
       phoneNumber: phoneNumber ?? this.phoneNumber,
       role: role ?? this.role,
       status: status ?? this.status,
+      authProvider: authProvider ?? this.authProvider,
+      googleId: googleId ?? this.googleId,
       dateOfBirth: dateOfBirth ?? this.dateOfBirth,
       idCardNumber: idCardNumber ?? this.idCardNumber,
       address: address ?? this.address,
@@ -93,6 +109,8 @@ class AdminCustomerModel extends Equatable {
         phoneNumber,
         role,
         status,
+        authProvider,
+        googleId,
         dateOfBirth,
         idCardNumber,
         address,

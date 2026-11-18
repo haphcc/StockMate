@@ -79,6 +79,8 @@ class AdminCustomerResponse(BaseModel):
     phone_number: str
     role: str
     status: str
+    auth_provider: str = "LOCAL"
+    google_id: str | None = None
     date_of_birth: date | None = None
     id_card_number: str | None = None
     address: str | None = None

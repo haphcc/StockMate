@@ -394,6 +394,11 @@
             ],
             "title": "Address"
           },
+          "auth_provider": {
+            "default": "LOCAL",
+            "title": "Auth Provider",
+            "type": "string"
+          },
           "avatar_url": {
             "anyOf": [
               {
@@ -433,6 +438,17 @@
           "full_name": {
             "title": "Full Name",
             "type": "string"
+          },
+          "google_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Google Id"
           },
           "id_card_number": {
             "anyOf": [
@@ -495,6 +511,11 @@
             ],
             "title": "Address"
           },
+          "auth_provider": {
+            "default": "LOCAL",
+            "title": "Auth Provider",
+            "type": "string"
+          },
           "avatar_url": {
             "anyOf": [
               {
@@ -534,6 +555,17 @@
           "full_name": {
             "title": "Full Name",
             "type": "string"
+          },
+          "google_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Google Id"
           },
           "id_card_number": {
             "anyOf": [
@@ -2611,7 +2643,7 @@
       },
       "ChangePasswordRequest": {
         "additionalProperties": false,
-        "description": "Payload for updating user password.",
+        "description": "Payload for updating or initially setting user password.",
         "properties": {
           "new_password": {
             "maxLength": 72,
@@ -2620,13 +2652,18 @@
             "type": "string"
           },
           "old_password": {
-            "minLength": 1,
-            "title": "Old Password",
-            "type": "string"
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Old Password"
           }
         },
         "required": [
-          "old_password",
           "new_password"
         ],
         "title": "ChangePasswordRequest",
@@ -2812,6 +2849,40 @@
           "error"
         ],
         "title": "ErrorResponse",
+        "type": "object"
+      },
+      "GoogleLoginRequest": {
+        "additionalProperties": false,
+        "description": "Payload for Google OAuth 2.0 ID Token or Access Token sign-in / sign-up.",
+        "properties": {
+          "access_token": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Google OAuth Access Token (fallback for Flutter Web)",
+            "title": "Access Token"
+          },
+          "id_token": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Google ID Token issued by Google Sign-In SDK",
+            "title": "Id Token"
+          }
+        },
+        "title": "GoogleLoginRequest",
         "type": "object"
       },
       "LoginRequest": {
@@ -3654,6 +3725,11 @@
       "UserResponse": {
         "description": "Authenticated user profile response.",
         "properties": {
+          "auth_provider": {
+            "default": "LOCAL",
+            "title": "Auth Provider",
+            "type": "string"
+          },
           "avatar_url": {
             "anyOf": [
               {
@@ -3676,6 +3752,11 @@
           "full_name": {
             "title": "Full Name",
             "type": "string"
+          },
+          "has_password": {
+            "default": true,
+            "title": "Has Password",
+            "type": "boolean"
           },
           "phone_number": {
             "title": "Phone Number",
@@ -5170,6 +5251,24 @@
               ],
               "description": "Filter by status: ACTIVE, LOCKED, PENDING, CLOSED",
               "title": "Status"
+            }
+          },
+          {
+            "description": "Filter by auth provider: LOCAL or GOOGLE",
+            "in": "query",
+            "name": "auth_provider",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by auth provider: LOCAL or GOOGLE",
+              "title": "Auth Provider"
             }
           },
           {
@@ -8688,6 +8787,98 @@
         "summary": "Delete Watchlist Entry",
         "tags": [
           "admin"
+        ]
+      }
+    },
+    "/api/auth/google": {
+      "post": {
+        "description": "Seamless Google Sign-In and Sign-Up via Google ID Token or Access Token.",
+        "operationId": "google_login_api_auth_google_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoogleLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Google Login",
+        "tags": [
+          "auth"
         ]
       }
     },

@@ -20,11 +20,19 @@ class AuthDatasource {
     }
   }
 
-  Future<Map<String, dynamic>> googleLogin(String idToken) async {
+  Future<Map<String, dynamic>> googleLogin({
+    String? idToken,
+    String? accessToken,
+  }) async {
     try {
+      final payload = <String, dynamic>{
+        if (idToken != null && idToken.isNotEmpty) 'id_token': idToken,
+        if (accessToken != null && accessToken.isNotEmpty)
+          'access_token': accessToken,
+      };
       final response = await _dio.post<dynamic>(
         ApiEndpoints.authGoogle,
-        data: {'id_token': idToken},
+        data: payload,
       );
       return Map<String, dynamic>.from(response.data as Map);
     } on DioException catch (error) {
@@ -66,14 +74,15 @@ class AuthDatasource {
   }
 
   Future<Map<String, dynamic>> changePassword({
-    required String oldPassword,
+    String? oldPassword,
     required String newPassword,
   }) async {
     try {
       final response = await _dio.put<dynamic>(
         ApiEndpoints.authPassword,
         data: {
-          'old_password': oldPassword,
+          if (oldPassword != null && oldPassword.isNotEmpty)
+            'old_password': oldPassword,
           'new_password': newPassword,
         },
       );

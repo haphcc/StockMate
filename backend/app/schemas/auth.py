@@ -3,7 +3,7 @@
 Authentication request and response schemas.
 """
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator, model_validator
 
 
 class LoginRequest(BaseModel):
@@ -19,11 +19,26 @@ class LoginRequest(BaseModel):
 
 
 class GoogleLoginRequest(BaseModel):
-    """Payload for Google OAuth 2.0 ID Token sign-in / sign-up."""
+    """Payload for Google OAuth 2.0 ID Token or Access Token sign-in / sign-up."""
 
     model_config = ConfigDict(extra="forbid")
 
-    id_token: str = Field(min_length=1, description="Google ID Token issued by Google Sign-In SDK")
+    id_token: str | None = Field(
+        default=None,
+        min_length=1,
+        description="Google ID Token issued by Google Sign-In SDK",
+    )
+    access_token: str | None = Field(
+        default=None,
+        min_length=1,
+        description="Google OAuth Access Token (fallback for Flutter Web)",
+    )
+
+    @model_validator(mode="after")
+    def validate_token_present(self) -> "GoogleLoginRequest":
+        if not self.id_token and not self.access_token:
+            raise ValueError("Cần cung cấp id_token hoặc access_token từ Google.")
+        return self
 
 
 class RegisterRequest(LoginRequest):
@@ -69,11 +84,11 @@ class UpdateProfileRequest(BaseModel):
 
 
 class ChangePasswordRequest(BaseModel):
-    """Payload for updating user password."""
+    """Payload for updating or initially setting user password."""
 
     model_config = ConfigDict(extra="forbid")
 
-    old_password: str = Field(min_length=1)
+    old_password: str | None = Field(default=None)
     new_password: str = Field(min_length=8, max_length=72)
 
     @field_validator("new_password")
@@ -96,6 +111,8 @@ class UserResponse(BaseModel):
     avatar_url: str | None = None
     status: str
     role: str = "CUSTOMER"
+    auth_provider: str = "LOCAL"
+    has_password: bool = True
 
 
 class TokenResponse(BaseModel):

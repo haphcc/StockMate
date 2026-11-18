@@ -15,6 +15,7 @@ abstract class AdminRepository {
     String? q,
     String? role,
     String? status,
+    String? authProvider,
     int page = 1,
     int pageSize = 20,
   });

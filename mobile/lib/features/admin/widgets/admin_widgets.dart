@@ -54,6 +54,8 @@ class AdminStatusBadge extends StatelessWidget {
         return AppColors.priceRef;
       case 'ADMIN':
         return AppColors.accent;
+      case 'GOOGLE':
+        return const Color(0xFF4285F4);
       default:
         return AppColors.darkTextSecondary;
     }

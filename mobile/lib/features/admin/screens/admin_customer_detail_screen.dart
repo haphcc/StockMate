@@ -286,9 +286,12 @@ class _AdminCustomerDetailScreenState
                   const SizedBox(height: 6),
                   Wrap(
                     spacing: 6,
+                    runSpacing: 6,
                     children: [
                       AdminStatusBadge(code: c.status),
                       AdminStatusBadge(code: c.role),
+                      if (c.isGoogleAccount)
+                        const AdminStatusBadge(code: 'GOOGLE'),
                     ],
                   ),
                 ],
@@ -301,7 +304,16 @@ class _AdminCustomerDetailScreenState
           child: Column(
             children: [
               AdminInfoRow(label: 'Email', value: c.email),
-              AdminInfoRow(label: 'Số điện thoại', value: c.phoneNumber),
+              AdminInfoRow(
+                label: 'Đăng nhập',
+                value: c.isGoogleAccount
+                    ? 'Tài khoản Google'
+                    : 'Email / Mật khẩu',
+              ),
+              AdminInfoRow(
+                label: 'Số điện thoại',
+                value: c.displayPhoneNumber,
+              ),
               if (c.dateOfBirth != null)
                 AdminInfoRow(label: 'Ngày sinh', value: c.dateOfBirth!),
               if (c.idCardNumber != null)

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/services/google_sign_in_service.dart';
 import '../../../data/models/user_model.dart';
 import '../../../providers/app_providers.dart';
 import '../../../providers/selected_account_provider.dart';
@@ -24,10 +25,13 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
     }
   }
 
-  Future<void> googleLogin(String idToken) async {
+  Future<void> googleLogin({String? idToken, String? accessToken}) async {
     state = const AsyncValue.loading();
     try {
-      final user = await ref.read(authRepositoryProvider).googleLogin(idToken);
+      final user = await ref.read(authRepositoryProvider).googleLogin(
+            idToken: idToken,
+            accessToken: accessToken,
+          );
       state = AsyncValue.data(user);
     } catch (_) {
       state = const AsyncValue.data(null);
@@ -49,6 +53,7 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
   Future<void> logout() async {
     state = const AsyncValue.loading();
     await ref.read(authRepositoryProvider).logout();
+    await GoogleSignInService().signOut();
     ref.read(selectedAccountProvider.notifier).select(null);
     state = const AsyncValue.data(null);
   }
@@ -67,12 +72,16 @@ class AuthNotifier extends AsyncNotifier<UserModel?> {
   }
 
   Future<void> changePassword({
-    required String oldPassword,
+    String? oldPassword,
     required String newPassword,
   }) async {
     await ref.read(authRepositoryProvider).changePassword(
       oldPassword: oldPassword,
       newPassword: newPassword,
     );
+    final current = state.value;
+    if (current != null && !current.hasPassword) {
+      state = AsyncValue.data(current.copyWith(hasPassword: true));
+    }
   }
 }

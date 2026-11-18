@@ -112,6 +112,7 @@ class ApiAdminRepository implements AdminRepository {
     String? q,
     String? role,
     String? status,
+    String? authProvider,
     int page = 1,
     int pageSize = 20,
   }) async {
@@ -122,6 +123,7 @@ class ApiAdminRepository implements AdminRepository {
         if (q != null && q.isNotEmpty) 'q': q,
         'role': ?role,
         'status': ?status,
+        'auth_provider': ?authProvider,
         'page': page,
         'page_size': pageSize,
       },

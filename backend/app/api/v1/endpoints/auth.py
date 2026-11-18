@@ -33,8 +33,12 @@ def login(request: LoginRequest, db: DbDep) -> TokenResponse:
 
 @router.post("/google", response_model=TokenResponse)
 def google_login(request: GoogleLoginRequest, db: DbDep) -> TokenResponse:
-    """Seamless Google Sign-In and Sign-Up via Google ID Token."""
-    return google_auth_service.google_login(db, request.id_token)
+    """Seamless Google Sign-In and Sign-Up via Google ID Token or Access Token."""
+    return google_auth_service.google_login(
+        db,
+        request.id_token,
+        access_token=request.access_token,
+    )
 
 
 @router.post("/refresh", response_model=TokenResponse)

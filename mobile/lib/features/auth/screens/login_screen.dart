@@ -60,8 +60,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _googleSignIn() async {
     try {
-      final idToken = await GoogleSignInService().signIn();
-      await ref.read(authProvider.notifier).googleLogin(idToken);
+      final credentials = await GoogleSignInService().signIn();
+      await ref.read(authProvider.notifier).googleLogin(
+            idToken: credentials.idToken,
+            accessToken: credentials.accessToken,
+          );
       if (mounted) {
         context.go('/home/overview');
       }

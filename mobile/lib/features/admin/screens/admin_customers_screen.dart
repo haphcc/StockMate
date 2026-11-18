@@ -27,10 +27,16 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
   String _q = '';
   String? _role;
   String? _status;
+  String? _authProvider;
   int _page = 1;
 
-  AdminCustomerQuery get _query =>
-      AdminCustomerQuery(q: _q, role: _role, status: _status, page: _page);
+  AdminCustomerQuery get _query => AdminCustomerQuery(
+        q: _q,
+        role: _role,
+        status: _status,
+        authProvider: _authProvider,
+        page: _page,
+      );
 
   @override
   void dispose() {
@@ -118,6 +124,14 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
               _page = 1;
             }),
           ),
+          AdminFilterChips(
+            options: AdminConstants.customerAuthProviders,
+            selected: _authProvider,
+            onChanged: (v) => setState(() {
+              _authProvider = v;
+              _page = 1;
+            }),
+          ),
           Expanded(
             child: async.when(
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -194,7 +208,7 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
                   ),
                 ),
                 Text(
-                  c.phoneNumber,
+                  c.displayPhoneNumber,
                   style: const TextStyle(
                     color: AppColors.darkTextMuted,
                     fontSize: 12,
@@ -208,6 +222,10 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               AdminStatusBadge(code: c.status),
+              if (c.isGoogleAccount) ...[
+                const SizedBox(height: 6),
+                const AdminStatusBadge(code: 'GOOGLE'),
+              ],
               if (c.isAdmin) ...[
                 const SizedBox(height: 6),
                 const AdminStatusBadge(code: 'ADMIN'),

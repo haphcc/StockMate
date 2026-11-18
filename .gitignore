@@ -21,3 +21,7 @@ build/
 *.bak
 
 /dump
+
+# Firebase / Google OAuth local credentials
+google-services.json
+GoogleService-Info.plist
