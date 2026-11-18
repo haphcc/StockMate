@@ -441,6 +441,9 @@ def list_customers(
     status: str | None = Query(
         default=None, description="Filter by status: ACTIVE, LOCKED, PENDING, CLOSED"
     ),
+    auth_provider: str | None = Query(
+        default=None, description="Filter by auth provider: LOCAL or GOOGLE"
+    ),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
     db: Session = Depends(get_db),
@@ -459,6 +462,8 @@ def list_customers(
         query = query.filter(Customer.role == role.upper())
     if status:
         query = query.filter(Customer.status == status.upper())
+    if auth_provider:
+        query = query.filter(Customer.auth_provider == auth_provider.upper())
 
     total = query.count()
     customers = (
@@ -476,6 +481,8 @@ def list_customers(
             phone_number=c.phone_number,
             role=c.role,
             status=c.status,
+            auth_provider=c.auth_provider,
+            google_id=c.google_id,
             date_of_birth=c.date_of_birth,
             id_card_number=c.id_card_number,
             address=c.address,
@@ -550,6 +557,8 @@ def create_customer(
         phone_number=customer.phone_number,
         role=customer.role,
         status=customer.status,
+        auth_provider=customer.auth_provider,
+        google_id=customer.google_id,
         date_of_birth=customer.date_of_birth,
         id_card_number=customer.id_card_number,
         address=customer.address,
@@ -597,6 +606,8 @@ def get_customer_detail(
         phone_number=customer.phone_number,
         role=customer.role,
         status=customer.status,
+        auth_provider=customer.auth_provider,
+        google_id=customer.google_id,
         date_of_birth=customer.date_of_birth,
         id_card_number=customer.id_card_number,
         address=customer.address,
@@ -664,6 +675,8 @@ def update_customer(
         phone_number=customer.phone_number,
         role=customer.role,
         status=customer.status,
+        auth_provider=customer.auth_provider,
+        google_id=customer.google_id,
         date_of_birth=customer.date_of_birth,
         id_card_number=customer.id_card_number,
         address=customer.address,

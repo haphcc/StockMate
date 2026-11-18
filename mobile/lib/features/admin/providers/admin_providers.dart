@@ -40,17 +40,19 @@ class AdminCustomerQuery extends Equatable {
   final String q;
   final String? role;
   final String? status;
+  final String? authProvider;
   final int page;
 
   const AdminCustomerQuery({
     this.q = '',
     this.role,
     this.status,
+    this.authProvider,
     this.page = 1,
   });
 
   @override
-  List<Object?> get props => [q, role, status, page];
+  List<Object?> get props => [q, role, status, authProvider, page];
 }
 
 /// Bộ lọc danh sách tài khoản đầu tư.
@@ -79,6 +81,7 @@ final adminCustomersProvider = FutureProvider.autoDispose
         q: query.q.isEmpty ? null : query.q,
         role: query.role,
         status: query.status,
+        authProvider: query.authProvider,
         page: query.page,
       );
 });

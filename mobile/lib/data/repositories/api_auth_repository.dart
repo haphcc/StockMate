@@ -26,6 +26,13 @@ class ApiAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<UserModel> googleLogin({String? idToken, String? accessToken}) async {
+    return _saveAndReadUser(
+      await datasource.googleLogin(idToken: idToken, accessToken: accessToken),
+    );
+  }
+
+  @override
   Future<UserModel> register(Map<String, dynamic> data) async {
     return _saveAndReadUser(await datasource.register(data));
   }
@@ -61,7 +68,7 @@ class ApiAuthRepository implements AuthRepository {
 
   @override
   Future<void> changePassword({
-    required String oldPassword,
+    String? oldPassword,
     required String newPassword,
   }) async {
     await datasource.changePassword(

@@ -162,15 +162,19 @@ def update_profile(db: Session, customer: Customer, request: UpdateProfileReques
 
 def change_password(db: Session, customer: Customer, request: ChangePasswordRequest) -> None:
     ensure_active(customer)
-    is_valid = verify_password(request.old_password, customer.password_hash)
-    if (
-        not is_valid
-        and customer.role == "ADMIN"
-        and request.old_password in ("admin@123", "admin123", "Matkhau@123")
-    ):
-        is_valid = True
-    if not is_valid:
-        raise ValidationException("Mật khẩu hiện tại không chính xác.")
+    if customer.has_password:
+        old_password = request.old_password or ""
+        if not old_password:
+            raise ValidationException("Vui lòng nhập mật khẩu hiện tại.")
+        is_valid = verify_password(old_password, customer.password_hash)
+        if (
+            not is_valid
+            and customer.role == "ADMIN"
+            and old_password in ("admin@123", "admin123", "Matkhau@123")
+        ):
+            is_valid = True
+        if not is_valid:
+            raise ValidationException("Mật khẩu hiện tại không chính xác.")
 
     customer.password_hash = get_password_hash(request.new_password)
     db.commit()

@@ -40,6 +40,7 @@ class _AdminCustomerFormScreenState
   bool _saving = false;
 
   bool get _isEdit => widget.customer != null;
+  bool get _hasPlaceholderPhone => widget.customer?.hasPlaceholderPhone ?? false;
 
   @override
   void initState() {
@@ -47,7 +48,9 @@ class _AdminCustomerFormScreenState
     final c = widget.customer;
     _name = TextEditingController(text: c?.fullName ?? '');
     _email = TextEditingController(text: c?.email ?? '');
-    _phone = TextEditingController(text: c?.phoneNumber ?? '');
+    _phone = TextEditingController(
+      text: (c != null && c.hasPlaceholderPhone) ? '' : (c?.phoneNumber ?? ''),
+    );
     _role = c?.role ?? 'CUSTOMER';
     _status = c?.status ?? 'ACTIVE';
   }
@@ -68,10 +71,11 @@ class _AdminCustomerFormScreenState
     final repo = ref.read(adminRepositoryProvider);
     try {
       if (_isEdit) {
+        final phoneText = _phone.text.trim();
         await repo.updateCustomer(widget.customer!.customerId, {
           'full_name': _name.text.trim(),
           'email': _email.text.trim(),
-          'phone_number': _phone.text.trim(),
+          if (phoneText.isNotEmpty) 'phone_number': phoneText,
           if (!widget.isSelf) 'role': _role,
           if (!widget.isSelf) 'status': _status,
         });
@@ -130,11 +134,17 @@ class _AdminCustomerFormScreenState
             ),
             const SizedBox(height: 16),
             AppTextField(
-              labelText: 'Số điện thoại',
+              labelText: _hasPlaceholderPhone
+                  ? 'Số điện thoại (tùy chọn - tài khoản Google)'
+                  : 'Số điện thoại',
+              hintText: _hasPlaceholderPhone
+                  ? 'Để trống nếu chưa cập nhật SĐT'
+                  : null,
               controller: _phone,
               keyboardType: TextInputType.phone,
               validator: (v) {
                 final value = (v ?? '').trim();
+                if (value.isEmpty && _hasPlaceholderPhone) return null;
                 if (!RegExp(r'^\+?[0-9]{9,15}$').hasMatch(value)) {
                   return 'Số điện thoại gồm 9 đến 15 chữ số';
                 }

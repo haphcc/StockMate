@@ -21,6 +21,8 @@ python-jose[cryptography]>=3.3   # ky/giai ma JWT
 passlib[bcrypt]>=1.7             # hash mat khau bcrypt
 bcrypt>=4.3,<5                  # passlib chua tuong thich bcrypt 5
 python-multipart>=0.0.9          # form OAuth2PasswordRequestForm
+google-auth>=2.35.0              # xac minh Google ID Token
+requests>=2.32.0                 # HTTP transport cho google-auth
 
 # --- Tien ich ---
 python-dotenv>=1.0

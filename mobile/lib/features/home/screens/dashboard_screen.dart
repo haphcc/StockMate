@@ -386,6 +386,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       await ProfileDialogs.showChangePasswordDialog(
         context: context,
         ref: ref,
+        hasPassword: user?.hasPassword ?? true,
       );
       return;
     }

@@ -22,11 +22,13 @@ abstract final class ProfileDialogs {
   static Future<void> showChangePasswordDialog({
     required BuildContext context,
     required WidgetRef ref,
+    bool hasPassword = true,
   }) async {
     await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) => _ChangePasswordDialog(ref: ref),
+      builder: (dialogContext) =>
+          _ChangePasswordDialog(ref: ref, hasPassword: hasPassword),
     );
   }
 }
@@ -48,11 +50,15 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
   bool _isLoading = false;
   String? _errorMessage;
 
+  bool get _hasPlaceholderPhone => widget.user?.hasPlaceholderPhone ?? false;
+
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.user?.fullName ?? '');
-    _phoneController = TextEditingController(text: widget.user?.phoneNumber ?? '');
+    _phoneController = TextEditingController(
+      text: _hasPlaceholderPhone ? '' : (widget.user?.phoneNumber ?? ''),
+    );
   }
 
   @override
@@ -70,9 +76,10 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
     });
 
     try {
+      final phoneInput = _phoneController.text.trim();
       await widget.ref.read(authProvider.notifier).updateProfile(
             fullName: _nameController.text.trim(),
-            phoneNumber: _phoneController.text.trim(),
+            phoneNumber: phoneInput.isEmpty ? null : phoneInput,
           );
       if (!mounted) return;
       Navigator.of(context).pop(true);
@@ -179,15 +186,22 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                 ),
                 const SizedBox(height: 14),
                 AppTextField(
-                  labelText: 'Số điện thoại',
+                  labelText: _hasPlaceholderPhone
+                      ? 'Số điện thoại (tùy chọn)'
+                      : 'Số điện thoại',
+                  hintText: _hasPlaceholderPhone
+                      ? 'Chưa cập nhật (VD: 0912345678)'
+                      : null,
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   prefixIcon: const Icon(Icons.phone_outlined, color: AppColors.darkTextSecondary, size: 20),
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
+                    final trimmed = (value ?? '').trim();
+                    if (trimmed.isEmpty) {
+                      if (_hasPlaceholderPhone) return null;
                       return 'Số điện thoại không được để trống';
                     }
-                    if (!RegExp(r'^0[35789][0-9]{8}$').hasMatch(value.trim())) {
+                    if (!RegExp(r'^0[35789][0-9]{8}$').hasMatch(trimmed)) {
                       return 'Số điện thoại 10 chữ số không hợp lệ (VD: 0912345678)';
                     }
                     return null;
@@ -257,8 +271,9 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
 
 class _ChangePasswordDialog extends StatefulWidget {
   final WidgetRef ref;
+  final bool hasPassword;
 
-  const _ChangePasswordDialog({required this.ref});
+  const _ChangePasswordDialog({required this.ref, this.hasPassword = true});
 
   @override
   State<_ChangePasswordDialog> createState() => _ChangePasswordDialogState();
@@ -292,14 +307,18 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
 
     try {
       await widget.ref.read(authProvider.notifier).changePassword(
-            oldPassword: _oldPasswordController.text,
+            oldPassword: widget.hasPassword ? _oldPasswordController.text : null,
             newPassword: _newPasswordController.text,
           );
       if (!mounted) return;
       Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Đổi mật khẩu thành công!'),
+        SnackBar(
+          content: Text(
+            widget.hasPassword
+                ? 'Đổi mật khẩu thành công!'
+                : 'Đặt mật khẩu thành công!',
+          ),
           backgroundColor: AppColors.primary,
         ),
       );
@@ -318,6 +337,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final titleText = widget.hasPassword ? 'Đổi mật khẩu' : 'Đặt mật khẩu';
     return Dialog(
       backgroundColor: AppColors.darkCard,
       shape: RoundedRectangleBorder(
@@ -338,13 +358,13 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.lock_reset_rounded, color: AppColors.primary, size: 24),
-                        SizedBox(width: 8),
+                        const Icon(Icons.lock_reset_rounded, color: AppColors.primary, size: 24),
+                        const SizedBox(width: 8),
                         Text(
-                          'Đổi mật khẩu',
-                          style: TextStyle(
+                          titleText,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
@@ -361,27 +381,29 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
                   ],
                 ),
                 const SizedBox(height: 18),
-                AppTextField(
-                  labelText: 'Mật khẩu hiện tại',
-                  controller: _oldPasswordController,
-                  obscureText: _obscureOld,
-                  prefixIcon: const Icon(Icons.lock_outline, color: AppColors.darkTextSecondary, size: 20),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscureOld ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                      color: AppColors.darkTextSecondary,
-                      size: 20,
+                if (widget.hasPassword) ...[
+                  AppTextField(
+                    labelText: 'Mật khẩu hiện tại',
+                    controller: _oldPasswordController,
+                    obscureText: _obscureOld,
+                    prefixIcon: const Icon(Icons.lock_outline, color: AppColors.darkTextSecondary, size: 20),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureOld ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                        color: AppColors.darkTextSecondary,
+                        size: 20,
+                      ),
+                      onPressed: () => setState(() => _obscureOld = !_obscureOld),
                     ),
-                    onPressed: () => setState(() => _obscureOld = !_obscureOld),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Vui lòng nhập mật khẩu hiện tại';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Vui lòng nhập mật khẩu hiện tại';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 14),
+                  const SizedBox(height: 14),
+                ],
                 AppTextField(
                   labelText: 'Mật khẩu mới',
                   hintText: 'Tối thiểu 8 ký tự',
@@ -473,9 +495,9 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
                             )
-                          : const Text(
-                              'Đổi mật khẩu',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          : Text(
+                              titleText,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                             ),
                     ),
                   ],

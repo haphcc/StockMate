@@ -5,6 +5,7 @@ Application configuration loaded from environment and backend/.env.
 
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parents[3]
@@ -19,6 +20,17 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
     API_V1_PREFIX: str = "/api"
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def parse_debug(cls, value: object) -> bool:
+        if isinstance(value, str):
+            val = value.strip().lower()
+            if val in ("release", "prod", "production", "false", "0", "no", "off"):
+                return False
+            if val in ("true", "1", "yes", "on", "debug", "dev"):
+                return True
+        return bool(value)
 
     # Database
     POSTGRES_HOST: str = "localhost"
@@ -46,6 +58,9 @@ class Settings(BaseSettings):
     PAYOS_CLIENT_ID: str = "449a7c67-bd90-4c82-b548-ad247cc70bce"
     PAYOS_API_KEY: str = "a1099b4d-fb74-4805-9bf8-e151c57d3a35"
     PAYOS_CHECKSUM_KEY: str = "08dbbf6c5216806d59c8ec575b521b225d7e51bb9035c4ccfc72c87d458b208a"
+
+    # Google OAuth 2.0
+    GOOGLE_CLIENT_ID: str = ""
 
     model_config = SettingsConfigDict(
         env_file=str(ENV_FILE) if ENV_FILE.exists() else str(FALLBACK_ENV),

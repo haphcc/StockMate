@@ -31,14 +31,18 @@ CREATE TABLE customers (
     avatar_url      VARCHAR(255),
     role            VARCHAR(20)   NOT NULL DEFAULT 'CUSTOMER',
     status          VARCHAR(20)   NOT NULL DEFAULT 'ACTIVE',
+    auth_provider   VARCHAR(20)   NOT NULL DEFAULT 'LOCAL', -- LOCAL / GOOGLE
+    google_id       VARCHAR(255),                           -- Google OAuth subject (sub)
     created_at      TIMESTAMPTZ   NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ   NOT NULL DEFAULT now(),
     CONSTRAINT pk_customers PRIMARY KEY (customer_id),
-    CONSTRAINT uq_customers_email  UNIQUE (email),
-    CONSTRAINT uq_customers_phone  UNIQUE (phone_number),
-    CONSTRAINT uq_customers_idcard UNIQUE (id_card_number),
-    CONSTRAINT ck_customers_role   CHECK (role IN ('CUSTOMER', 'ADMIN')),
-    CONSTRAINT ck_customers_status CHECK (status IN ('PENDING','ACTIVE','LOCKED','CLOSED'))
+    CONSTRAINT uq_customers_email         UNIQUE (email),
+    CONSTRAINT uq_customers_phone         UNIQUE (phone_number),
+    CONSTRAINT uq_customers_idcard        UNIQUE (id_card_number),
+    CONSTRAINT uq_customers_google_id     UNIQUE (google_id),
+    CONSTRAINT ck_customers_role          CHECK (role IN ('CUSTOMER', 'ADMIN')),
+    CONSTRAINT ck_customers_status        CHECK (status IN ('PENDING','ACTIVE','LOCKED','CLOSED')),
+    CONSTRAINT ck_customers_auth_provider CHECK (auth_provider IN ('LOCAL', 'GOOGLE'))
 );
 
 -- ---------------------------------------------------------------------

@@ -1,5 +1,6 @@
 class AdminConstants {
   static const List<String> customerRoles = ['CUSTOMER', 'ADMIN'];
+  static const List<String> customerAuthProviders = ['LOCAL', 'GOOGLE'];
   static const List<String> customerStatuses = [
     'PENDING',
     'ACTIVE',
@@ -30,6 +31,8 @@ static const List<String> orderTypes = ['BUY', 'SELL'];
   static const Map<String, String> _labels = {
     'CUSTOMER': 'Khách hàng',
     'ADMIN': 'Quản trị viên',
+    'GOOGLE': 'Google',
+    'LOCAL': 'Email / Mật khẩu',
     'PENDING': 'Chờ duyệt',
     'ACTIVE': 'Hoạt động',
     'LOCKED': 'Đã khóa',

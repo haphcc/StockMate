@@ -8,6 +8,7 @@ from fastapi import APIRouter
 from app.api.deps import CurrentUserDep, DbDep
 from app.schemas.auth import (
     ChangePasswordRequest,
+    GoogleLoginRequest,
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
@@ -15,7 +16,7 @@ from app.schemas.auth import (
     UpdateProfileRequest,
     UserResponse,
 )
-from app.services import auth_service
+from app.services import auth_service, google_auth_service
 
 router = APIRouter()
 
@@ -28,6 +29,16 @@ def register(request: RegisterRequest, db: DbDep) -> TokenResponse:
 @router.post("/login", response_model=TokenResponse)
 def login(request: LoginRequest, db: DbDep) -> TokenResponse:
     return auth_service.login(db, request)
+
+
+@router.post("/google", response_model=TokenResponse)
+def google_login(request: GoogleLoginRequest, db: DbDep) -> TokenResponse:
+    """Seamless Google Sign-In and Sign-Up via Google ID Token or Access Token."""
+    return google_auth_service.google_login(
+        db,
+        request.id_token,
+        access_token=request.access_token,
+    )
 
 
 @router.post("/refresh", response_model=TokenResponse)
