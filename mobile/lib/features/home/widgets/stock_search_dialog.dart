@@ -92,6 +92,7 @@ class _StockSearchDialogState extends ConsumerState<StockSearchDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     return Dialog(
       backgroundColor: AppColors.darkCard,
       shape: RoundedRectangleBorder(
@@ -121,7 +122,7 @@ class _StockSearchDialogState extends ConsumerState<StockSearchDialog> {
                         style: const TextStyle(color: Colors.white, fontSize: 14),
                         onChanged: _onQueryChanged,
                         decoration: InputDecoration(
-                          hintText: 'Tìm kiếm mã chứng khoán, tên công ty...',
+                          hintText: l10n.searchStockHint,
                           hintStyle: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
                           prefixIcon: const Icon(Icons.search_rounded, color: AppColors.primary, size: 20),
                           suffixIcon: _searchController.text.isNotEmpty
@@ -158,15 +159,15 @@ class _StockSearchDialogState extends ConsumerState<StockSearchDialog> {
                   : _error != null
                       ? Center(
                           child: Text(
-                            _error!,
+                            l10n.isVietnamese ? 'Không thể tải danh sách cổ phiếu.' : 'Failed to load stock list.',
                             style: const TextStyle(color: AppColors.priceDown),
                           ),
                         )
                       : _results.isEmpty
-                          ? const Center(
+                          ? Center(
                               child: Text(
-                                'Không tìm thấy mã cổ phiếu nào.',
-                                style: TextStyle(color: AppColors.darkTextSecondary),
+                                l10n.noStocksFound,
+                                style: const TextStyle(color: AppColors.darkTextSecondary),
                               ),
                             )
                           : ListView.separated(

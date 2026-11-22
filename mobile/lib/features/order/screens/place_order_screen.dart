@@ -1,15 +1,18 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/stockmate_api.dart';
 import '../../../data/models/stock_model.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../providers/app_providers.dart';
 import '../../market/data/market_fixtures.dart';
 import '../../market/widgets/market_components.dart';
 
-class PlaceOrderScreen extends StatefulWidget {
+class PlaceOrderScreen extends ConsumerStatefulWidget {
   final String? symbol;
   final String? side;
   final String? initialSymbol;
@@ -26,10 +29,10 @@ class PlaceOrderScreen extends StatefulWidget {
   });
 
   @override
-  State<PlaceOrderScreen> createState() => _PlaceOrderScreenState();
+  ConsumerState<PlaceOrderScreen> createState() => _PlaceOrderScreenState();
 }
 
-class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
+class _PlaceOrderScreenState extends ConsumerState<PlaceOrderScreen> {
   final _api = StockmateApi();
   late String _symbol;
   late bool _isBuy;
@@ -166,7 +169,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
       if (stocks.isEmpty) {
         setState(() {
           _marketLoading = false;
-          _marketError = 'Backend chưa có mã cổ phiếu để đặt lệnh.';
+          _marketError = 'NO_STOCKS';
         });
         return;
       }
@@ -187,7 +190,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
       if (mounted) {
         setState(() {
           _marketLoading = false;
-          _marketError = 'Không tải được danh sách mã cổ phiếu.';
+          _marketError = 'LOAD_FAILED';
         });
       }
     }
@@ -202,7 +205,19 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     if (_stocks.isEmpty) {
+      final errorMsg = _marketError == 'NO_STOCKS'
+          ? (l10n.isVietnamese
+              ? 'Backend chưa có mã cổ phiếu để đặt lệnh.'
+              : 'No stock symbols available for trading.')
+          : _marketError == 'LOAD_FAILED'
+              ? (l10n.isVietnamese
+                  ? 'Không tải được danh sách mã cổ phiếu.'
+                  : 'Failed to load stock list.')
+              : (l10n.isVietnamese
+                  ? 'Không có dữ liệu cổ phiếu.'
+                  : 'No stock data available.');
       return Scaffold(
         backgroundColor: AppColors.darkBackground,
         body: Center(
@@ -212,7 +227,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      _marketError ?? 'Không có dữ liệu cổ phiếu.',
+                      errorMsg,
                       style: const TextStyle(
                         color: AppColors.darkTextSecondary,
                       ),
@@ -220,7 +235,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                     const SizedBox(height: 12),
                     FilledButton(
                       onPressed: _loadStocks,
-                      child: const Text('Tải lại'),
+                      child: Text(l10n.isVietnamese ? 'Tải lại' : 'Reload'),
                     ),
                   ],
                 ),
@@ -251,11 +266,17 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
     String? priceError;
     if (_price.text.isNotEmpty && price > 0) {
       if (priceDong < stock.floorPrice) {
-        priceError = 'Giá thấp hơn sàn (${formatBoardPrice(stock.floorPrice)})';
+        priceError = l10n.isVietnamese
+            ? 'Giá thấp hơn sàn (${formatBoardPrice(stock.floorPrice)})'
+            : 'Price below floor (${formatBoardPrice(stock.floorPrice)})';
       } else if (priceDong > stock.ceilingPrice) {
-        priceError = 'Giá cao hơn trần (${formatBoardPrice(stock.ceilingPrice)})';
+        priceError = l10n.isVietnamese
+            ? 'Giá cao hơn trần (${formatBoardPrice(stock.ceilingPrice)})'
+            : 'Price above ceiling (${formatBoardPrice(stock.ceilingPrice)})';
       } else if (priceDong % tick != 0) {
-        priceError = 'Bước giá sàn ${stock.exchange} là $tick đ (chạm vào Sàn/TC/Trần bên dưới để chọn nhanh)';
+        priceError = l10n.isVietnamese
+            ? 'Bước giá sàn ${stock.exchange} là $tick đ (chạm vào Sàn/TC/Trần bên dưới để chọn nhanh)'
+            : 'Tick size for ${stock.exchange} is $tick VND (tap Floor/Ref/Ceil below to select quickly)';
       }
     }
     final feeEstimate = estimate * 0.0015;
@@ -275,23 +296,23 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Giao dịch',
-                        style: TextStyle(
+                        l10n.tradeTitle,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 25,
                           fontWeight: FontWeight.w800,
                           letterSpacing: -.5,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        'Đặt lệnh giới hạn (LO)',
-                        style: TextStyle(
+                        l10n.limitOrderType,
+                        style: const TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 12,
                         ),
@@ -324,7 +345,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                   children: [
                     const Icon(Icons.account_balance_wallet_outlined, size: 16, color: AppColors.darkTextSecondary),
                     const SizedBox(width: 8),
-                    const Text('Tài khoản: ', style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 12)),
+                    Text(l10n.tradingAccount, style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 12)),
                     const Spacer(),
                     DropdownButton<int>(
                       value: _selectedAccountId,
@@ -354,15 +375,15 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
               ),
             ],
             const SizedBox(height: 20),
-            _sidePicker(),
+            _sidePicker(l10n),
             const SizedBox(height: 16),
             MarketPanel(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'MÃ CỔ PHIẾU',
-                    style: TextStyle(
+                  Text(
+                    l10n.symbolLabel.toUpperCase(),
+                    style: const TextStyle(
                       color: AppColors.darkTextMuted,
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
@@ -430,11 +451,13 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                     },
                   ),
                   if (price > 0 && !validPrice)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        'Giá phải đúng bước giá và nằm trong biên độ trần/sàn.',
-                        style: TextStyle(
+                        l10n.isVietnamese
+                            ? 'Giá phải đúng bước giá và nằm trong biên độ trần/sàn.'
+                            : 'Price must match tick size and be within ceiling/floor range.',
+                        style: const TextStyle(
                           color: AppColors.priceDown,
                           fontSize: 10,
                         ),
@@ -443,9 +466,9 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Text(
-                        'Giá khớp gần nhất',
-                        style: TextStyle(
+                      Text(
+                        l10n.latestMatchPrice,
+                        style: const TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 11,
                         ),
@@ -462,9 +485,9 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      const Text(
-                        'nghìn ₫',
-                        style: TextStyle(
+                      Text(
+                        l10n.thousandDongUnit,
+                        style: const TextStyle(
                           color: AppColors.darkTextMuted,
                           fontSize: 10,
                         ),
@@ -479,7 +502,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _fieldLabel('GIÁ ĐẶT', '× 1.000 ₫'),
+                  _fieldLabel(l10n.priceLabel.toUpperCase(), '× 1.000 ₫'),
                   const SizedBox(height: 8),
                   _numberField(
                     _price,
@@ -502,7 +525,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                   Row(
                     children: [
                       _priceMark(
-                        'Trần',
+                        l10n.ceilingPriceLabel,
                         formatBoardPrice(stock.ceilingPrice),
                         AppColors.priceCeiling,
                         () => setState(() {
@@ -512,7 +535,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                       ),
                       const Spacer(),
                       _priceMark(
-                        'TC',
+                        l10n.refPriceLabel,
                         formatBoardPrice(stock.referencePrice),
                         AppColors.priceRef,
                         () => setState(() {
@@ -522,7 +545,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                       ),
                       const Spacer(),
                       _priceMark(
-                        'Sàn',
+                        l10n.floorPriceLabel,
                         formatBoardPrice(stock.floorPrice),
                         AppColors.priceFloor,
                         () => setState(() {
@@ -541,21 +564,21 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _fieldLabel(
-                    'KHỐI LƯỢNG',
+                    l10n.quantityLabel.toUpperCase(),
                     _isBuy
-                        ? 'Sức mua: ${_money(_cashBalance)} ₫'
-                        : 'Khả dụng: ${_number(availableShares)} cp',
+                        ? '${l10n.buyPower}: ${_money(_cashBalance)} ₫'
+                        : '${l10n.available}: ${_number(availableShares)} cp',
                   ),
                   const SizedBox(height: 8),
                   _numberField(_quantity, onChanged: (_) => setState(() {})),
                   if (_quantity.text.isNotEmpty &&
                       quantity > 0 &&
                       !validQuantity)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        'Khối lượng phải là bội số của 100 cổ phiếu.',
-                        style: TextStyle(
+                        l10n.errQuantityMultiple100,
+                        style: const TextStyle(
                           color: AppColors.priceDown,
                           fontSize: 10,
                         ),
@@ -565,7 +588,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        'Số dư tiền không đủ. Cần ${_money(totalBuyRequired)} ₫ (gồm phí), hiện có ${_money(_cashBalance)} ₫.',
+                        l10n.errInsufficientCash,
                         style: const TextStyle(
                           color: AppColors.priceDown,
                           fontSize: 10,
@@ -577,7 +600,9 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        'Tài khoản hiện không có cổ phiếu $_symbol khả dụng trong danh mục để bán.',
+                        l10n.isVietnamese
+                            ? 'Tài khoản hiện không có cổ phiếu $_symbol khả dụng trong danh mục để bán.'
+                            : 'No shares of $_symbol available in portfolio to sell.',
                         style: const TextStyle(
                           color: AppColors.priceDown,
                           fontSize: 10,
@@ -589,7 +614,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: Text(
-                        'Khối lượng bán ($quantity cp) vượt quá số lượng khả dụng ($availableShares cp).',
+                        l10n.errInsufficientShares,
                         style: const TextStyle(
                           color: AppColors.priceDown,
                           fontSize: 10,
@@ -663,7 +688,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                               ),
                             ),
                             child: Text(
-                              _isBuy ? 'Tối đa' : 'Tất cả',
+                              _isBuy ? l10n.maxQuantity : (l10n.isVietnamese ? 'Tất cả' : 'All'),
                               style: TextStyle(
                                 color: _isBuy ? AppColors.primary : AppColors.priceDown,
                                 fontSize: 11,
@@ -685,9 +710,9 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                 children: [
                   Row(
                     children: [
-                      const Text(
-                        'Giá trị tạm tính',
-                        style: TextStyle(
+                      Text(
+                        l10n.estimatedTotal,
+                        style: const TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 12,
                         ),
@@ -706,9 +731,9 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                   const SizedBox(height: 11),
                   Row(
                     children: [
-                      const Text(
-                        'Phí giao dịch dự kiến',
-                        style: TextStyle(
+                      Text(
+                        l10n.tradingFeeEstimate,
+                        style: const TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 11,
                         ),
@@ -744,18 +769,18 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
               ),
               child: Text(
                 _submitting
-                    ? 'Đang gửi lệnh…'
+                    ? l10n.submittingOrder
                     : !validQuantity
-                        ? 'Khối lượng phải là bội số của 100'
+                        ? l10n.errQuantityMultiple100
                         : !validPrice
-                            ? 'Vui lòng kiểm tra lại giá đặt'
+                            ? (l10n.isVietnamese ? 'Vui lòng kiểm tra lại giá đặt' : 'Please check order price')
                             : _isBuy && !validCash
-                                ? 'Số dư tiền không đủ đặt mua'
+                                ? l10n.errInsufficientCash
                                 : !_isBuy && availableShares <= 0
-                                    ? 'Không có cổ phiếu $_symbol để bán'
+                                    ? (l10n.isVietnamese ? 'Không có cổ phiếu $_symbol để bán' : 'No shares of $_symbol to sell')
                                     : !_isBuy && !validShares
-                                        ? 'Khối lượng bán vượt quá khả dụng'
-                                        : 'Xem lại lệnh ${_isBuy ? 'mua' : 'bán'}',
+                                        ? l10n.errInsufficientShares
+                                        : l10n.reviewOrderBtn(_isBuy),
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
@@ -763,10 +788,10 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
-              'Lệnh được kiểm tra giá, sức mua và khối lượng trước khi gửi.',
+            Text(
+              l10n.orderCheckHint,
               textAlign: TextAlign.center,
-              style: TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
+              style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
             ),
           ],
         ),
@@ -774,7 +799,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
     );
   }
 
-  Widget _sidePicker() => Container(
+  Widget _sidePicker(AppLocalizations l10n) => Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(
           color: AppColors.darkCard,
@@ -782,7 +807,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
           border: Border.all(color: AppColors.darkCardBorder),
         ),
         child: Row(
-            children: [_sideButton('MUA', true), _sideButton('BÁN', false)]),
+            children: [_sideButton(l10n.orderBuy, true), _sideButton(l10n.orderSell, false)]),
       );
 
   Widget _sideButton(String text, bool buy) {
@@ -901,6 +926,7 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
     double price,
     double estimate,
   ) async {
+    final l10n = ref.read(l10nProvider);
     final place = await showModalBottomSheet<bool>(
       context: context,
       backgroundColor: AppColors.darkSurface,
@@ -912,25 +938,25 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Xác nhận thông tin lệnh',
-                style: TextStyle(
+              Text(
+                l10n.reviewOrderConfirmTitle,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
               ),
               const SizedBox(height: 18),
-              _reviewLine('Loại lệnh', '${_isBuy ? 'Mua' : 'Bán'} $symbol'),
+              _reviewLine(l10n.orderTypeLabel, '${_isBuy ? l10n.orderBuy : l10n.orderSell} $symbol'),
               _reviewLine(
-                'Giá / khối lượng',
-                '${price.toStringAsFixed(1)} × 1.000 ₫  ·  $quantity cp',
+                l10n.pricePerQty,
+                '${price.toStringAsFixed(1)} × 1.000 ₫  ·  $quantity ${l10n.isVietnamese ? 'cp' : 'shares'}',
               ),
-              _reviewLine('Giá trị dự kiến', '${_money(estimate)} ₫'),
+              _reviewLine(l10n.expectedValue, '${_money(estimate)} ₫'),
               const SizedBox(height: 16),
-              const Text(
-                'Lệnh LO sẽ được gửi lên tài khoản đầu tư đang chọn.',
-                style: TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
+              Text(
+                l10n.orderDisclaimer,
+                style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -942,9 +968,9 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
                     foregroundColor: const Color(0xFF06251C),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text(
-                    'Xác nhận đặt lệnh',
-                    style: TextStyle(fontWeight: FontWeight.w800),
+                  child: Text(
+                    l10n.confirmPlaceOrderBtn,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
               ),
@@ -971,11 +997,11 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text(
-                'Đã gửi lệnh thành công! Vào Sổ lệnh để theo dõi trạng thái.',
+              content: Text(
+                l10n.orderSuccessSnackbar,
               ),
               action: SnackBarAction(
-                label: 'Xem sổ lệnh',
+                label: l10n.viewOrderBookAction,
                 textColor: AppColors.primary,
                 onPressed: () => context.go('/home/orders'),
               ),
@@ -984,8 +1010,9 @@ class _PlaceOrderScreenState extends State<PlaceOrderScreen> {
         }
       } catch (error) {
         if (mounted) {
+          final l10n = ref.read(l10nProvider);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Không đặt được lệnh: $error')),
+            SnackBar(content: Text(l10n.isVietnamese ? 'Không đặt được lệnh: $error' : 'Failed to place order: $error')),
           );
         }
       } finally {

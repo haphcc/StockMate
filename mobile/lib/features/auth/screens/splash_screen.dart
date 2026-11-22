@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 
 class SplashScreen extends ConsumerWidget {
   const SplashScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       body: Container(
@@ -59,9 +61,11 @@ class SplashScreen extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Mô phỏng chứng khoán rủi ro 0 đồng',
-              style: TextStyle(
+            Text(
+              l10n.isVietnamese
+                  ? 'Mô phỏng chứng khoán rủi ro 0 đồng'
+                  : 'Zero-risk stock market simulation',
+              style: const TextStyle(
                 color: AppColors.darkTextSecondary,
                 fontSize: 14,
                 fontWeight: FontWeight.w400,

@@ -19,6 +19,7 @@ void main() {
       expect(l10n.registerTitle, 'Tạo tài khoản StockMate');
       expect(l10n.profileTitle, 'Hồ sơ cá nhân');
       expect(l10n.tabMarket, 'Thị trường');
+      expect(l10n.tabWatchlist, 'Theo dõi');
       expect(l10n.tabOrders, 'Sổ lệnh');
       expect(l10n.tabTrade, 'Đặt lệnh');
       expect(l10n.tabPortfolio, 'Danh mục');
@@ -26,6 +27,11 @@ void main() {
       expect(l10n.labelLanguage, 'Ngôn ngữ hiển thị');
       expect(l10n.darkMode, 'Chế độ tối');
       expect(l10n.logoutButton, 'Đăng xuất tài khoản');
+      expect(l10n.placeOrderTitle, 'Đặt lệnh LO');
+      expect(l10n.orderBookTitle, 'Sổ lệnh');
+      expect(l10n.txHistoryTitle, 'Lịch sử giao dịch');
+      expect(l10n.notificationsTitle, 'Thông báo');
+      expect(l10n.depositTitle, 'Nạp tiền vào tài khoản');
     });
 
     test('English localizations return correct strings', () {
@@ -36,6 +42,7 @@ void main() {
       expect(l10n.registerTitle, 'Create StockMate Account');
       expect(l10n.profileTitle, 'Personal Profile');
       expect(l10n.tabMarket, 'Market');
+      expect(l10n.tabWatchlist, 'Watchlist');
       expect(l10n.tabOrders, 'Orders');
       expect(l10n.tabTrade, 'Trade');
       expect(l10n.tabPortfolio, 'Portfolio');
@@ -43,6 +50,11 @@ void main() {
       expect(l10n.labelLanguage, 'Display Language');
       expect(l10n.darkMode, 'Dark Mode');
       expect(l10n.logoutButton, 'Log Out');
+      expect(l10n.placeOrderTitle, 'Place LO Order');
+      expect(l10n.orderBookTitle, 'Order Book');
+      expect(l10n.txHistoryTitle, 'Transaction History');
+      expect(l10n.notificationsTitle, 'Notifications');
+      expect(l10n.depositTitle, 'Deposit Funds');
     });
 
     test('All critical strings are distinct between VI and EN', () {
@@ -53,6 +65,7 @@ void main() {
       expect(vi.registerTitle, isNot(equals(en.registerTitle)));
       expect(vi.profileTitle, isNot(equals(en.profileTitle)));
       expect(vi.tabMarket, isNot(equals(en.tabMarket)));
+      expect(vi.tabWatchlist, isNot(equals(en.tabWatchlist)));
       expect(vi.tabOrders, isNot(equals(en.tabOrders)));
       expect(vi.tabTrade, isNot(equals(en.tabTrade)));
       expect(vi.tabPortfolio, isNot(equals(en.tabPortfolio)));
@@ -62,6 +75,11 @@ void main() {
       expect(vi.fullNameLabel, isNot(equals(en.fullNameLabel)));
       expect(vi.termsOfService, isNot(equals(en.termsOfService)));
       expect(vi.logoutButton, isNot(equals(en.logoutButton)));
+      expect(vi.placeOrderTitle, isNot(equals(en.placeOrderTitle)));
+      expect(vi.orderBookTitle, isNot(equals(en.orderBookTitle)));
+      expect(vi.txHistoryTitle, isNot(equals(en.txHistoryTitle)));
+      expect(vi.notificationsTitle, isNot(equals(en.notificationsTitle)));
+      expect(vi.depositTitle, isNot(equals(en.depositTitle)));
     });
   });
 

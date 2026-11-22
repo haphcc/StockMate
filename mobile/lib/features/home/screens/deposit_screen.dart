@@ -32,20 +32,21 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
   }
 
   Future<void> _create() async {
+    final l10n = ref.read(l10nProvider);
     final accountId = ref.read(selectedAccountProvider);
     if (accountId == null) {
-      setState(() => _error = 'Chưa có tài khoản CASH hoạt động.');
+      setState(() => _error = l10n.isVietnamese ? 'Chưa có tài khoản CASH hoạt động.' : 'No active CASH account found.');
       return;
     }
     Money value;
     try {
       value = Money.parse(_amount.text);
     } catch (_) {
-      setState(() => _error = 'Số tiền không hợp lệ.');
+      setState(() => _error = l10n.isVietnamese ? 'Số tiền không hợp lệ.' : 'Invalid amount.');
       return;
     }
     if (value.cents <= 0) {
-      setState(() => _error = 'Số tiền phải lớn hơn 0.');
+      setState(() => _error = l10n.isVietnamese ? 'Số tiền phải lớn hơn 0.' : 'Amount must be greater than 0.');
       return;
     }
     setState(() {
@@ -87,6 +88,7 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     final deposit = _deposit;
     final accounts = ref.watch(accountsProvider).value ?? const [];
     final cashAccounts = accounts
@@ -98,7 +100,7 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
     final selectedId = ref.watch(selectedAccountProvider);
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
-      appBar: AppBar(title: const Text('Nạp tiền')),
+      appBar: AppBar(title: Text(l10n.depositTitle)),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
@@ -120,8 +122,8 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
                   ? null
                   : (id) =>
                         ref.read(selectedAccountProvider.notifier).select(id),
-              decoration: const InputDecoration(
-                labelText: 'Tài khoản nạp tiền',
+              decoration: InputDecoration(
+                labelText: l10n.isVietnamese ? 'Tài khoản nạp tiền' : 'Deposit Account',
               ),
             ),
             const SizedBox(height: 16),
@@ -131,9 +133,9 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
                 decimal: true,
               ),
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                labelText: 'Số tiền (VND)',
-                hintText: '1000000',
+              decoration: InputDecoration(
+                labelText: l10n.depositAmountLabel,
+                hintText: l10n.depositAmountHint,
               ),
             ),
             const SizedBox(height: 16),
@@ -141,15 +143,15 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
               onPressed: _loading || cashAccounts.isEmpty ? null : _create,
               child: _loading
                   ? const CircularProgressIndicator()
-                  : const Text('Tạo yêu cầu nạp tiền'),
+                  : Text(l10n.btnGenerateQR),
             ),
           ] else ...[
             Text(
-              'Mã đơn: ${deposit.orderCode}',
+              '${l10n.isVietnamese ? 'Mã đơn' : 'Order ID'}: ${deposit.orderCode}',
               style: const TextStyle(color: Colors.white),
             ),
             Text(
-              'Trạng thái: ${_completed ? 'COMPLETED' : deposit.status}',
+              '${l10n.isVietnamese ? 'Trạng thái' : 'Status'}: ${_completed ? 'COMPLETED' : deposit.status}',
               style: const TextStyle(color: AppColors.darkTextSecondary),
             ),
             const SizedBox(height: 16),
@@ -168,9 +170,9 @@ class _DepositScreenState extends ConsumerState<DepositScreen> {
               style: const TextStyle(color: AppColors.primary),
             ),
             if (_completed)
-              const Text(
-                'Số dư đã được cập nhật.',
-                style: TextStyle(color: AppColors.primary),
+              Text(
+                l10n.isVietnamese ? 'Số dư đã được cập nhật.' : 'Balance has been updated.',
+                style: const TextStyle(color: AppColors.primary),
               ),
           ],
           if (_error != null) ...[

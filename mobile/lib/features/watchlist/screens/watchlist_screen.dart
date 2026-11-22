@@ -1,27 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/stockmate_api.dart';
 import '../../../data/models/stock_model.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/sparkline_chart.dart';
+import '../../../providers/app_providers.dart';
 import '../../market/data/market_fixtures.dart';
 import '../../market/widgets/market_components.dart';
 
-class WatchlistScreen extends StatefulWidget {
+class WatchlistScreen extends ConsumerStatefulWidget {
   const WatchlistScreen({super.key});
   @override
-  State<WatchlistScreen> createState() => _WatchlistScreenState();
+  ConsumerState<WatchlistScreen> createState() => _WatchlistScreenState();
 }
 
-class _WatchlistScreenState extends State<WatchlistScreen> {
+class _WatchlistScreenState extends ConsumerState<WatchlistScreen> {
   final _symbols = <String>[];
   final _quotes = <String, StockModel>{};
   final _api = StockmateApi();
   List<StockModel> _availableStocks = [];
   bool _loading = true;
   String? _loadError;
-  String _filter = 'Tất cả';
+  String _filter = 'all';
 
   @override
   void initState() {
@@ -101,8 +103,9 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
           _symbols.remove(symbol);
           _quotes.remove(symbol);
         });
+        final l10n = ref.read(l10nProvider);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Đã bỏ theo dõi mã $symbol')),
+          SnackBar(content: Text(l10n.removedFromWatchlist(symbol))),
         );
       }
     } catch (error) {
@@ -116,6 +119,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     final allTrackedStocks = _symbols
         .map((symbol) => _quotes[symbol] ?? stockFor(symbol))
         .toList();
@@ -142,12 +146,17 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
     final stocks = allTrackedStocks
         .where(
           (stock) =>
-              _filter == 'Tất cả' ||
-              (_filter == 'Tăng'
+              _filter == 'all' ||
+              (_filter == 'gain'
                   ? stock.changeAmount > 0
-                  : (_filter == 'Giảm' ? stock.changeAmount < 0 : true)),
+                  : (_filter == 'loss' ? stock.changeAmount < 0 : true)),
         )
         .toList();
+    final filterOptions = [
+      ('all', l10n.all),
+      ('gain', l10n.gainers),
+      ('loss', l10n.losers),
+    ];
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       body: SafeArea(
@@ -168,23 +177,23 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                 children: [
                   Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Danh sách theo dõi',
-                              style: TextStyle(
+                              l10n.watchlistTitle,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 25,
                                 fontWeight: FontWeight.w800,
                                 letterSpacing: -.5,
                               ),
                             ),
-                            SizedBox(height: 4),
+                            const SizedBox(height: 4),
                             Text(
-                              'Các mã bạn đang quan tâm',
-                              style: TextStyle(
+                              l10n.watchlistSubtitle,
+                              style: const TextStyle(
                                 color: AppColors.darkTextSecondary,
                                 fontSize: 12,
                               ),
@@ -217,7 +226,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '${_symbols.length} mã',
+                          '${_symbols.length} ${l10n.symbolsCount(_symbols.length)}',
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
@@ -225,9 +234,9 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                           ),
                         ),
                         const Spacer(),
-                        const Text(
-                          'Hôm nay',
-                          style: TextStyle(
+                        Text(
+                          l10n.today,
+                          style: const TextStyle(
                             color: AppColors.darkTextSecondary,
                             fontSize: 11,
                           ),
@@ -248,14 +257,14 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
-                      children: ['Tất cả', 'Tăng', 'Giảm']
+                      children: filterOptions
                           .map(
-                            (filter) => Padding(
+                            (opt) => Padding(
                               padding: const EdgeInsets.only(right: 8),
                               child: FilterChipPill(
-                                label: filter,
-                                selected: _filter == filter,
-                                onTap: () => setState(() => _filter = filter),
+                                label: opt.$2,
+                                selected: _filter == opt.$1,
+                                onTap: () => setState(() => _filter = opt.$1),
                               ),
                             ),
                           )
@@ -264,13 +273,13 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                   ),
                   const SizedBox(height: 12),
                   if (stocks.isEmpty)
-                    const MarketPanel(
+                    MarketPanel(
                       child: Padding(
-                        padding: EdgeInsets.all(20),
+                        padding: const EdgeInsets.all(20),
                         child: Center(
                           child: Text(
-                            'Chưa có mã nào trong nhóm này.',
-                            style: TextStyle(
+                            l10n.emptyWatchlistGroup,
+                            style: const TextStyle(
                               color: AppColors.darkTextSecondary,
                             ),
                           ),
@@ -288,7 +297,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                     Padding(
                       padding: const EdgeInsets.all(20),
                       child: Text(
-                        'Không tải được danh sách: $_loadError',
+                        l10n.isVietnamese ? 'Không tải được danh sách: $_loadError' : 'Failed to load watchlist: $_loadError',
                         style: const TextStyle(color: AppColors.priceDown),
                       ),
                     )
@@ -404,14 +413,14 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                                       _removeWatch(stock.symbol);
                                     }
                                   },
-                                  itemBuilder: (menuContext) => const [
+                                  itemBuilder: (menuContext) => [
                                     PopupMenuItem(
                                       value: 'trade',
-                                      child: Text('Đặt lệnh mua'),
+                                      child: Text(l10n.actionTradeBuy),
                                     ),
                                     PopupMenuItem(
                                       value: 'remove',
-                                      child: Text('Bỏ theo dõi'),
+                                      child: Text(l10n.actionUnwatch),
                                     ),
                                   ],
                                 ),
@@ -422,9 +431,9 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                       );
                     }),
                   const SizedBox(height: 12),
-                  const Text(
-                    'Đơn vị: nghìn đồng',
-                    style: TextStyle(
+                  Text(
+                    l10n.unitThousandDong,
+                    style: const TextStyle(
                       color: AppColors.darkTextMuted,
                       fontSize: 10,
                     ),
@@ -440,6 +449,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
   }
 
   Future<void> _showAddDialog() async {
+    final l10n = ref.read(l10nProvider);
     final available = await _getAvailableStocks();
     if (!mounted) return;
 
@@ -459,9 +469,9 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
               borderRadius: BorderRadius.circular(16),
               side: const BorderSide(color: AppColors.darkCardBorder),
             ),
-            title: const Text(
-              'Thêm mã theo dõi',
-              style: TextStyle(
+            title: Text(
+              l10n.addStockToWatchlist,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -473,9 +483,9 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Chọn nhanh từ danh mục niêm yết',
-                    style: TextStyle(
+                  Text(
+                    l10n.quickSelectFromListed,
+                    style: const TextStyle(
                       color: AppColors.darkTextSecondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
@@ -494,9 +504,9 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                         value: available.any((s) => s.symbol == selectedDropdownSymbol)
                             ? selectedDropdownSymbol
                             : null,
-                        hint: const Text(
-                          '-- Chọn mã cổ phiếu --',
-                          style: TextStyle(
+                        hint: Text(
+                          l10n.selectStockPlaceholder,
+                          style: const TextStyle(
                             color: AppColors.darkTextMuted,
                             fontSize: 13,
                           ),
@@ -536,9 +546,9 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                                   ),
                                 ),
                                 if (inList)
-                                  const Text(
-                                    ' (Đã thêm)',
-                                    style: TextStyle(
+                                  Text(
+                                    l10n.addedLabel,
+                                    style: const TextStyle(
                                       color: AppColors.priceRef,
                                       fontSize: 10,
                                     ),
@@ -559,16 +569,16 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  const Row(
+                  Row(
                     children: [
-                      Expanded(
+                      const Expanded(
                         child: Divider(color: AppColors.darkCardBorder),
                       ),
                       Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Text(
-                          'HOẶC TỰ NHẬP MÃ',
-                          style: TextStyle(
+                          l10n.orEnterSymbol,
+                          style: const TextStyle(
                             color: AppColors.darkTextMuted,
                             fontSize: 10,
                             fontWeight: FontWeight.w600,
@@ -576,7 +586,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                           ),
                         ),
                       ),
-                      Expanded(
+                      const Expanded(
                         child: Divider(color: AppColors.darkCardBorder),
                       ),
                     ],
@@ -602,7 +612,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                       });
                     },
                     decoration: InputDecoration(
-                      hintText: 'Nhập mã chứng khoán (VD: FPT, SSI...)',
+                      hintText: l10n.enterStockHint,
                       hintStyle: const TextStyle(
                         color: AppColors.darkTextMuted,
                         fontSize: 13,
@@ -649,17 +659,17 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                   ),
                   if (alreadyInWatchlist && currentText.isNotEmpty) ...[
                     const SizedBox(height: 10),
-                    const Row(
+                    Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.info_outline_rounded,
                           color: AppColors.priceRef,
                           size: 14,
                         ),
-                        SizedBox(width: 6),
+                        const SizedBox(width: 6),
                         Text(
-                          'Mã này đã có trong danh mục theo dõi của bạn',
-                          style: TextStyle(
+                          l10n.alreadyInWatchlist,
+                          style: const TextStyle(
                             color: AppColors.priceRef,
                             fontSize: 11,
                           ),
@@ -673,9 +683,9 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(dialogCtx),
-                child: const Text(
-                  'Để sau',
-                  style: TextStyle(color: AppColors.darkTextSecondary),
+                child: Text(
+                  l10n.btnLater,
+                  style: const TextStyle(color: AppColors.darkTextSecondary),
                 ),
               ),
               FilledButton(
@@ -687,9 +697,9 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
                 onPressed: (currentText.isEmpty || alreadyInWatchlist)
                     ? null
                     : () => Navigator.pop(dialogCtx, currentText),
-                child: const Text(
-                  'Thêm',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                child: Text(
+                  l10n.btnAdd,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -713,7 +723,7 @@ class _WatchlistScreenState extends State<WatchlistScreen> {
           _quotes[symbol] = stock;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Đã thêm $symbol vào danh sách theo dõi')),
+          SnackBar(content: Text(l10n.addedToWatchlist(symbol))),
         );
       }
     } catch (error) {

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/notification_model.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../providers/app_providers.dart';
 import '../providers/notification_provider.dart';
 
 class NotificationsSheet extends ConsumerStatefulWidget {
@@ -34,12 +36,12 @@ class _NotificationsSheetState extends ConsumerState<NotificationsSheet> {
     });
   }
 
-  String _formatTime(DateTime time) {
+  String _formatTime(DateTime time, AppLocalizations l10n) {
     final diff = DateTime.now().difference(time);
-    if (diff.inMinutes < 1) return 'Vừa xong';
-    if (diff.inMinutes < 60) return '${diff.inMinutes} phút trước';
-    if (diff.inHours < 24) return '${diff.inHours} giờ trước';
-    if (diff.inDays < 7) return '${diff.inDays} ngày trước';
+    if (diff.inMinutes < 1) return l10n.justNow;
+    if (diff.inMinutes < 60) return l10n.minutesAgo(diff.inMinutes);
+    if (diff.inHours < 24) return l10n.hoursAgo(diff.inHours);
+    if (diff.inDays < 7) return l10n.daysAgo(diff.inDays);
     return '${time.day.toString().padLeft(2, '0')}/${time.month.toString().padLeft(2, '0')}/${time.year}';
   }
 
@@ -71,6 +73,7 @@ class _NotificationsSheetState extends ConsumerState<NotificationsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     final notifsAsync = ref.watch(notificationsProvider);
     final unreadCount = ref.watch(unreadNotificationCountProvider);
 
@@ -113,9 +116,9 @@ class _NotificationsSheetState extends ConsumerState<NotificationsSheet> {
               children: [
                 Row(
                   children: [
-                    const Text(
-                      'Thông báo',
-                      style: TextStyle(
+                    Text(
+                      l10n.notificationsTitle,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -146,9 +149,9 @@ class _NotificationsSheetState extends ConsumerState<NotificationsSheet> {
                     if (unreadCount > 0)
                       TextButton(
                         onPressed: () => ref.read(notificationsProvider.notifier).markAllAsRead(),
-                        child: const Text(
-                          'Đã đọc tất cả',
-                          style: TextStyle(color: AppColors.primary, fontSize: 12),
+                        child: Text(
+                          l10n.markAllAsRead,
+                          style: const TextStyle(color: AppColors.primary, fontSize: 12),
                         ),
                       ),
                     IconButton(
@@ -167,7 +170,7 @@ class _NotificationsSheetState extends ConsumerState<NotificationsSheet> {
             child: Row(
               children: [
                 ChoiceChip(
-                  label: const Text('Tất cả'),
+                  label: Text(l10n.all),
                   selected: !_unreadOnly,
                   onSelected: (val) => setState(() => _unreadOnly = !val),
                   selectedColor: AppColors.primary,
@@ -180,7 +183,7 @@ class _NotificationsSheetState extends ConsumerState<NotificationsSheet> {
                 ),
                 const SizedBox(width: 8),
                 ChoiceChip(
-                  label: Text('Chưa đọc ($unreadCount)'),
+                  label: Text('${l10n.unreadOnly} ($unreadCount)'),
                   selected: _unreadOnly,
                   onSelected: (val) => setState(() => _unreadOnly = val),
                   selectedColor: AppColors.primary,
@@ -216,7 +219,7 @@ class _NotificationsSheetState extends ConsumerState<NotificationsSheet> {
                     ElevatedButton(
                       onPressed: () => ref.read(notificationsProvider.notifier).refresh(),
                       style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-                      child: const Text('Thử lại', style: TextStyle(color: Colors.black)),
+                      child: Text(l10n.isVietnamese ? 'Thử lại' : 'Retry', style: const TextStyle(color: Colors.black)),
                     ),
                   ],
                 ),
@@ -236,7 +239,9 @@ class _NotificationsSheetState extends ConsumerState<NotificationsSheet> {
                         ),
                         const SizedBox(height: 12),
                         Text(
-                          _unreadOnly ? 'Không có thông báo chưa đọc nào.' : 'Chưa có thông báo nào.',
+                          _unreadOnly
+                              ? (l10n.isVietnamese ? 'Không có thông báo chưa đọc nào.' : 'No unread notifications.')
+                              : l10n.noNotifications,
                           style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 14),
                         ),
                       ],
@@ -324,7 +329,7 @@ class _NotificationsSheetState extends ConsumerState<NotificationsSheet> {
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
-                                      _formatTime(item.createdAt),
+                                      _formatTime(item.createdAt, l10n),
                                       style: const TextStyle(
                                         color: AppColors.darkTextMuted,
                                         fontSize: 11,

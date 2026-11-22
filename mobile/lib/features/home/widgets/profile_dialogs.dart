@@ -4,6 +4,7 @@ import '../../../core/network/api_exception.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../data/models/user_model.dart';
+import '../../../providers/app_providers.dart';
 import '../../auth/providers/auth_provider.dart';
 
 abstract final class ProfileDialogs {
@@ -69,6 +70,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
   }
 
   Future<void> _handleSubmit() async {
+    final l10n = widget.ref.read(l10nProvider);
     if (!_formKey.currentState!.validate()) return;
     setState(() {
       _isLoading = true;
@@ -84,8 +86,8 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
       if (!mounted) return;
       Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cập nhật thông tin thành công!'),
+        SnackBar(
+          content: Text(l10n.isVietnamese ? 'Cập nhật thông tin thành công!' : 'Profile updated successfully!'),
           backgroundColor: AppColors.primary,
         ),
       );
@@ -104,6 +106,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = widget.ref.watch(l10nProvider);
     return Dialog(
       backgroundColor: AppColors.darkCard,
       shape: RoundedRectangleBorder(
@@ -124,13 +127,13 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Row(
+                    Row(
                       children: [
-                        Icon(Icons.edit_note_rounded, color: AppColors.primary, size: 24),
-                        SizedBox(width: 8),
+                        const Icon(Icons.edit_note_rounded, color: AppColors.primary, size: 24),
+                        const SizedBox(width: 8),
                         Text(
-                          'Sửa thông tin cá nhân',
-                          style: TextStyle(
+                          l10n.editProfileTitle,
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 17,
                             fontWeight: FontWeight.bold,
@@ -165,21 +168,21 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      const Text(
-                        '(Cố định)',
-                        style: TextStyle(color: AppColors.darkTextMuted, fontSize: 11),
+                      Text(
+                        l10n.isVietnamese ? '(Cố định)' : '(Fixed)',
+                        style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 11),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 16),
                 AppTextField(
-                  labelText: 'Họ và tên',
+                  labelText: l10n.isVietnamese ? 'Họ và tên' : 'Full Name',
                   controller: _nameController,
                   prefixIcon: const Icon(Icons.person_outline_rounded, color: AppColors.darkTextSecondary, size: 20),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Họ và tên không được để trống';
+                      return l10n.isVietnamese ? 'Họ và tên không được để trống' : 'Full name cannot be empty';
                     }
                     return null;
                   },
@@ -187,10 +190,10 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                 const SizedBox(height: 14),
                 AppTextField(
                   labelText: _hasPlaceholderPhone
-                      ? 'Số điện thoại (tùy chọn)'
-                      : 'Số điện thoại',
+                      ? (l10n.isVietnamese ? 'Số điện thoại (tùy chọn)' : 'Phone Number (optional)')
+                      : (l10n.isVietnamese ? 'Số điện thoại' : 'Phone Number'),
                   hintText: _hasPlaceholderPhone
-                      ? 'Chưa cập nhật (VD: 0912345678)'
+                      ? (l10n.isVietnamese ? 'Chưa cập nhật (VD: 0912345678)' : 'Not set (e.g. 0912345678)')
                       : null,
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
@@ -199,10 +202,12 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                     final trimmed = (value ?? '').trim();
                     if (trimmed.isEmpty) {
                       if (_hasPlaceholderPhone) return null;
-                      return 'Số điện thoại không được để trống';
+                      return l10n.isVietnamese ? 'Số điện thoại không được để trống' : 'Phone number cannot be empty';
                     }
                     if (!RegExp(r'^0[35789][0-9]{8}$').hasMatch(trimmed)) {
-                      return 'Số điện thoại 10 chữ số không hợp lệ (VD: 0912345678)';
+                      return l10n.isVietnamese
+                          ? 'Số điện thoại 10 chữ số không hợp lệ (VD: 0912345678)'
+                          : 'Invalid 10-digit phone number';
                     }
                     return null;
                   },
@@ -236,7 +241,7 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                   children: [
                     TextButton(
                       onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-                      child: const Text('Hủy', style: TextStyle(color: AppColors.darkTextSecondary)),
+                      child: Text(l10n.isVietnamese ? 'Hủy' : 'Cancel', style: const TextStyle(color: AppColors.darkTextSecondary)),
                     ),
                     const SizedBox(width: 10),
                     FilledButton(
@@ -253,9 +258,9 @@ class _EditProfileDialogState extends State<_EditProfileDialog> {
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
                             )
-                          : const Text(
-                              'Lưu thay đổi',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          : Text(
+                              l10n.saveChanges,
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                             ),
                     ),
                   ],
@@ -311,13 +316,14 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
             newPassword: _newPasswordController.text,
           );
       if (!mounted) return;
+      final l10n = widget.ref.read(l10nProvider);
       Navigator.of(context).pop(true);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             widget.hasPassword
-                ? 'Đổi mật khẩu thành công!'
-                : 'Đặt mật khẩu thành công!',
+                ? (l10n.isVietnamese ? 'Đổi mật khẩu thành công!' : 'Password changed successfully!')
+                : (l10n.isVietnamese ? 'Đặt mật khẩu thành công!' : 'Password set successfully!'),
           ),
           backgroundColor: AppColors.primary,
         ),
@@ -337,7 +343,10 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final titleText = widget.hasPassword ? 'Đổi mật khẩu' : 'Đặt mật khẩu';
+    final l10n = widget.ref.watch(l10nProvider);
+    final titleText = widget.hasPassword
+        ? l10n.changePassword
+        : l10n.setPassword;
     return Dialog(
       backgroundColor: AppColors.darkCard,
       shape: RoundedRectangleBorder(
@@ -383,7 +392,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
                 const SizedBox(height: 18),
                 if (widget.hasPassword) ...[
                   AppTextField(
-                    labelText: 'Mật khẩu hiện tại',
+                    labelText: l10n.currentPasswordLabel,
                     controller: _oldPasswordController,
                     obscureText: _obscureOld,
                     prefixIcon: const Icon(Icons.lock_outline, color: AppColors.darkTextSecondary, size: 20),
@@ -397,7 +406,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Vui lòng nhập mật khẩu hiện tại';
+                        return l10n.isVietnamese ? 'Vui lòng nhập mật khẩu hiện tại' : 'Please enter current password';
                       }
                       return null;
                     },
@@ -405,8 +414,8 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
                   const SizedBox(height: 14),
                 ],
                 AppTextField(
-                  labelText: 'Mật khẩu mới',
-                  hintText: 'Tối thiểu 8 ký tự',
+                  labelText: l10n.newPasswordLabel,
+                  hintText: l10n.isVietnamese ? 'Tối thiểu 8 ký tự' : 'Minimum 8 characters',
                   controller: _newPasswordController,
                   obscureText: _obscureNew,
                   prefixIcon: const Icon(Icons.lock_outline_rounded, color: AppColors.darkTextSecondary, size: 20),
@@ -420,17 +429,17 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Vui lòng nhập mật khẩu mới';
+                      return l10n.isVietnamese ? 'Vui lòng nhập mật khẩu mới' : 'Please enter new password';
                     }
                     if (value.length < 8) {
-                      return 'Mật khẩu mới tối thiểu 8 ký tự';
+                      return l10n.isVietnamese ? 'Mật khẩu mới tối thiểu 8 ký tự' : 'New password must be at least 8 characters';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 14),
                 AppTextField(
-                  labelText: 'Xác nhận mật khẩu mới',
+                  labelText: l10n.confirmNewPasswordLabel,
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirm,
                   prefixIcon: const Icon(Icons.check_circle_outline_rounded, color: AppColors.darkTextSecondary, size: 20),
@@ -444,7 +453,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
                   ),
                   validator: (value) {
                     if (value != _newPasswordController.text) {
-                      return 'Mật khẩu xác nhận không khớp';
+                      return l10n.passwordMismatch;
                     }
                     return null;
                   },
@@ -478,7 +487,7 @@ class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
                   children: [
                     TextButton(
                       onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-                      child: const Text('Hủy', style: TextStyle(color: AppColors.darkTextSecondary)),
+                      child: Text(l10n.isVietnamese ? 'Hủy' : 'Cancel', style: const TextStyle(color: AppColors.darkTextSecondary)),
                     ),
                     const SizedBox(width: 10),
                     FilledButton(

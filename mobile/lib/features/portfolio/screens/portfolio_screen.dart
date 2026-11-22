@@ -7,6 +7,7 @@ import '../../../data/models/account_model.dart';
 import '../../../data/models/portfolio_model.dart';
 import '../../../providers/account_providers.dart';
 import '../../../providers/app_providers.dart';
+import '../../../l10n/app_localizations.dart';
 
 class PortfolioScreen extends ConsumerWidget {
   const PortfolioScreen({super.key});
@@ -115,8 +116,10 @@ class _AssetCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
     if (asset == null) {
-      return const _ErrorCard(
-        message: 'Không có tài khoản CASH đang hoạt động.',
+      return _ErrorCard(
+        message: l10n.isVietnamese
+            ? 'Không có tài khoản CASH đang hoạt động.'
+            : 'No active CASH account found.',
       );
     }
     final a = asset!;
@@ -217,6 +220,7 @@ class _HoldingItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final isProfitable = item.profitLoss.cents >= 0;
     final colorProfit =
         isProfitable ? AppColors.primary : AppColors.priceDown;
@@ -318,17 +322,17 @@ class _HoldingItem extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     _holdingStat(
-                      'Khối lượng',
+                      l10n.isVietnamese ? 'Khối lượng' : 'Quantity',
                       '${item.quantity}',
-                      subLabel: 'Khả dụng: ${item.availableQuantity}',
+                      subLabel: '${l10n.isVietnamese ? 'Khả dụng' : 'Available'}: ${item.availableQuantity}',
                     ),
                     _holdingStat(
-                      'Giá vốn',
+                      l10n.isVietnamese ? 'Giá vốn' : 'Avg Cost',
                       '${item.averagePrice.decimalString} ₫',
-                      subLabel: 'TT: ${item.marketPrice.decimalString} ₫',
+                      subLabel: '${l10n.isVietnamese ? 'TT' : 'Market'}: ${item.marketPrice.decimalString} ₫',
                     ),
                     _holdingStat(
-                      'Giá trị',
+                      l10n.isVietnamese ? 'Giá trị' : 'Market Value',
                       item.currentValue.formatVnd(),
                       alignRight: true,
                     ),
@@ -350,8 +354,10 @@ class _HoldingItem extends StatelessWidget {
                         icon: const Icon(Icons.arrow_downward_rounded, size: 15),
                         label: Text(
                           hasAvailable
-                              ? 'Bán (${item.availableQuantity})'
-                              : 'Chờ về',
+                              ? (l10n.isVietnamese
+                                  ? 'Bán (${item.availableQuantity})'
+                                  : 'Sell (${item.availableQuantity})')
+                              : (l10n.isVietnamese ? 'Chờ về' : 'Pending'),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.priceDown,
@@ -381,7 +387,7 @@ class _HoldingItem extends StatelessWidget {
                           '/home/trade?symbol=${item.stockSymbol}&side=BUY',
                         ),
                         icon: const Icon(Icons.add_rounded, size: 15),
-                        label: const Text('Mua thêm'),
+                        label: Text(l10n.isVietnamese ? 'Mua thêm' : 'Buy More'),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: const Color(0xFF06251C),
@@ -418,7 +424,7 @@ class _HoldingItem extends StatelessWidget {
                         ),
                         padding: const EdgeInsets.all(10),
                       ),
-                      tooltip: 'Xem biểu đồ nến',
+                      tooltip: l10n.isVietnamese ? 'Xem biểu đồ nến' : 'Candlestick Chart',
                     ),
                   ],
                 ),
