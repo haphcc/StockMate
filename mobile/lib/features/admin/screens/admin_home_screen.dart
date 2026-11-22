@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/widgets/language_switch_button.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../providers/app_providers.dart';
 import '../../auth/providers/auth_provider.dart';
@@ -55,19 +54,13 @@ class AdminHomeScreen extends ConsumerWidget {
             // Chừa chỗ phía dưới để không bị thanh điều hướng nổi che.
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    l10n.isVietnamese ? 'Quản trị hệ thống' : 'System Administration',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const LanguageSwitchButton(height: 30),
-                ],
+              Text(
+                l10n.isVietnamese ? 'Quản trị hệ thống' : 'System Administration',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               const SizedBox(height: 4),
               Text(
