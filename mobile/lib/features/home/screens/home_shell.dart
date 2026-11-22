@@ -4,23 +4,25 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../providers/app_providers.dart';
 import '../../auth/providers/auth_provider.dart';
 
 class HomeShell extends ConsumerWidget {
   const HomeShell({super.key, required this.navigationShell});
   final StatefulNavigationShell navigationShell;
 
-  static const _destinations = <_Destination>[
-    _Destination(Icons.show_chart_rounded, 'Thị trường'),
-    _Destination(Icons.bookmark_border_rounded, 'Theo dõi'),
-    _Destination(Icons.swap_horiz_rounded, 'Đặt lệnh'),
-    _Destination(Icons.receipt_long_rounded, 'Sổ lệnh'),
-    _Destination(Icons.pie_chart_outline_rounded, 'Tài sản'),
-    _Destination(Icons.admin_panel_settings_outlined, 'Quản trị'),
-  ];
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
+    final destinations = <_Destination>[
+      _Destination(Icons.show_chart_rounded, l10n.tabMarket),
+      _Destination(Icons.bookmark_border_rounded, l10n.tabWatchlist),
+      _Destination(Icons.swap_horiz_rounded, l10n.tabTrade),
+      _Destination(Icons.receipt_long_rounded, l10n.tabOrders),
+      _Destination(Icons.pie_chart_outline_rounded, l10n.tabPortfolio),
+      _Destination(Icons.admin_panel_settings_outlined, l10n.tabAdmin),
+    ];
+
     final isAdmin = ref.watch(authProvider).value?.isAdmin ?? false;
     final count = isAdmin ? 6 : 5;
     final index = navigationShell.currentIndex.clamp(0, count - 1).toInt();
@@ -47,7 +49,7 @@ class HomeShell extends ConsumerWidget {
                 ),
                 child: Row(
                   children: List.generate(count, (itemIndex) {
-                    final destination = _destinations[itemIndex];
+                    final destination = destinations[itemIndex];
                     final selected = index == itemIndex;
                     return Expanded(
                       child: InkWell(

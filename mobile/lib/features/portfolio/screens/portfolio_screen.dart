@@ -6,6 +6,7 @@ import '../../../core/widgets/stockmate_brand.dart';
 import '../../../data/models/account_model.dart';
 import '../../../data/models/portfolio_model.dart';
 import '../../../providers/account_providers.dart';
+import '../../../providers/app_providers.dart';
 
 class PortfolioScreen extends ConsumerWidget {
   const PortfolioScreen({super.key});
@@ -21,13 +22,14 @@ class PortfolioScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final assets = ref.watch(assetsProvider);
     final portfolio = ref.watch(portfolioProvider);
 
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
-        title: const Text('Danh mục đầu tư'),
+        title: Text(l10n.portfolioTitle),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 16),
@@ -56,12 +58,12 @@ class PortfolioScreen extends ConsumerWidget {
               ),
               error: (e, _) => _ErrorCard(message: e.toString()),
               data: (items) => items.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(40),
+                  ? Padding(
+                      padding: const EdgeInsets.all(40),
                       child: Center(
                         child: Text(
-                          'Danh mục chưa có cổ phiếu',
-                          style: TextStyle(color: AppColors.darkTextSecondary),
+                          l10n.noHoldings,
+                          style: const TextStyle(color: AppColors.darkTextSecondary),
                         ),
                       ),
                     )
@@ -70,16 +72,16 @@ class PortfolioScreen extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'DANH MỤC NẮM GIỮ',
-                              style: TextStyle(
+                            Text(
+                              l10n.holdingsHeader,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
-                              '${items.length} mã',
+                              l10n.holdingsCount(items.length),
                               style: const TextStyle(
                                 color: AppColors.darkTextSecondary,
                                 fontSize: 12,
@@ -105,12 +107,13 @@ class PortfolioScreen extends ConsumerWidget {
   }
 }
 
-class _AssetCard extends StatelessWidget {
+class _AssetCard extends ConsumerWidget {
   final AssetModel? asset;
   const _AssetCard({required this.asset});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     if (asset == null) {
       return const _ErrorCard(
         message: 'Không có tài khoản CASH đang hoạt động.',
@@ -133,9 +136,9 @@ class _AssetCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Tổng tài sản ròng',
-            style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+          Text(
+            l10n.totalNetAssets,
+            style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
           ),
           const SizedBox(height: 6),
           Text(
@@ -150,8 +153,8 @@ class _AssetCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _Stat('Lãi / Lỗ', a.totalProfitLoss.formatVnd(), c),
-              _Stat('Sức mua tiền mặt', a.cashBalance.formatVnd(), Colors.white),
+              _Stat(l10n.profitLoss, a.totalProfitLoss.formatVnd(), c),
+              _Stat(l10n.buyingPower, a.cashBalance.formatVnd(), Colors.white),
             ],
           ),
         ],

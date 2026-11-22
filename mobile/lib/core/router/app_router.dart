@@ -82,6 +82,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/deposit',
         builder: (context, state) => const DepositScreen(),
       ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const SettingsScreen(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return HomeShell(navigationShell: navigationShell);

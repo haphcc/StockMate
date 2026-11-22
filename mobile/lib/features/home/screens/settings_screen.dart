@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/language_switch_button.dart';
+import '../../../providers/app_providers.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../widgets/profile_dialogs.dart';
 
@@ -9,22 +11,33 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final user = ref.watch(authProvider).value;
+
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
         backgroundColor: AppColors.darkBackground,
-        title: const Text('Cài đặt & Tài khoản'),
+        title: Text(l10n.settingsAndAccount),
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 16.0),
+            child: Center(
+              child: LanguageSwitchButton(height: 30),
+            ),
+          ),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          // Section: Tài khoản / Profile
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'TÀI KHOẢN',
-                style: TextStyle(
+              Text(
+                l10n.sectionGeneral,
+                style: const TextStyle(
                   color: AppColors.darkTextSecondary,
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -37,9 +50,9 @@ class SettingsScreen extends ConsumerWidget {
                   user: user,
                 ),
                 icon: const Icon(Icons.edit_outlined, size: 16, color: AppColors.primary),
-                label: const Text(
-                  'Sửa thông tin',
-                  style: TextStyle(
+                label: Text(
+                  l10n.editProfile,
+                  style: const TextStyle(
                     color: AppColors.primary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -64,7 +77,7 @@ class SettingsScreen extends ConsumerWidget {
               children: [
                 _InfoRow(
                   icon: Icons.person_outline_rounded,
-                  label: 'Họ và tên',
+                  label: l10n.labelFullName,
                   value: user?.fullName ?? '—',
                   onTap: () => ProfileDialogs.showEditProfileDialog(
                     context: context,
@@ -75,13 +88,13 @@ class SettingsScreen extends ConsumerWidget {
                 const Divider(color: AppColors.darkCardBorder, height: 1),
                 _InfoRow(
                   icon: Icons.email_outlined,
-                  label: 'Email',
+                  label: l10n.labelEmail,
                   value: user?.email ?? '—',
                 ),
                 const Divider(color: AppColors.darkCardBorder, height: 1),
                 _InfoRow(
                   icon: Icons.phone_outlined,
-                  label: 'Số điện thoại',
+                  label: l10n.labelPhone,
                   value: user?.displayPhoneNumber ?? '—',
                   onTap: () => ProfileDialogs.showEditProfileDialog(
                     context: context,
@@ -92,24 +105,39 @@ class SettingsScreen extends ConsumerWidget {
                 const Divider(color: AppColors.darkCardBorder, height: 1),
                 _InfoRow(
                   icon: Icons.verified_user_outlined,
-                  label: 'Đăng nhập',
+                  label: l10n.labelLoginMethod,
                   value: (user?.isGoogleAccount ?? false)
-                      ? 'Tài khoản Google'
-                      : 'Email & Mật khẩu',
+                      ? l10n.googleAccount
+                      : l10n.emailPasswordAccount,
                 ),
                 const Divider(color: AppColors.darkCardBorder, height: 1),
                 _InfoRow(
                   icon: Icons.badge_outlined,
-                  label: 'Vai trò',
+                  label: l10n.labelRole,
                   value: user?.role ?? '—',
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'BẢO MẬT',
-            style: TextStyle(
+
+          // Section: Ngôn ngữ / Language
+          Text(
+            l10n.sectionPreferences,
+            style: const TextStyle(
+              color: AppColors.darkTextSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 10),
+          const LanguageSettingsTile(),
+          const SizedBox(height: 24),
+
+          // Section: Bảo mật / Security
+          Text(
+            l10n.sectionSecurity,
+            style: const TextStyle(
               color: AppColors.darkTextSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -142,7 +170,9 @@ class SettingsScreen extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              (user?.hasPassword ?? true) ? 'Đổi mật khẩu' : 'Đặt mật khẩu',
+                              (user?.hasPassword ?? true)
+                                  ? l10n.changePassword
+                                  : l10n.setPassword,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.w600,
@@ -151,8 +181,8 @@ class SettingsScreen extends ConsumerWidget {
                             const SizedBox(height: 2),
                             Text(
                               (user?.hasPassword ?? true)
-                                  ? 'Cập nhật mật khẩu tài khoản'
-                                  : 'Đặt mật khẩu để có thể đăng nhập bằng email',
+                                  ? l10n.updatePasswordDesc
+                                  : l10n.setPasswordDesc,
                               style: const TextStyle(
                                 color: AppColors.darkTextSecondary,
                                 fontSize: 12,
@@ -173,9 +203,11 @@ class SettingsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
-            'ỨNG DỤNG',
-            style: TextStyle(
+
+          // Section: Ứng dụng
+          Text(
+            l10n.sectionApplication,
+            style: const TextStyle(
               color: AppColors.darkTextSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -189,25 +221,25 @@ class SettingsScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.darkCardBorder),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.info_outline_rounded, color: AppColors.primary),
-                SizedBox(width: 12),
+                const Icon(Icons.info_outline_rounded, color: AppColors.primary),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
+                      const Text(
                         'StockMate',
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      SizedBox(height: 3),
+                      const SizedBox(height: 3),
                       Text(
-                        'Phiên bản 1.0.0',
-                        style: TextStyle(
+                        '${l10n.appVersion} 1.0.0',
+                        style: const TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 13,
                         ),

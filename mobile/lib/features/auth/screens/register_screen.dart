@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../../../core/widgets/language_switch_button.dart';
 import '../../../core/widgets/stockmate_brand.dart';
 import '../../../core/services/google_sign_in_service.dart';
+import '../../../providers/app_providers.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/social_login_buttons.dart';
 
@@ -48,19 +50,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return score.clamp(1, 4);
   }
 
-  String get _strengthLabel {
-    if (_passwordController.text.isEmpty) return 'Chưa nhập';
+  String _getStrengthLabel(dynamic l10n) {
+    if (_passwordController.text.isEmpty) return l10n.strengthEmpty;
     switch (_passwordStrength) {
       case 1:
-        return 'Yếu';
+        return l10n.strengthWeak;
       case 2:
-        return 'Trung bình';
+        return l10n.strengthMedium;
       case 3:
-        return 'Khá';
+        return l10n.strengthGood;
       case 4:
-        return 'Mạnh';
+        return l10n.strengthStrong;
       default:
-        return 'Chưa nhập';
+        return l10n.strengthEmpty;
     }
   }
 
@@ -91,14 +93,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   void _register() async {
+    final l10n = ref.read(l10nProvider);
     if (!_formKey.currentState!.validate() ||
         _passwordController.text != _confirmPasswordController.text) {
       return;
     }
     if (!_agreeTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng đồng ý với Điều khoản dịch vụ'),
+        SnackBar(
+          content: Text(l10n.termsRequired),
           backgroundColor: AppColors.priceDown,
           behavior: SnackBarBehavior.floating,
         ),
@@ -143,7 +146,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     } catch (e) {
       if (mounted) {
         final msg = e.toString().replaceAll('Exception: ', '');
-        if (msg.contains('Đã hủy')) return;
+        if (msg.contains('Đã hủy') || msg.contains('canceled') || msg.contains('cancelled')) return;
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -159,6 +162,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     final authState = ref.watch(authProvider);
     final isLoading = authState.isLoading;
 
@@ -172,35 +176,41 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top App Bar
+                // Top App Bar with Logo and Language Switch Button
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      onPressed: () {
-                        if (context.canPop()) {
-                          context.pop();
-                        } else {
-                          context.go('/login');
-                        }
-                      },
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            if (context.canPop()) {
+                              context.pop();
+                            } else {
+                              context.go('/login');
+                            }
+                          },
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                        const SizedBox(width: 16),
+                        const StockMateBrand(iconSize: 28, fontSize: 18),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    const StockMateBrand(iconSize: 28, fontSize: 18),
+                    const LanguageSwitchButton(),
                   ],
                 ),
                 const SizedBox(height: 24),
 
                 // Title
-                const Text(
-                  'Tạo tài khoản StockMate',
-                  style: TextStyle(
+                Text(
+                  l10n.registerTitle,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
@@ -209,75 +219,94 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Full name
+                // 1. Full Name Field
+                _buildFieldLabel(
+                  icon: Icons.badge_outlined,
+                  label: l10n.fullNameLabel,
+                ),
+                const SizedBox(height: 8),
                 AppTextField(
-                  labelWidget: _buildFieldLabel(
-                    icon: Icons.badge_outlined,
-                    label: 'Họ và tên (như trên CCCD)',
-                  ),
-                  hintText: 'NGUYEN VAN A',
+                  hintText: l10n.fullNameHint,
                   controller: _nameController,
+                  validator: (value) =>
+                      value == null || value.trim().isEmpty ? l10n.fullNameHint : null,
+                  prefixIcon: const Icon(
+                    Icons.person_outline_rounded,
+                    color: AppColors.darkTextSecondary,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(height: 18),
 
-                // Email
+                // 2. Email Field
+                _buildFieldLabel(
+                  icon: Icons.email_outlined,
+                  label: l10n.emailLabel,
+                ),
+                const SizedBox(height: 8),
                 AppTextField(
-                  labelWidget: _buildFieldLabel(
-                    icon: Icons.contact_mail_outlined,
-                    label: 'Email',
-                  ),
-                  hintText: 'investor@stockmate.vn',
+                  hintText: l10n.emailHint,
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) =>
                       value == null ||
-                          !RegExp(
-                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                          ).hasMatch(value.trim())
-                      ? 'Email không hợp lệ'
-                      : null,
+                              !RegExp(
+                                r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                              ).hasMatch(value.trim())
+                          ? l10n.emailInvalid
+                          : null,
+                  prefixIcon: const Icon(
+                    Icons.alternate_email_rounded,
+                    color: AppColors.darkTextSecondary,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(height: 18),
 
+                // 3. Phone Number Field
+                _buildFieldLabel(
+                  icon: Icons.phone_android_outlined,
+                  label: l10n.phoneLabel,
+                ),
+                const SizedBox(height: 8),
                 AppTextField(
-                  labelText: 'Số điện thoại',
-                  hintText: '0912345678',
+                  hintText: l10n.phoneHint,
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   validator: (value) =>
                       value == null ||
-                          !RegExp(r'^0[35789]\d{8}$').hasMatch(value.trim())
-                      ? 'Số điện thoại không hợp lệ'
-                      : null,
+                              !RegExp(r'^(0[3|5|7|8|9])+([0-9]{8})$').hasMatch(
+                                value.trim(),
+                              )
+                          ? l10n.phoneInvalid
+                          : null,
+                  prefixIcon: const Icon(
+                    Icons.phone_outlined,
+                    color: AppColors.darkTextSecondary,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(height: 18),
 
-                // Password
+                // 4. Password Field
+                _buildFieldLabel(
+                  icon: Icons.lock_outline_rounded,
+                  label: l10n.passwordRegisterLabel,
+                ),
+                const SizedBox(height: 8),
                 AppTextField(
-                  labelWidget: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildFieldLabel(
-                        icon: Icons.lock_outline_rounded,
-                        label: 'Mật khẩu tài khoản',
-                      ),
-                      Text(
-                        _strengthLabel,
-                        style: TextStyle(
-                          color: _strengthColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  hintText: 'Tối thiểu 8 ký tự, 1 số, 1 chữ hoa',
+                  hintText: l10n.passwordRegisterHint,
                   controller: _passwordController,
-                  validator: (value) => value == null || value.length < 8
-                      ? 'Mật khẩu tối thiểu 8 ký tự'
-                      : null,
                   obscureText: _obscurePassword,
-                  onChanged: (_) => setState(() {}),
+                  onChanged: (val) => setState(() {}),
+                  validator: (value) => value == null || value.length < 8
+                      ? l10n.passwordMinLength
+                      : null,
+                  prefixIcon: const Icon(
+                    Icons.lock_rounded,
+                    color: AppColors.darkTextSecondary,
+                    size: 20,
+                  ),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword
@@ -290,53 +319,75 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
-                const SizedBox(height: 8),
 
-                // Password strength 4 bars
-                Row(
-                  children: List.generate(4, (index) {
-                    final isActive = index < _passwordStrength;
-                    return Expanded(
-                      child: Container(
-                        height: 3,
-                        margin: EdgeInsets.only(right: index < 3 ? 6 : 0),
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? _strengthColor
-                              : AppColors.darkBorder,
+                // Password strength meter
+                if (_passwordController.text.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
                           borderRadius: BorderRadius.circular(2),
+                          child: LinearProgressIndicator(
+                            value: _passwordStrength / 4,
+                            backgroundColor: AppColors.darkInput,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              _strengthColor,
+                            ),
+                            minHeight: 4,
+                          ),
                         ),
                       ),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 10),
-
-                // Password requirement indicators
-                Wrap(
-                  spacing: 14,
-                  runSpacing: 8,
-                  children: [
-                    _buildCheckRule('8+ ký tự', _hasMinLength),
-                    _buildCheckRule('Chữ hoa', _hasUppercase),
-                    _buildCheckRule('Chữ số', _hasNumber),
-                    _buildCheckRule('Ký tự đặc biệt (!@#...)', _hasSpecialChar),
-                  ],
-                ),
+                      const SizedBox(width: 10),
+                      Text(
+                        _getStrengthLabel(l10n),
+                        style: TextStyle(
+                          color: _strengthColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 6,
+                    children: [
+                      _buildCheckRule(l10n.ruleMinLength, _hasMinLength),
+                      _buildCheckRule(l10n.ruleUppercase, _hasUppercase),
+                      _buildCheckRule(l10n.ruleNumber, _hasNumber),
+                      _buildCheckRule(l10n.ruleSpecial, _hasSpecialChar),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 18),
 
-                // Confirm Password
+                // 5. Confirm Password Field
+                _buildFieldLabel(
+                  icon: Icons.check_circle_outline_rounded,
+                  label: l10n.confirmPasswordLabel,
+                ),
+                const SizedBox(height: 8),
                 AppTextField(
-                  labelWidget: _buildFieldLabel(
-                    icon: Icons.shield_outlined,
-                    label: 'Xác nhận mật khẩu',
-                  ),
-                  hintText: 'Nhập lại mật khẩu',
+                  hintText: l10n.confirmPasswordHint,
                   controller: _confirmPasswordController,
-                  validator: (value) => value != _passwordController.text
-                      ? 'Mật khẩu xác nhận không khớp'
-                      : null,
                   obscureText: _obscureConfirmPassword,
+                  onChanged: (val) => setState(() {}),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return l10n.confirmPasswordHint;
+                    }
+                    if (value != _passwordController.text) {
+                      return l10n.passwordMismatch;
+                    }
+                    return null;
+                  },
+                  prefixIcon: const Icon(
+                    Icons.lock_clock_outlined,
+                    color: AppColors.darkTextSecondary,
+                    size: 20,
+                  ),
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureConfirmPassword
@@ -346,61 +397,56 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       size: 20,
                     ),
                     onPressed: () => setState(
-                      () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                      () =>
+                          _obscureConfirmPassword = !_obscureConfirmPassword,
                     ),
                   ),
                 ),
                 const SizedBox(height: 14),
 
-                // Referral Code Accordion
-                InkWell(
-                  onTap: () =>
-                      setState(() => _showReferralField = !_showReferralField),
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
+                // Referral Field Toggle
+                if (!_showReferralField)
+                  GestureDetector(
+                    onTap: () => setState(() => _showReferralField = true),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Row(
-                          children: [
-                            Icon(
-                              Icons.group_outlined,
-                              color: AppColors.darkTextSecondary,
-                              size: 18,
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Mã giới thiệu (tùy chọn)',
-                              style: TextStyle(
-                                color: AppColors.darkTextSecondary,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
+                        const Icon(
+                          Icons.add_circle_outline_rounded,
+                          color: AppColors.primary,
+                          size: 16,
                         ),
-                        Icon(
-                          _showReferralField
-                              ? Icons.keyboard_arrow_up_rounded
-                              : Icons.keyboard_arrow_down_rounded,
-                          color: AppColors.darkTextSecondary,
-                          size: 20,
+                        const SizedBox(width: 6),
+                        Text(
+                          l10n.referralOptional,
+                          style: const TextStyle(
+                            color: AppColors.primary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
                       ],
                     ),
+                  )
+                else ...[
+                  _buildFieldLabel(
+                    icon: Icons.card_giftcard_rounded,
+                    label: l10n.referralOptional,
                   ),
-                ),
-                if (_showReferralField) ...[
                   const SizedBox(height: 8),
                   AppTextField(
-                    hintText: 'Nhập mã giới thiệu người thân/bạn bè',
+                    hintText: l10n.referralHint,
                     controller: _referralController,
+                    prefixIcon: const Icon(
+                      Icons.redeem_rounded,
+                      color: AppColors.darkTextSecondary,
+                      size: 20,
+                    ),
                   ),
                 ],
-                const SizedBox(height: 18),
+                const SizedBox(height: 20),
 
-                // Terms of service agreement checkbox
+                // Terms Checkbox
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -408,8 +454,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       onTap: () => setState(() => _agreeTerms = !_agreeTerms),
                       borderRadius: BorderRadius.circular(4),
                       child: Container(
-                        width: 18,
-                        height: 18,
+                        width: 20,
+                        height: 20,
                         margin: const EdgeInsets.only(top: 2),
                         decoration: BoxDecoration(
                           color: _agreeTerms
@@ -435,33 +481,30 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     const SizedBox(width: 10),
                     Expanded(
                       child: RichText(
-                        text: const TextSpan(
-                          style: TextStyle(
+                        text: TextSpan(
+                          style: const TextStyle(
                             color: AppColors.darkTextSecondary,
                             fontSize: 12,
                             height: 1.45,
                           ),
                           children: [
-                            TextSpan(text: 'Tôi đồng ý với '),
+                            TextSpan(text: l10n.agreeTermsPrefix),
                             TextSpan(
-                              text: 'Điều khoản dịch vụ',
-                              style: TextStyle(
+                              text: l10n.termsOfService,
+                              style: const TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            TextSpan(text: ' và hiểu rõ đây là '),
+                            TextSpan(text: l10n.termsAndUnderstand),
                             TextSpan(
-                              text:
-                                  'môi trường giao dịch chứng khoán giả lập rủi ro 0 đồng',
-                              style: TextStyle(
+                              text: l10n.termsRiskFree,
+                              style: const TextStyle(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
-                            TextSpan(
-                              text: ' phục vụ học tập, rèn luyện kỹ năng.',
-                            ),
+                            TextSpan(text: l10n.termsPurpose),
                           ],
                         ),
                       ),
@@ -472,7 +515,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                 // CTA Button
                 GradientButton(
-                  text: 'Tạo Tài Khoản & Nhận 100.000đ',
+                  text: l10n.registerButton,
                   isLoading: isLoading,
                   trailingIcon: const Icon(
                     Icons.trending_up_rounded,
@@ -485,7 +528,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
                 // Social registration
                 SocialAuthSection(
-                  dividerText: 'HOẶC ĐĂNG KÝ NHANH',
+                  dividerText: l10n.orRegisterWith,
                   onGoogleTap: _googleSignIn,
                   onAppleTap: () => _register(),
                 ),
@@ -496,9 +539,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Đã có tài khoản? ',
-                        style: TextStyle(
+                      Text(
+                        l10n.alreadyHaveAccount,
+                        style: const TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 13,
                         ),
@@ -511,9 +554,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             context.go('/login');
                           }
                         },
-                        child: const Text(
-                          'Đăng nhập',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.loginNow,
+                          style: const TextStyle(
                             color: AppColors.primary,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,

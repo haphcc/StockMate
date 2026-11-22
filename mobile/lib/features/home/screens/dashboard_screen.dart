@@ -14,6 +14,7 @@ import '../widgets/dashboard_dialogs.dart';
 import '../providers/notification_provider.dart';
 import '../../../data/models/stock_model.dart';
 import '../../../core/theme/price_colors.dart';
+import '../../../providers/app_providers.dart';
 
 enum _ProfileAction { editProfile, changePassword, settings, logout }
 
@@ -192,6 +193,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   // --- 1. Top Header Bar ---
   Widget _buildTopHeader() {
+    final l10n = ref.watch(l10nProvider);
     final user = ref.watch(authProvider).value;
     final unreadNotifs = ref.watch(unreadNotificationCountProvider);
     return Row(
@@ -296,32 +298,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                 ),
                 const PopupMenuDivider(),
-                const PopupMenuItem<_ProfileAction>(
+                PopupMenuItem<_ProfileAction>(
                   value: _ProfileAction.editProfile,
                   child: _ProfileMenuItem(
                     icon: Icons.person_outline_rounded,
-                    label: 'Sửa thông tin',
+                    label: l10n.editProfile,
                   ),
                 ),
-                const PopupMenuItem<_ProfileAction>(
+                PopupMenuItem<_ProfileAction>(
                   value: _ProfileAction.changePassword,
                   child: _ProfileMenuItem(
                     icon: Icons.lock_outline_rounded,
-                    label: 'Đổi mật khẩu',
+                    label: l10n.changePassword,
                   ),
                 ),
-                const PopupMenuItem<_ProfileAction>(
+                PopupMenuItem<_ProfileAction>(
                   value: _ProfileAction.settings,
                   child: _ProfileMenuItem(
                     icon: Icons.settings_outlined,
-                    label: 'Cài đặt',
+                    label: l10n.settingsAndAccount,
                   ),
                 ),
-                const PopupMenuItem<_ProfileAction>(
+                PopupMenuItem<_ProfileAction>(
                   value: _ProfileAction.logout,
                   child: _ProfileMenuItem(
                     icon: Icons.logout_rounded,
-                    label: 'Đăng xuất',
+                    label: l10n.logoutButton,
                     color: AppColors.priceDown,
                   ),
                 ),
@@ -396,25 +398,26 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       return;
     }
 
+    final l10n = ref.read(l10nProvider);
     final shouldLogout = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.darkCard,
-        title: const Text('Đăng xuất', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'Bạn có chắc muốn đăng xuất khỏi StockMate?',
-          style: TextStyle(color: AppColors.darkTextSecondary),
+        title: Text(l10n.logoutConfirmTitle, style: const TextStyle(color: Colors.white)),
+        content: Text(
+          l10n.logoutConfirmMessage,
+          style: const TextStyle(color: AppColors.darkTextSecondary),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(false),
-            child: const Text('Hủy'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(true),
-            child: const Text(
-              'Đăng xuất',
-              style: TextStyle(color: AppColors.priceDown),
+            child: Text(
+              l10n.confirm,
+              style: const TextStyle(color: AppColors.priceDown),
             ),
           ),
         ],

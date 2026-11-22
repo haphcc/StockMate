@@ -4,8 +4,10 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../../../core/widgets/language_switch_button.dart';
 import '../../../core/widgets/stockmate_brand.dart';
 import '../../../core/services/google_sign_in_service.dart';
+import '../../../providers/app_providers.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/social_login_buttons.dart';
 
@@ -71,7 +73,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } catch (e) {
       if (mounted) {
         final msg = e.toString().replaceAll('Exception: ', '');
-        if (msg.contains('Đã hủy')) return;
+        if (msg.contains('Đã hủy') || msg.contains('canceled') || msg.contains('cancelled')) return;
         ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -87,6 +89,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     final authState = ref.watch(authProvider);
     final isLoading = authState.isLoading;
 
@@ -100,33 +103,39 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Top App Bar
+                // Top App Bar with Logo and Language Switch Button
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    IconButton(
-                      icon: const Icon(
-                        Icons.arrow_back_ios_new_rounded,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      onPressed: () {
-                        if (context.canPop()) {
-                          context.pop();
-                        }
-                      },
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
+                    Row(
+                      children: [
+                        IconButton(
+                          icon: const Icon(
+                            Icons.arrow_back_ios_new_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          onPressed: () {
+                            if (context.canPop()) {
+                              context.pop();
+                            }
+                          },
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                        const SizedBox(width: 16),
+                        const StockMateBrand(iconSize: 28, fontSize: 18),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    const StockMateBrand(iconSize: 28, fontSize: 18),
+                    const LanguageSwitchButton(),
                   ],
                 ),
                 const SizedBox(height: 32),
 
                 // Title
-                const Text(
-                  'Đăng nhập tài khoản',
-                  style: TextStyle(
+                Text(
+                  l10n.loginTitle,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -135,34 +144,34 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Account Field
+                // Account / Email Field
                 AppTextField(
-                  labelText: 'Email',
-                  hintText: 'investor@stockmate.vn',
+                  labelText: l10n.accountLabel,
+                  hintText: l10n.accountHint,
                   controller: _accountController,
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) =>
                       value == null ||
-                          !RegExp(
-                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                          ).hasMatch(value.trim())
-                      ? 'Email không hợp lệ'
-                      : null,
+                              !RegExp(
+                                r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                              ).hasMatch(value.trim())
+                          ? l10n.emailInvalid
+                          : null,
                   prefixIcon: const Icon(
                     Icons.email_outlined,
                     color: AppColors.darkTextSecondary,
                     size: 20,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 18),
 
                 // Password Field
                 AppTextField(
-                  labelText: 'Mật khẩu PIN / Đăng nhập',
-                  hintText: '••••••••••••',
+                  labelText: l10n.passwordLabel,
+                  hintText: l10n.passwordHint,
                   controller: _passwordController,
                   validator: (value) => value == null || value.length < 8
-                      ? 'Mật khẩu tối thiểu 8 ký tự'
+                      ? l10n.passwordMinLength
                       : null,
                   obscureText: _obscurePassword,
                   prefixIcon: const Icon(
@@ -218,9 +227,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 : null,
                           ),
                           const SizedBox(width: 8),
-                          const Text(
-                            'Ghi nhớ',
-                            style: TextStyle(
+                          Text(
+                            l10n.rememberMe,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 13,
                               fontWeight: FontWeight.w400,
@@ -231,9 +240,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     GestureDetector(
                       onTap: () {},
-                      child: const Text(
-                        'Quên mật khẩu?',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.forgotPassword,
+                        style: const TextStyle(
                           color: AppColors.primary,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -246,7 +255,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Login Button
                 GradientButton(
-                  text: 'Đăng Nhập Ngay',
+                  text: l10n.loginButton,
                   isLoading: isLoading,
                   trailingIcon: const Icon(
                     Icons.arrow_forward_rounded,
@@ -259,7 +268,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Social logins
                 SocialAuthSection(
-                  dividerText: 'HOẶC ĐĂNG NHẬP QUA',
+                  dividerText: l10n.orLoginWith,
                   onGoogleTap: _googleSignIn,
                   onAppleTap: () => _login(),
                 ),
@@ -270,18 +279,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Chưa có tài khoản? ',
-                        style: TextStyle(
+                      Text(
+                        l10n.noAccount,
+                        style: const TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 13,
                         ),
                       ),
                       GestureDetector(
                         onTap: () => context.push('/register'),
-                        child: const Text(
-                          'Đăng ký ngay',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.registerNow,
+                          style: const TextStyle(
                             color: AppColors.primary,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
