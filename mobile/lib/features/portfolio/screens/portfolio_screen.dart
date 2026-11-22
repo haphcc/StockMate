@@ -1,19 +1,29 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/stockmate_brand.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../providers/app_providers.dart';
 
-class PortfolioScreen extends StatelessWidget {
+class PortfolioScreen extends ConsumerWidget {
   const PortfolioScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
+
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
-        title: const Text('Danh mục đầu tư'),
+        title: Text(l10n.portfolioTitle),
         centerTitle: false,
-        actions: const [
-          Padding(
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person_outline_rounded, color: Colors.white),
+            onPressed: () => context.push('/profile'),
+          ),
+          const Padding(
             padding: EdgeInsets.only(right: 16),
             child: StockMateBrand(iconSize: 24, fontSize: 16),
           ),
@@ -37,7 +47,7 @@ class PortfolioScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Tổng tài sản ròng', style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 13)),
+                Text(l10n.totalNetAssets, style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 13)),
                 const SizedBox(height: 6),
                 const Text(
                   '1,000,000,000 đ',
@@ -47,8 +57,8 @@ class PortfolioScreen extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildAssetStat('Lãi / Lỗ', '+7,500,000 đ (+3.8%)', AppColors.primary),
-                    _buildAssetStat('Sức mua', '500,000,000 đ', Colors.white),
+                    _buildAssetStat(l10n.profitLoss, '+7,500,000 đ (+3.8%)', AppColors.primary),
+                    _buildAssetStat(l10n.buyingPower, '500,000,000 đ', Colors.white),
                   ],
                 ),
               ],
@@ -59,10 +69,10 @@ class PortfolioScreen extends StatelessWidget {
           // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: const [
+            children: [
               Text(
-                'DANH MỤC NẮM GIỮ',
-                style: TextStyle(
+                l10n.holdingsHeader,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -70,8 +80,8 @@ class PortfolioScreen extends StatelessWidget {
                 ),
               ),
               Text(
-                '2 mã',
-                style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 12),
+                l10n.isVietnamese ? '2 mã' : '2 stocks',
+                style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 12),
               ),
             ],
           ),

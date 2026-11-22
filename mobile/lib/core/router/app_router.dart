@@ -5,6 +5,7 @@ import '../../features/auth/providers/auth_provider.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
+import '../../features/profile/screens/profile_screen.dart';
 import '../../features/home/screens/home_shell.dart';
 import '../../features/home/screens/dashboard_screen.dart';
 import '../../features/order/screens/order_book_screen.dart';
@@ -50,6 +51,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/sparkline_chart.dart';
 import '../../../core/widgets/stockmate_brand.dart';
@@ -145,21 +146,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
             const SizedBox(width: 8),
             // User Avatar
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(17),
-                child: Image.network(
-                  'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    color: const Color(0xFF1E293B),
-                    child: const Icon(Icons.person, color: Colors.white70, size: 20),
+            GestureDetector(
+              onTap: () => context.push('/profile'),
+              child: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppColors.primary.withValues(alpha: 0.5), width: 1.5),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(17),
+                  child: Image.network(
+                    'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150',
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: const Color(0xFF1E293B),
+                      child: const Icon(Icons.person, color: Colors.white70, size: 20),
+                    ),
                   ),
                 ),
               ),

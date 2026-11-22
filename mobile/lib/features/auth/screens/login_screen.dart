@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../../../core/widgets/language_switch_button.dart';
 import '../../../core/widgets/stockmate_brand.dart';
+import '../../../providers/app_providers.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/social_login_buttons.dart';
 
@@ -63,6 +65,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isLoading = authState.isLoading;
+    final l10n = ref.watch(l10nProvider);
 
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
@@ -93,14 +96,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(width: 16),
                     const StockMateBrand(iconSize: 28, fontSize: 18),
+                    const Spacer(),
+                    const LanguageSwitchButton(height: 32),
                   ],
                 ),
                 const SizedBox(height: 32),
 
                 // Title
-                const Text(
-                  'Đăng nhập tài khoản',
-                  style: TextStyle(
+                Text(
+                  l10n.loginTitle,
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -111,8 +116,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Account Field
                 AppTextField(
-                  labelText: 'Tài khoản / SĐT / CCCD',
-                  hintText: 'Nhập 09xx, CCCD hoặc mã 086C...',
+                  labelText: l10n.accountLabel,
+                  hintText: l10n.accountHint,
                   controller: _accountController,
                   prefixIcon: const Icon(
                     Icons.badge_outlined,
@@ -124,8 +129,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Password Field
                 AppTextField(
-                  labelText: 'Mật khẩu PIN / Đăng nhập',
-                  hintText: '••••••••••••',
+                  labelText: l10n.passwordLabel,
+                  hintText: l10n.passwordHint,
                   controller: _passwordController,
                   obscureText: _obscurePassword,
                   prefixIcon: const Icon(
@@ -174,9 +179,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 : null,
                           ),
                           const SizedBox(width: 8),
-                          const Text(
-                            'Ghi nhớ',
-                            style: TextStyle(
+                          Text(
+                            l10n.rememberMe,
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 13,
                               fontWeight: FontWeight.w400,
@@ -187,9 +192,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     GestureDetector(
                       onTap: () {},
-                      child: const Text(
-                        'Quên mật khẩu?',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.forgotPassword,
+                        style: const TextStyle(
                           color: AppColors.primary,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -205,7 +210,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   children: [
                     Expanded(
                       child: GradientButton(
-                        text: 'Đăng Nhập Ngay',
+                        text: l10n.loginButton,
                         isLoading: isLoading,
                         trailingIcon: const Icon(
                           Icons.arrow_forward_rounded,
@@ -264,7 +269,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Social logins
                 SocialAuthSection(
-                  dividerText: 'HOẶC ĐĂNG NHẬP QUA',
+                  dividerText: l10n.orLoginWith,
                   onGoogleTap: () => _login(),
                   onAppleTap: () => _login(),
                 ),
@@ -275,18 +280,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
-                        'Chưa có tài khoản? ',
-                        style: TextStyle(
+                      Text(
+                        l10n.noAccount,
+                        style: const TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 13,
                         ),
                       ),
                       GestureDetector(
                         onTap: () => context.push('/register'),
-                        child: const Text(
-                          'Đăng ký ngay',
-                          style: TextStyle(
+                        child: Text(
+                          l10n.registerNow,
+                          style: const TextStyle(
                             color: AppColors.primary,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,

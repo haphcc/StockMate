@@ -1,40 +1,45 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../providers/app_providers.dart';
 
-class HomeShell extends StatelessWidget {
+class HomeShell extends ConsumerWidget {
   final StatefulNavigationShell navigationShell;
 
   const HomeShell({super.key, required this.navigationShell});
 
-  static const List<_NavDestination> _destinations = [
+  List<_NavDestination> _getDestinations(AppLocalizations l10n) => [
     _NavDestination(
       icon: Icons.trending_up_rounded,
       activeIcon: Icons.trending_up_rounded,
-      label: 'Thị trường',
+      label: l10n.tabMarket,
     ),
     _NavDestination(
       icon: Icons.receipt_long_rounded,
       activeIcon: Icons.receipt_long_rounded,
-      label: 'Sổ lệnh',
+      label: l10n.tabOrders,
     ),
     _NavDestination(
       icon: Icons.bolt_rounded,
       activeIcon: Icons.bolt_rounded,
-      label: 'Đặt lệnh',
+      label: l10n.tabTrade,
     ),
     _NavDestination(
       icon: Icons.pie_chart_outline_rounded,
       activeIcon: Icons.pie_chart_rounded,
-      label: 'Danh mục',
+      label: l10n.tabPortfolio,
     ),
   ];
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = navigationShell.currentIndex;
+    final l10n = ref.watch(l10nProvider);
+    final destinations = _getDestinations(l10n);
 
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
@@ -76,7 +81,7 @@ class HomeShell extends StatelessWidget {
                   ),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      final itemWidth = constraints.maxWidth / _destinations.length;
+                      final itemWidth = constraints.maxWidth / destinations.length;
                       const indicatorSize = 38.0;
 
                       return Stack(
@@ -115,8 +120,8 @@ class HomeShell extends StatelessWidget {
 
                           // Tab items
                           Row(
-                            children: List.generate(_destinations.length, (index) {
-                              final item = _destinations[index];
+                            children: List.generate(destinations.length, (index) {
+                              final item = destinations[index];
                               final isSelected = index == currentIndex;
 
                               return Expanded(
