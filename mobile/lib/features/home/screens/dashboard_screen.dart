@@ -107,6 +107,46 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     'MWG', 'FRT', 'PNJ', 'MSN', 'VNM', 'SAB', 'KDC', 'DGW'
   };
 
+  String _getCategoryLabel(String cat, dynamic l10n) {
+    switch (cat) {
+      case 'Tất cả':
+        return l10n.catAll;
+      case 'Ngân hàng':
+        return l10n.catBanking;
+      case 'Bất động sản':
+        return l10n.catRealEstate;
+      case 'Chứng khoán':
+        return l10n.catSecurities;
+      case 'Thép':
+        return l10n.catSteel;
+      case 'Năng lượng':
+        return l10n.catEnergy;
+      case 'Bán lẻ & Tiêu dùng':
+        return l10n.catRetail;
+      default:
+        return cat;
+    }
+  }
+
+  String _getSortLabel(String key, dynamic l10n) {
+    switch (key) {
+      case 'volume':
+        return l10n.sortTopVolume;
+      case 'gain':
+        return l10n.sortTopGain;
+      case 'loss':
+        return l10n.sortTopLoss;
+      case 'price_high':
+        return l10n.sortPriceHigh;
+      case 'price_low':
+        return l10n.sortPriceLow;
+      case 'alpha':
+        return l10n.sortAlpha;
+      default:
+        return l10n.sortTopVolume;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final dashboardAsync = ref.watch(dashboardProvider);
@@ -175,7 +215,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     child: Padding(
                       padding: const EdgeInsets.all(24.0),
                       child: Text(
-                        'Lỗi tải dữ liệu: $err',
+                        l10n.isVietnamese ? 'Lỗi tải dữ liệu: $err' : 'Error loading data: $err',
                         style: const TextStyle(color: AppColors.priceDown),
                       ),
                     ),
@@ -206,7 +246,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         Row(
           children: [
             IconButton(
-              tooltip: 'Tìm kiếm cổ phiếu',
+              tooltip: l10n.searchStockTooltip,
               icon: const Icon(
                 Icons.search_rounded,
                 color: Colors.white,
@@ -221,7 +261,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               clipBehavior: Clip.none,
               children: [
                 IconButton(
-                  tooltip: 'Thông báo',
+                  tooltip: l10n.notificationTooltip,
                   icon: const Icon(
                     Icons.notifications_none_rounded,
                     color: Colors.white,
@@ -248,7 +288,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
             const SizedBox(width: 8),
             PopupMenuButton<_ProfileAction>(
-              tooltip: 'Tài khoản',
+              tooltip: l10n.accountTooltip,
               color: AppColors.darkCard,
               elevation: 10,
               offset: const Offset(0, 46),
@@ -431,8 +471,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   // --- 2. Virtual Balance Bar ---
   Widget _buildVirtualBalanceBar(DashboardData? data) {
-    final accountLabel = data?.account.accountNumber ?? 'Đang tải...';
-    final cashLabel = data?.assets.cashBalance.formatVnd() ?? 'Đang tải...';
+    final l10n = ref.watch(l10nProvider);
+    final accountLabel = data?.account.accountNumber ?? l10n.loading;
+    final cashLabel = data?.assets.cashBalance.formatVnd() ?? l10n.loading;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -449,7 +490,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             children: [
               if (data != null && data.accounts.length > 1)
                 PopupMenuButton<int>(
-                  tooltip: 'Chọn tài khoản',
+                  tooltip: l10n.selectAccount,
                   padding: EdgeInsets.zero,
                   position: PopupMenuPosition.under,
                   color: AppColors.darkCard,
@@ -504,7 +545,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Tài khoản $accountLabel',
+                        '${l10n.accountPrefix} $accountLabel',
                         style: const TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 12,
@@ -531,7 +572,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Tài khoản $accountLabel',
+                      '${l10n.accountPrefix} $accountLabel',
                       style: const TextStyle(
                         color: AppColors.darkTextSecondary,
                         fontSize: 12,
@@ -552,9 +593,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  const Text(
-                    'Thị trường',
-                    style: TextStyle(
+                  Text(
+                    l10n.marketLabel,
+                    style: const TextStyle(
                       color: AppColors.darkTextSecondary,
                       fontSize: 11,
                       fontWeight: FontWeight.w400,
@@ -573,9 +614,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Số dư tiền mặt',
-                      style: TextStyle(
+                    Text(
+                      l10n.cashBalance,
+                      style: const TextStyle(
                         color: AppColors.darkTextSecondary,
                         fontSize: 11,
                         fontWeight: FontWeight.w400,
@@ -615,18 +656,18 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         width: 0.8,
                       ),
                     ),
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.add_circle_outline,
                           color: AppColors.primary,
                           size: 15,
                         ),
-                        SizedBox(width: 5),
+                        const SizedBox(width: 5),
                         Text(
-                          'Nạp tiền',
-                          style: TextStyle(
+                          l10n.deposit,
+                          style: const TextStyle(
                             color: AppColors.primary,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
@@ -646,6 +687,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   // --- 3. Indices Section ---
   Widget _buildIndicesHeader() {
+    final l10n = ref.watch(l10nProvider);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -660,9 +702,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ),
             const SizedBox(width: 8),
-            const Text(
-              'CHỈ SỐ TRỰC TIẾP HOSE / HNX',
-              style: TextStyle(
+            Text(
+              l10n.marketIndices.toUpperCase(),
+              style: const TextStyle(
                 color: Color(0xFF2DD4BF),
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
@@ -671,9 +713,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
           ],
         ),
-        const Text(
-          'Khớp liên tục',
-          style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 11),
+        Text(
+          l10n.currentMatching,
+          style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 11),
         ),
       ],
     );
@@ -788,6 +830,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   // --- 4. Market Breadth Card ---
   Widget _buildMarketBreadthCard() {
+    final l10n = ref.watch(l10nProvider);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -807,17 +850,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Row(
+                  Row(
                     children: [
-                      Icon(
+                      const Icon(
                         Icons.bar_chart_rounded,
                         color: AppColors.primary,
                         size: 20,
                       ),
-                      SizedBox(width: 8),
+                      const SizedBox(width: 8),
                       Text(
-                        'Độ rộng toàn thị trường',
-                        style: TextStyle(
+                        l10n.marketBreadth,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -838,9 +881,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         width: 0.8,
                       ),
                     ),
-                    child: const Text(
-                      'Tích cực',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.gainers,
+                      style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
@@ -892,11 +935,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildBreadthStat('12 Trần', AppColors.priceCeiling),
-                  _buildBreadthStat('245 Tăng', AppColors.primary),
-                  _buildBreadthStat('68 TC', const Color(0xFF06B6D4)),
-                  _buildBreadthStat('132 Giảm', const Color(0xFFF87171)),
-                  _buildBreadthStat('3 Sàn', const Color(0xFF38BDF8)),
+                  _buildBreadthStat('12 ${l10n.ceilingPriceLabel}', AppColors.priceCeiling),
+                  _buildBreadthStat('245 ${l10n.gainers}', AppColors.primary),
+                  _buildBreadthStat('68 ${l10n.refPriceLabel}', const Color(0xFF06B6D4)),
+                  _buildBreadthStat('132 ${l10n.losers}', const Color(0xFFF87171)),
+                  _buildBreadthStat('3 ${l10n.floorPriceLabel}', const Color(0xFF38BDF8)),
                 ],
               ),
             ],
@@ -934,6 +977,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   // --- 5. Hot News / Highlight Card ---
   Widget _buildHotNewsCard() {
+    final l10n = ref.watch(l10nProvider);
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -949,21 +993,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.stars_rounded,
                           color: Color(0xFFC084FC),
                           size: 16,
                         ),
-                        SizedBox(width: 6),
+                        const SizedBox(width: 6),
                         Text(
-                          'ĐIỂM NÓNG HOSE',
-                          style: TextStyle(
+                          l10n.hotNewsHOSE,
+                          style: const TextStyle(
                             color: Color(0xFFC084FC),
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
@@ -972,20 +1016,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Text(
-                      'Dòng tiền lan tỏa nhóm Bán Lẻ & Công Nghệ',
-                      style: TextStyle(
+                      l10n.hotNewsHeadline,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         height: 1.3,
                       ),
                     ),
-                    SizedBox(height: 6),
+                    const SizedBox(height: 6),
                     Text(
-                      'Thanh khoản đạt 18.2K tỷ VNĐ, khối ngoại mua ròng SSI & MWG.',
-                      style: TextStyle(
+                      l10n.hotNewsSubtitle,
+                      style: const TextStyle(
                         color: AppColors.darkTextSecondary,
                         fontSize: 11,
                         height: 1.35,
@@ -1149,6 +1193,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   // --- 6. Category Filter Chips ---
   Widget _buildCategoryChips(List<StockModel> stocks) {
+    final l10n = ref.watch(l10nProvider);
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       physics: const BouncingScrollPhysics(),
@@ -1191,7 +1236,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        cat,
+                        _getCategoryLabel(cat, l10n),
                         style: TextStyle(
                           color: cat == _selectedCategory
                               ? const Color(0xFF032617)
@@ -1237,6 +1282,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   // --- 7. Price Board Header & Sort ---
   Widget _buildPriceBoardHeader(int count) {
+    final l10n = ref.watch(l10nProvider);
     final sortMeta =
         _sortOptions[_selectedSort] ?? ('Top Khối lượng', Icons.bar_chart_rounded);
 
@@ -1248,12 +1294,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             Expanded(
               child: Row(
                 children: [
-                  const Flexible(
+                  Flexible(
                     child: Text(
-                      'BẢNG GIÁ TRỰC TUYẾN',
+                      l10n.priceBoardHeader.toUpperCase(),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
@@ -1274,7 +1320,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       ),
                     ),
                     child: Text(
-                      '$count mã',
+                      l10n.symbolsCount(count),
                       style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 10,
@@ -1288,7 +1334,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             const SizedBox(width: 8),
             // Real working PopupMenuButton with all sort options
             PopupMenuButton<String>(
-              tooltip: 'Tùy chọn sắp xếp',
+              tooltip: l10n.sortTooltip,
               color: AppColors.darkCard,
               elevation: 10,
               offset: const Offset(0, 36),
@@ -1315,7 +1361,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          entry.value.$1,
+                          _getSortLabel(entry.key, l10n),
                           style: TextStyle(
                             color: isSelected
                                 ? AppColors.primary
@@ -1356,7 +1402,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     Icon(sortMeta.$2, color: AppColors.primary, size: 13),
                     const SizedBox(width: 5),
                     Text(
-                      sortMeta.$1,
+                      _getSortLabel(_selectedSort, l10n),
                       style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 11,
@@ -1383,13 +1429,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             color: AppColors.darkCard.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Row(
+          child: Row(
             children: [
               Expanded(
                 flex: 4,
                 child: Text(
-                  'MÃ / DOANH NGHIỆP',
-                  style: TextStyle(
+                  l10n.colSymbolCompany,
+                  style: const TextStyle(
                     color: AppColors.darkTextMuted,
                     fontSize: 10,
                     fontWeight: FontWeight.w600,
@@ -1401,8 +1447,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 flex: 3,
                 child: Center(
                   child: Text(
-                    'XU HƯỚNG',
-                    style: TextStyle(
+                    l10n.colTrend,
+                    style: const TextStyle(
                       color: AppColors.darkTextMuted,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -1416,8 +1462,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 child: Align(
                   alignment: Alignment.centerRight,
                   child: Text(
-                    'GIÁ KHỚP / +/-',
-                    style: TextStyle(
+                    l10n.colMatchChange,
+                    style: const TextStyle(
                       color: AppColors.darkTextMuted,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
@@ -1435,6 +1481,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   // --- 8. Stocks Table ---
   Widget _buildStockTable(List<StockModel> filtered) {
+    final l10n = ref.watch(l10nProvider);
     if (filtered.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(28),
@@ -1445,7 +1492,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ),
         alignment: Alignment.center,
         child: Text(
-          'Không có mã cổ phiếu nào thuộc nhóm "$_selectedCategory"',
+          l10n.noStocksInCategory(_getCategoryLabel(_selectedCategory, l10n)),
           style: const TextStyle(
             color: AppColors.darkTextSecondary,
             fontSize: 13,
@@ -1473,11 +1520,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           Color badgeBg;
           Color badgeText;
           if (stock.priceState == PriceState.ceiling) {
-            badge = 'TRẦN';
+            badge = l10n.badgeCeiling;
             badgeBg = const Color(0xFF8B5CF6);
             badgeText = Colors.white;
           } else if (stock.priceState == PriceState.floor) {
-            badge = 'SÀN';
+            badge = l10n.badgeFloor;
             badgeBg = const Color(0xFF06B6D4);
             badgeText = Colors.black;
           } else {
@@ -1591,7 +1638,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               ),
                               const SizedBox(width: 3),
                               Text(
-                                'KL: $volumeFormatted',
+                                l10n.volumePrefix(volumeFormatted),
                                 style: const TextStyle(
                                   color: AppColors.darkTextMuted,
                                   fontSize: 10,

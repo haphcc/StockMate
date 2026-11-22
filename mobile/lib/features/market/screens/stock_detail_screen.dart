@@ -1,21 +1,23 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/stockmate_api.dart';
 import '../../../data/models/stock_model.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../providers/app_providers.dart';
 import '../data/market_fixtures.dart';
 import '../widgets/market_components.dart';
 
-class StockDetailScreen extends StatefulWidget {
+class StockDetailScreen extends ConsumerStatefulWidget {
   const StockDetailScreen({super.key, required this.symbol});
   final String symbol;
   @override
-  State<StockDetailScreen> createState() => _StockDetailScreenState();
+  ConsumerState<StockDetailScreen> createState() => _StockDetailScreenState();
 }
 
-class _StockDetailScreenState extends State<StockDetailScreen> {
+class _StockDetailScreenState extends ConsumerState<StockDetailScreen> {
   String _range = '1M';
   bool _saved = false;
   StockModel? _stock;
@@ -116,6 +118,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     final stock = _stock;
     if (_loading) {
       return const Scaffold(
@@ -248,30 +251,30 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  _chartSection(stock),
+                  _chartSection(stock, l10n),
                   const SizedBox(height: 20),
-                  const SectionTitle('Thông tin giao dịch'),
+                  SectionTitle(l10n.tradeInfoTitle),
                   const SizedBox(height: 10),
                   MarketPanel(
                     child: Column(
                       children: [
                         _priceLine(
-                          'Mở cửa',
+                          l10n.openPrice,
                           formatBoardPrice(stock.referencePrice),
                           AppColors.priceRef,
                         ),
                         _priceLine(
-                          'Cao nhất',
+                          l10n.highPrice,
                           formatBoardPrice(stock.ceilingPrice),
                           AppColors.priceCeiling,
                         ),
                         _priceLine(
-                          'Thấp nhất',
+                          l10n.lowPrice,
                           formatBoardPrice(stock.floorPrice),
                           AppColors.priceFloor,
                         ),
                         _priceLine(
-                          'Khối lượng',
+                          l10n.volumeLabel,
                           formatVolume(stock.totalVolume),
                           Colors.white,
                           last: true,
@@ -280,9 +283,9 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const SectionTitle('Giá trong phiên'),
+                  SectionTitle(l10n.sessionPricesTitle),
                   const SizedBox(height: 10),
-                  _buildMarketDepth(context, stock),
+                  _buildMarketDepth(context, stock, l10n),
                   const SizedBox(height: 110),
                 ],
               ),
@@ -305,7 +308,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                     side: const BorderSide(color: AppColors.priceDown),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text('Bán'),
+                  child: Text(l10n.orderSell),
                 ),
               ),
               const SizedBox(width: 12),
@@ -315,7 +318,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                   onPressed: () =>
                       context.go('/home/trade?symbol=${stock.symbol}&side=BUY'),
                   icon: const Icon(Icons.add_rounded, size: 18),
-                  label: const Text('Đặt lệnh mua'),
+                  label: Text(l10n.actionTradeBuy),
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: const Color(0xFF06251C),
@@ -331,7 +334,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
     );
   }
 
-  Widget _chartSection(StockModel stock) {
+  Widget _chartSection(StockModel stock, AppLocalizations l10n) {
     String dateAt(double fraction) {
       if (_candles.isEmpty) return '—';
       final index = ((_candles.length - 1) * fraction).round();
@@ -344,11 +347,11 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Text(
-                'Biểu đồ nến',
-                style: TextStyle(
+                l10n.candleChartTitle,
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -453,7 +456,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
     ),
   );
 
-  Widget _buildMarketDepth(BuildContext context, StockModel stock) {
+  Widget _buildMarketDepth(BuildContext context, StockModel stock, AppLocalizations l10n) {
     final int tick;
     final priceDong = stock.currentPrice;
     if (stock.exchange == 'HOSE') {
@@ -507,7 +510,7 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       child: Column(
         children: [
-          _depthHeader(),
+          _depthHeader(l10n),
           const SizedBox(height: 8),
           _depthRow(
             context: context,
@@ -546,9 +549,9 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
             askRatio: ask3Vol / maxVol,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Chạm vào mức giá để điền nhanh vào màn hình Đặt lệnh',
-            style: TextStyle(
+          Text(
+            l10n.depthTapHint,
+            style: const TextStyle(
               color: AppColors.darkTextMuted,
               fontSize: 10,
             ),
@@ -558,8 +561,8 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
     );
   }
 
-  Widget _depthHeader() => const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+  Widget _depthHeader(AppLocalizations l10n) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
         child: Row(
           children: [
             Expanded(
@@ -567,8 +570,8 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'KL MUA',
-                    style: TextStyle(
+                    l10n.bidQty,
+                    style: const TextStyle(
                       color: AppColors.darkTextMuted,
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
@@ -576,8 +579,8 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                     ),
                   ),
                   Text(
-                    'GIÁ MUA',
-                    style: TextStyle(
+                    l10n.bidPrice,
+                    style: const TextStyle(
                       color: AppColors.darkTextMuted,
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
@@ -587,14 +590,14 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                 ],
               ),
             ),
-            SizedBox(width: 14),
+            const SizedBox(width: 14),
             Expanded(
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'GIÁ BÁN',
-                    style: TextStyle(
+                    l10n.askPrice,
+                    style: const TextStyle(
                       color: AppColors.darkTextMuted,
                       fontSize: 9,
                       fontWeight: FontWeight.w700,
@@ -602,10 +605,20 @@ class _StockDetailScreenState extends State<StockDetailScreen> {
                     ),
                   ),
                   Text(
-                    'KL BÁN',
-                    style: TextStyle(
+                    l10n.askQty,
+                    style: const TextStyle(
                       color: AppColors.darkTextMuted,
                       fontSize: 9,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: .5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
                       fontWeight: FontWeight.w700,
                       letterSpacing: .5,
                     ),

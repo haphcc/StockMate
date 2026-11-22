@@ -115,8 +115,10 @@ class _AssetCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = ref.watch(l10nProvider);
     if (asset == null) {
-      return const _ErrorCard(
-        message: 'Không có tài khoản CASH đang hoạt động.',
+      return _ErrorCard(
+        message: l10n.isVietnamese
+            ? 'Không có tài khoản CASH đang hoạt động.'
+            : 'No active CASH account found.',
       );
     }
     final a = asset!;
@@ -232,6 +234,7 @@ class _HoldingItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final c = item.profitLoss.cents >= 0
         ? AppColors.primary
         : AppColors.priceDown;
@@ -309,17 +312,19 @@ class _HoldingItem extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _holdingStat(
-                        'Khả dụng / Tổng',
+                        l10n.isVietnamese ? 'Khả dụng / Tổng' : 'Available / Total',
                         '${item.availableQuantity} / ${item.quantity}',
                         subLabel: item.t1PendingQuantity > 0 ||
                                 item.t2PendingQuantity > 0
-                            ? 'Chờ: T+1: ${item.t1PendingQuantity} | T+2: ${item.t2PendingQuantity}'
+                            ? (l10n.isVietnamese
+                                ? 'Chờ: T+1: ${item.t1PendingQuantity} | T+2: ${item.t2PendingQuantity}'
+                                : 'Pending: T+1: ${item.t1PendingQuantity} | T+2: ${item.t2PendingQuantity}')
                             : null,
                       ),
                     ),
                     Expanded(
                       child: _holdingStat(
-                        'Giá vốn / Hiện tại',
+                        l10n.isVietnamese ? 'Giá vốn / Hiện tại' : 'Avg Cost / Current',
                         '${item.avgBuyPrice.formatVND} / ${item.currentPrice.formatVND}',
                         alignRight: true,
                       ),
@@ -331,7 +336,7 @@ class _HoldingItem extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _holdingStat(
-                        'Giá trị thị trường',
+                        l10n.isVietnamese ? 'Giá trị thị trường' : 'Market Value',
                         item.marketValue.formatVND,
                       ),
                     ),
@@ -355,8 +360,10 @@ class _HoldingItem extends StatelessWidget {
                         icon: const Icon(Icons.arrow_downward_rounded, size: 15),
                         label: Text(
                           hasAvailable
-                              ? 'Bán (${item.availableQuantity})'
-                              : 'Chờ về',
+                              ? (l10n.isVietnamese
+                                  ? 'Bán (${item.availableQuantity})'
+                                  : 'Sell (${item.availableQuantity})')
+                              : (l10n.isVietnamese ? 'Chờ về' : 'Pending'),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: AppColors.priceDown,
@@ -386,7 +393,7 @@ class _HoldingItem extends StatelessWidget {
                           '/home/trade?symbol=${item.stockSymbol}&side=BUY',
                         ),
                         icon: const Icon(Icons.add_rounded, size: 15),
-                        label: const Text('Mua thêm'),
+                        label: Text(l10n.isVietnamese ? 'Mua thêm' : 'Buy More'),
                         style: FilledButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: const Color(0xFF06251C),
@@ -423,7 +430,7 @@ class _HoldingItem extends StatelessWidget {
                         ),
                         padding: const EdgeInsets.all(10),
                       ),
-                      tooltip: 'Xem biểu đồ nến',
+                      tooltip: l10n.isVietnamese ? 'Xem biểu đồ nến' : 'Candlestick Chart',
                     ),
                   ],
                 ),

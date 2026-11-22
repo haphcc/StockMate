@@ -1,51 +1,54 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/stockmate_api.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../providers/app_providers.dart';
 import '../../market/widgets/market_components.dart';
 
-class OrderBookScreen extends StatefulWidget {
+class OrderBookScreen extends ConsumerStatefulWidget {
   const OrderBookScreen({super.key});
   @override
-  State<OrderBookScreen> createState() => _OrderBookScreenState();
+  ConsumerState<OrderBookScreen> createState() => _OrderBookScreenState();
 }
 
-class _OrderBookScreenState extends State<OrderBookScreen> {
+class _OrderBookScreenState extends ConsumerState<OrderBookScreen> {
   final _api = StockmateApi();
   bool _loading = true;
   String? _error;
-  String _filter = 'Tất cả';
+  String _filter = 'all';
   final _orders = <_OrderPreview>[
     _OrderPreview(
       id: 'SM-24816',
       symbol: 'FPT',
-      side: 'MUA',
+      side: 'BUY',
       price: '134.0',
       quantity: 500,
       filled: 200,
       time: '14:32',
-      status: 'Khớp một phần',
+      status: 'PARTIAL',
     ),
     _OrderPreview(
       id: 'SM-24811',
       symbol: 'MWG',
-      side: 'BÁN',
+      side: 'SELL',
       price: '64.0',
-      quantity: 1_000,
+      quantity: 1000,
       filled: 0,
       time: '14:18',
-      status: 'Chờ khớp',
+      status: 'PENDING',
     ),
     _OrderPreview(
       id: 'SM-24790',
       symbol: 'SSI',
-      side: 'MUA',
+      side: 'BUY',
       price: '33.8',
       quantity: 300,
       filled: 300,
       time: '10:06',
-      status: 'Đã khớp',
+      status: 'COMPLETED',
     ),
   ];
 
@@ -71,26 +74,19 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
           ..addAll(
             rows.map((row) {
               final date = DateTime.tryParse('${row['order_date']}')?.toLocal();
-              final status = switch ('${row['status']}') {
-                'PENDING' => 'Chờ khớp',
-                'PARTIAL' => 'Khớp một phần',
-                'COMPLETED' => 'Đã khớp',
-                'CANCELLED' => 'Đã hủy',
-                'REJECTED' => 'Bị từ chối',
-                _ => '${row['status']}',
-              };
+              final rawStatus = '${row['status']}';
               final rawPrice = double.tryParse('${row['order_price']}') ?? 0;
               return _OrderPreview(
                 id: '${row['order_id']}',
                 symbol: '${row['stock_symbol']}',
-                side: row['order_type'] == 'BUY' ? 'MUA' : 'BÁN',
+                side: row['order_type'] == 'BUY' ? 'BUY' : 'SELL',
                 price: (rawPrice / 1000).toStringAsFixed(1),
                 quantity: (row['quantity'] as num).toInt(),
                 filled: (row['filled_quantity'] as num).toInt(),
                 time: date == null
                     ? ''
                     : '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}',
-                status: status,
+                status: rawStatus,
               );
             }),
           );
@@ -108,18 +104,45 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
     }
   }
 
+  String _getStatusLabel(String status, AppLocalizations l10n) {
+    switch (status) {
+      case 'PENDING':
+        return l10n.statusPending;
+      case 'PARTIAL':
+        return l10n.statusPartial;
+      case 'COMPLETED':
+        return l10n.statusCompleted;
+      case 'CANCELLED':
+        return l10n.statusCancelled;
+      case 'REJECTED':
+        return l10n.statusRejected;
+      default:
+        return status;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     final shown = _orders
         .where(
           (order) =>
-              _filter == 'Tất cả' ||
-              (_filter == 'Đang mở'
-                  ? order.status == 'Chờ khớp' ||
-                        order.status == 'Khớp một phần'
-                  : order.status == _filter),
+              _filter == 'all' ||
+              (_filter == 'open'
+                  ? order.status == 'PENDING' || order.status == 'PARTIAL'
+                  : (_filter == 'completed'
+                      ? order.status == 'COMPLETED'
+                      : (_filter == 'cancelled'
+                          ? order.status == 'CANCELLED'
+                          : true))),
         )
         .toList();
+    final filterOptions = [
+      ('all', l10n.all),
+      ('open', l10n.filterOpenOrders),
+      ('completed', l10n.statusCompleted),
+      ('cancelled', l10n.statusCancelled),
+    ];
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       body: SafeArea(
@@ -131,22 +154,22 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
           children: [
             Row(
               children: [
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Sổ lệnh',
-                        style: TextStyle(
+                        l10n.orderBookTitle,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 25,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      SizedBox(height: 4),
+                      const SizedBox(height: 4),
                       Text(
-                        'Theo dõi các lệnh đã đặt',
-                        style: TextStyle(
+                        l10n.orderBookSubtitle,
+                        style: const TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 12,
                         ),
@@ -174,7 +197,7 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'Không tải được sổ lệnh: $_error',
+                  l10n.isVietnamese ? 'Không tải được sổ lệnh: $_error' : 'Failed to load order book: $_error',
                   style: const TextStyle(color: AppColors.priceDown),
                 ),
               ),
@@ -183,8 +206,8 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
               child: Row(
                 children: [
                   _miniStat(
-                    'Lệnh đang mở',
-                    '${_orders.where((order) => order.status == 'Chờ khớp' || order.status == 'Khớp một phần').length}',
+                    l10n.openOrdersStat,
+                    '${_orders.where((order) => order.status == 'PENDING' || order.status == 'PARTIAL').length}',
                     AppColors.priceRef,
                   ),
                   const Spacer(),
@@ -195,21 +218,21 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
                   ),
                   const Spacer(),
                   _miniStat(
-                    'Đã khớp hôm nay',
-                    '${_orders.where((order) => order.status == 'Đã khớp').length}',
+                    l10n.filledTodayStat,
+                    '${_orders.where((order) => order.status == 'COMPLETED').length}',
                     AppColors.primary,
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 22),
-            const SectionTitle('Lệnh của tôi'),
+            SectionTitle(l10n.myOrders),
             Align(
               alignment: Alignment.centerRight,
               child: TextButton.icon(
                 onPressed: () => context.push('/home/orders/transactions'),
                 icon: const Icon(Icons.arrow_forward_rounded, size: 15),
-                label: const Text('Lịch sử giao dịch'),
+                label: Text(l10n.viewHistoryBtn),
                 style: TextButton.styleFrom(
                   foregroundColor: AppColors.primary,
                   visualDensity: VisualDensity.compact,
@@ -220,14 +243,14 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: ['Tất cả', 'Đang mở', 'Đã khớp', 'Đã hủy']
+                children: filterOptions
                     .map(
-                      (filter) => Padding(
+                      (opt) => Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: FilterChipPill(
-                          label: filter,
-                          selected: _filter == filter,
-                          onTap: () => setState(() => _filter = filter),
+                          label: opt.$2,
+                          selected: _filter == opt.$1,
+                          onTap: () => setState(() => _filter = opt.$1),
                         ),
                       ),
                     )
@@ -236,13 +259,13 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
             ),
             const SizedBox(height: 14),
             if (shown.isEmpty)
-              const MarketPanel(
+              MarketPanel(
                 child: Padding(
-                  padding: EdgeInsets.all(22),
+                  padding: const EdgeInsets.all(22),
                   child: Center(
                     child: Text(
-                      'Không có lệnh trong trạng thái này.',
-                      style: TextStyle(color: AppColors.darkTextSecondary),
+                      l10n.noOrdersInStatus,
+                      style: const TextStyle(color: AppColors.darkTextSecondary),
                     ),
                   ),
                 ),
@@ -253,14 +276,14 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
                   padding: const EdgeInsets.only(bottom: 10),
                   child: MarketPanel(
                     padding: const EdgeInsets.all(15),
-                    child: _orderTile(order),
+                    child: _orderTile(order, l10n),
                   ),
                 ),
               ),
             const SizedBox(height: 12),
-            const Text(
-              'Lệnh của tài khoản đang chọn · cập nhật từ máy chủ',
-              style: TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
+            Text(
+              l10n.ordersFooterNotice,
+              style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
             ),
           ],
         ),
@@ -291,12 +314,12 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
     ],
   );
 
-  Widget _orderTile(_OrderPreview order) {
-    final buy = order.side == 'MUA';
+  Widget _orderTile(_OrderPreview order, AppLocalizations l10n) {
+    final buy = order.side == 'BUY';
     final tint = buy ? AppColors.primary : AppColors.priceDown;
-    final stateColor = order.status == 'Đã khớp'
+    final stateColor = order.status == 'COMPLETED'
         ? AppColors.primary
-        : order.status == 'Đã hủy'
+        : (order.status == 'CANCELLED' || order.status == 'REJECTED')
         ? AppColors.darkTextMuted
         : AppColors.priceRef;
     return Column(
@@ -311,7 +334,7 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
                 borderRadius: BorderRadius.circular(7),
               ),
               child: Text(
-                order.side,
+                buy ? l10n.orderBuy : l10n.orderSell,
                 style: TextStyle(
                   color: tint,
                   fontSize: 9,
@@ -330,7 +353,7 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
             ),
             const Spacer(),
             Text(
-              order.status,
+              _getStatusLabel(order.status, l10n),
               style: TextStyle(
                 color: stateColor,
                 fontSize: 10,
@@ -341,17 +364,17 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
         ),
         const SizedBox(height: 6),
         Text(
-          '${order.id}  ·  Hôm nay, ${order.time}',
+          l10n.orderIdToday(order.id, order.time),
           style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
         ),
         const SizedBox(height: 14),
         Row(
           children: [
-            _orderValue('GIÁ ĐẶT', '${order.price} nghìn'),
+            _orderValue(l10n.priceLabel.toUpperCase(), '${order.price} ${l10n.thousandDongUnit}'),
             const Spacer(),
-            _orderValue('KHỐI LƯỢNG', '${_number(order.quantity)} cp'),
+            _orderValue(l10n.quantityLabel.toUpperCase(), '${_number(order.quantity)} cp'),
             const Spacer(),
-            _orderValue('ĐÃ KHỚP', '${_number(order.filled)} cp'),
+            _orderValue(l10n.filledQty, '${_number(order.filled)} cp'),
           ],
         ),
         if (order.quantity > 0) ...[
@@ -366,7 +389,7 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
             ),
           ),
         ],
-        if (order.status == 'Chờ khớp' || order.status == 'Khớp một phần') ...[
+        if (order.status == 'PENDING' || order.status == 'PARTIAL') ...[
           const SizedBox(height: 9),
           Align(
             alignment: Alignment.centerRight,
@@ -380,7 +403,7 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
                 } catch (error) {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Không hủy được lệnh: $error')),
+                      SnackBar(content: Text(l10n.isVietnamese ? 'Không hủy được lệnh: $error' : 'Failed to cancel order: $error')),
                     );
                   }
                 }
@@ -389,7 +412,7 @@ class _OrderBookScreenState extends State<OrderBookScreen> {
                 foregroundColor: AppColors.priceDown,
                 visualDensity: VisualDensity.compact,
               ),
-              child: const Text('Hủy lệnh'),
+              child: Text(l10n.btnCancelOrder),
             ),
           ),
         ],

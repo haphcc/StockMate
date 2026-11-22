@@ -1,28 +1,31 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/stockmate_api.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../providers/app_providers.dart';
 import '../../market/widgets/market_components.dart';
 
-class NotificationScreen extends StatefulWidget {
+class NotificationScreen extends ConsumerStatefulWidget {
   const NotificationScreen({super.key});
   @override
-  State<NotificationScreen> createState() => _NotificationScreenState();
+  ConsumerState<NotificationScreen> createState() => _NotificationScreenState();
 }
 
-class _NotificationScreenState extends State<NotificationScreen> {
+class _NotificationScreenState extends ConsumerState<NotificationScreen> {
   final _api = StockmateApi();
   bool _loading = true;
   String? _error;
-  String _filter = 'Tất cả';
+  String _filter = 'all';
   final _items = <_NoticePreview>[
     _NoticePreview(
       title: 'Lệnh FPT khớp một phần',
       content:
           'Lệnh mua 500 cổ phiếu FPT đã khớp 200 cổ phiếu ở mức giá 134.200 ₫.',
       time: '14:32 · Hôm nay',
-      type: 'Lệnh',
+      type: 'ORDER',
       icon: Icons.swap_horiz_rounded,
       unread: true,
     ),
@@ -31,7 +34,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       content:
           'Giao dịch bán 300 cổ phiếu SSI đã hoàn tất. Tiền bán dự kiến về tài khoản ngày 18/11.',
       time: '10:08 · Hôm nay',
-      type: 'Tài khoản',
+      type: 'ACCOUNT',
       icon: Icons.check_circle_outline_rounded,
       unread: true,
     ),
@@ -40,7 +43,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       content:
           'VN-Index tăng 0,97% trong phiên sáng, thanh khoản tập trung ở nhóm ngân hàng và công nghệ.',
       time: '09:15 · Hôm nay',
-      type: 'Thị trường',
+      type: 'PRICE_ALERT',
       icon: Icons.candlestick_chart_rounded,
       unread: false,
     ),
@@ -49,7 +52,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       content:
           'Thị trường chứng khoán sẽ nghỉ giao dịch vào ngày lễ theo lịch công bố của sở giao dịch.',
       time: '16:30 · 12/11',
-      type: 'Hệ thống',
+      type: 'SYSTEM',
       icon: Icons.campaign_outlined,
       unread: false,
     ),
@@ -76,12 +79,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ..addAll(
             rows.map((row) {
               final rawType = '${row['notification_type']}';
-              final type = switch (rawType) {
-                'ORDER' => 'Lệnh',
-                'PRICE_ALERT' => 'Thị trường',
-                'SYSTEM' => 'Hệ thống',
-                _ => rawType,
-              };
               final created = DateTime.tryParse(
                 '${row['created_at']}',
               )?.toLocal();
@@ -92,7 +89,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 time: created == null
                     ? ''
                     : '${created.day}/${created.month} · ${created.hour}:${created.minute.toString().padLeft(2, '0')}',
-                type: type,
+                type: rawType,
                 icon: Icons.notifications_outlined,
                 unread: !(row['is_read'] as bool),
               );
@@ -118,23 +115,48 @@ class _NotificationScreenState extends State<NotificationScreen> {
       if (mounted) setState(() => item.unread = false);
     } catch (error) {
       if (mounted) {
+        final l10n = ref.read(l10nProvider);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Không cập nhật được thông báo: $error')),
+          SnackBar(content: Text(l10n.isVietnamese ? 'Không cập nhật được thông báo: $error' : 'Failed to update notification: $error')),
         );
       }
     }
   }
 
+  String _getTypeLabel(String type, AppLocalizations l10n) {
+    switch (type) {
+      case 'ORDER':
+        return l10n.notifTypeOrder;
+      case 'PRICE_ALERT':
+      case 'MARKET':
+        return l10n.notifTypeMarket;
+      case 'ACCOUNT':
+        return l10n.notifTypeAccount;
+      case 'SYSTEM':
+        return l10n.notifTypeSystem;
+      default:
+        return type;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     final items = _items
         .where(
           (item) =>
-              _filter == 'Tất cả' ||
-              (_filter == 'Chưa đọc' ? item.unread : item.type == _filter),
+              _filter == 'all' ||
+              (_filter == 'unread' ? item.unread : item.type == _filter),
         )
         .toList();
     final unread = _items.where((item) => item.unread).length;
+    final filterOptions = [
+      ('all', l10n.all),
+      ('unread', l10n.unreadOnly),
+      ('ORDER', l10n.notifTypeOrder),
+      ('PRICE_ALERT', l10n.notifTypeMarket),
+      ('SYSTEM', l10n.notifTypeSystem),
+    ];
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       body: SafeArea(
@@ -161,9 +183,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Thông báo',
-                        style: TextStyle(
+                      Text(
+                        l10n.notificationsTitle,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
@@ -171,7 +193,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       ),
                       const SizedBox(height: 3),
                       Text(
-                        '$unread thông báo chưa đọc',
+                        l10n.isVietnamese
+                            ? '$unread thông báo chưa đọc'
+                            : '$unread unread notification${unread == 1 ? '' : 's'}',
                         style: const TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 11,
@@ -190,9 +214,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             _markRead(item);
                           }
                         },
-                  child: const Text(
-                    'Đọc tất cả',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.isVietnamese ? 'Đọc tất cả' : 'Read all',
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -212,7 +236,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'Không tải được thông báo: $_error',
+                  l10n.isVietnamese ? 'Không tải được thông báo: $_error' : 'Failed to load notifications: $_error',
                   style: const TextStyle(color: AppColors.priceDown),
                 ),
               ),
@@ -220,32 +244,31 @@ class _NotificationScreenState extends State<NotificationScreen> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children:
-                    ['Tất cả', 'Chưa đọc', 'Lệnh', 'Thị trường', 'Hệ thống']
-                        .map(
-                          (filter) => Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: FilterChipPill(
-                              label: filter,
-                              selected: _filter == filter,
-                              onTap: () => setState(() => _filter = filter),
-                            ),
-                          ),
-                        )
-                        .toList(),
+                children: filterOptions
+                    .map(
+                      (filter) => Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: FilterChipPill(
+                          label: filter.$2,
+                          selected: _filter == filter.$1,
+                          onTap: () => setState(() => _filter = filter.$1),
+                        ),
+                      ),
+                    )
+                    .toList(),
               ),
             ),
             const SizedBox(height: 18),
-            const SectionTitle('Gần đây'),
+            SectionTitle(l10n.isVietnamese ? 'Gần đây' : 'Recent'),
             const SizedBox(height: 10),
             if (items.isEmpty)
-              const MarketPanel(
+              MarketPanel(
                 child: Padding(
-                  padding: EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(24),
                   child: Center(
                     child: Text(
-                      'Bạn đã xem hết thông báo.',
-                      style: TextStyle(color: AppColors.darkTextSecondary),
+                      l10n.noNotifications,
+                      style: const TextStyle(color: AppColors.darkTextSecondary),
                     ),
                   ),
                 ),
@@ -295,7 +318,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                           color: Colors.white,
                                           fontSize: 12,
                                           fontWeight: item.unread
-                                              ? FontWeight.w800
+                                              ? FontWeight.bold
                                               : FontWeight.w600,
                                         ),
                                       ),
@@ -311,7 +334,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                       ),
                                   ],
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 4),
                                 Text(
                                   item.content,
                                   style: const TextStyle(
@@ -324,7 +347,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                 Row(
                                   children: [
                                     Text(
-                                      item.type.toUpperCase(),
+                                      _getTypeLabel(item.type, l10n).toUpperCase(),
                                       style: const TextStyle(
                                         color: AppColors.darkTextMuted,
                                         fontSize: 8,
@@ -358,9 +381,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 ),
               ),
             const SizedBox(height: 12),
-            const Text(
-              'Thông báo của tài khoản đang đăng nhập',
-              style: TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
+            Text(
+              l10n.isVietnamese
+                  ? 'Thông báo của tài khoản đang đăng nhập'
+                  : 'Notifications for logged in account',
+              style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
             ),
           ],
         ),

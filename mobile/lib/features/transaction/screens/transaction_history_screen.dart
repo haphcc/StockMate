@@ -1,27 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/stockmate_api.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../providers/app_providers.dart';
 import '../../market/widgets/market_components.dart';
 
-class TransactionHistoryScreen extends StatefulWidget {
+class TransactionHistoryScreen extends ConsumerStatefulWidget {
   const TransactionHistoryScreen({super.key});
   @override
-  State<TransactionHistoryScreen> createState() =>
+  ConsumerState<TransactionHistoryScreen> createState() =>
       _TransactionHistoryScreenState();
 }
 
-class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
+class _TransactionHistoryScreenState extends ConsumerState<TransactionHistoryScreen> {
   final _api = StockmateApi();
   bool _loading = true;
   String? _error;
-  String _filter = 'Tất cả';
+  String _filter = 'all';
   final _transactions = <_TradePreview>[
     const _TradePreview(
       symbol: 'FPT',
-      side: 'MUA',
+      side: 'BUY',
       qty: 200,
       price: '134.20',
       total: '26.840.000',
@@ -31,7 +34,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     ),
     const _TradePreview(
       symbol: 'SSI',
-      side: 'BÁN',
+      side: 'SELL',
       qty: 300,
       price: '34.10',
       total: '10.230.000',
@@ -41,7 +44,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
     ),
     const _TradePreview(
       symbol: 'HPG',
-      side: 'MUA',
+      side: 'BUY',
       qty: 500,
       price: '28.70',
       total: '14.350.000',
@@ -79,7 +82,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               double amount(key) => double.tryParse('${row[key]}') ?? 0;
               return _TradePreview(
                 symbol: '${row['stock_symbol']}',
-                side: row['transaction_type'] == 'BUY' ? 'MUA' : 'BÁN',
+                side: row['transaction_type'] == 'BUY' ? 'BUY' : 'SELL',
                 qty: (row['quantity'] as num).toInt(),
                 price: (amount('price') / 1000).toStringAsFixed(2),
                 total: amount('total_amount').toStringAsFixed(0),
@@ -107,8 +110,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     final shown = _transactions
-        .where((item) => _filter == 'Tất cả' || item.side == _filter)
+        .where((item) => _filter == 'all' || item.side == _filter)
         .toList();
     final displayedTotal = _transactions.fold<int>(
       0,
@@ -116,6 +120,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
           sum +
           (int.tryParse(item.total.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0),
     );
+    final filterOptions = [
+      ('all', l10n.all),
+      ('BUY', l10n.isVietnamese ? 'Lệnh mua' : 'Buy Orders'),
+      ('SELL', l10n.isVietnamese ? 'Lệnh bán' : 'Sell Orders'),
+    ];
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       body: SafeArea(
@@ -138,37 +147,27 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                   ),
                 ),
                 const SizedBox(width: 10),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Lịch sử giao dịch',
-                        style: TextStyle(
+                        l10n.transactionHistoryTitle,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 21,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      SizedBox(height: 3),
+                      const SizedBox(height: 3),
                       Text(
-                        'Các giao dịch đã khớp',
-                        style: TextStyle(
+                        l10n.transactionHistorySubtitle,
+                        style: const TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 11,
                         ),
                       ),
                     ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Icons.calendar_month_rounded,
-                    color: Colors.white,
-                  ),
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColors.darkCard,
                   ),
                 ),
               ],
@@ -184,7 +183,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Text(
-                  'Không tải được lịch sử: $_error',
+                  l10n.isVietnamese ? 'Không tải được lịch sử: $_error' : 'Failed to load history: $_error',
                   style: const TextStyle(color: AppColors.priceDown),
                 ),
               ),
@@ -202,9 +201,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Tổng giá trị trong danh sách',
-                          style: TextStyle(
+                        Text(
+                          l10n.totalTradeValue,
+                          style: const TextStyle(
                             color: AppColors.darkTextSecondary,
                             fontSize: 10,
                           ),
@@ -231,7 +230,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      '${_transactions.length} GD',
+                      '${_transactions.length} ${l10n.isVietnamese ? 'GD' : 'Trades'}',
                       style: const TextStyle(
                         color: AppColors.primary,
                         fontSize: 10,
@@ -246,18 +245,14 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
-                children: ['Tất cả', 'MUA', 'BÁN']
+                children: filterOptions
                     .map(
-                      (filter) => Padding(
+                      (opt) => Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: FilterChipPill(
-                          label: filter == 'Tất cả'
-                              ? filter
-                              : filter == 'MUA'
-                              ? 'Lệnh mua'
-                              : 'Lệnh bán',
-                          selected: _filter == filter,
-                          onTap: () => setState(() => _filter = filter),
+                          label: opt.$2,
+                          selected: _filter == opt.$1,
+                          onTap: () => setState(() => _filter = opt.$1),
                         ),
                       ),
                     )
@@ -265,21 +260,21 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
               ),
             ),
             const SizedBox(height: 18),
-            const SectionTitle('Giao dịch gần nhất'),
+            SectionTitle(l10n.isVietnamese ? 'Giao dịch gần nhất' : 'Recent Transactions'),
             const SizedBox(height: 10),
             ...shown.map(
               (trade) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: MarketPanel(
                   padding: const EdgeInsets.all(15),
-                  child: _tradeCard(trade),
+                  child: _tradeCard(trade, l10n),
                 ),
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Lịch sử giao dịch từ tài khoản đang chọn',
-              style: TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
+            Text(
+              l10n.transactionsFooterNotice,
+              style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
             ),
           ],
         ),
@@ -288,9 +283,15 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
   );
   }
 
-  Widget _tradeCard(_TradePreview trade) {
-    final buy = trade.side == 'MUA';
+  Widget _tradeCard(_TradePreview trade, AppLocalizations l10n) {
+    final buy = trade.side == 'BUY';
     final color = buy ? AppColors.primary : AppColors.priceDown;
+    String settlementText = trade.settlement;
+    if (trade.settlement == 'Đã thanh toán') {
+      settlementText = l10n.settledStatus;
+    } else if (trade.settlement == 'Đang chờ thanh toán') {
+      settlementText = l10n.pendingSettlement;
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -328,7 +329,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
                 borderRadius: BorderRadius.circular(7),
               ),
               child: Text(
-                trade.side,
+                buy ? l10n.orderBuy : l10n.orderSell,
                 style: TextStyle(
                   color: color,
                   fontSize: 9,
@@ -341,11 +342,11 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         const SizedBox(height: 14),
         Row(
           children: [
-            _data('KHỐI LƯỢNG', '${trade.qty} cp'),
+            _data(l10n.quantityLabel.toUpperCase(), '${trade.qty} cp'),
             const Spacer(),
-            _data('GIÁ KHỚP', '${trade.price} nghìn'),
+            _data(l10n.currentMatching.toUpperCase(), '${trade.price} ${l10n.thousandDongUnit}'),
             const Spacer(),
-            _data('GIÁ TRỊ', '${trade.total} ₫'),
+            _data(l10n.isVietnamese ? 'GIÁ TRỊ' : 'VALUE', '${trade.total} ₫'),
           ],
         ),
         const SizedBox(height: 12),
@@ -353,9 +354,9 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
         const SizedBox(height: 10),
         Row(
           children: [
-            const Text(
-              'Phí giao dịch',
-              style: TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
+            Text(
+              l10n.isVietnamese ? 'Phí giao dịch' : 'Trading Fee',
+              style: const TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
             ),
             const Spacer(),
             Text(
@@ -373,7 +374,7 @@ class _TransactionHistoryScreenState extends State<TransactionHistoryScreen> {
             ),
             const SizedBox(width: 4),
             Text(
-              trade.settlement,
+              settlementText,
               style: const TextStyle(
                 color: AppColors.darkTextSecondary,
                 fontSize: 9,
