@@ -4,6 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../../../providers/app_providers.dart';
 import '../data/admin_constants.dart';
 import '../data/models/admin_customer_model.dart';
 import '../providers/admin_providers.dart';
@@ -102,13 +103,20 @@ class _AdminCustomerFormScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
+
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text(_isEdit ? 'Sửa khách hàng' : 'Thêm khách hàng'),
+        title: Text(
+          _isEdit
+              ? (isVi ? 'Sửa khách hàng' : 'Edit Customer')
+              : (isVi ? 'Thêm khách hàng' : 'Add Customer'),
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -116,12 +124,20 @@ class _AdminCustomerFormScreenState
           padding: const EdgeInsets.all(20),
           children: [
             AppTextField(
-              labelText: 'Họ và tên',
+              labelText: isVi ? 'Họ và tên' : 'Full Name',
               controller: _name,
               validator: (v) {
                 final value = (v ?? '').trim();
-                if (value.length < 2) return 'Họ tên tối thiểu 2 ký tự';
-                if (value.length > 100) return 'Họ tên tối đa 100 ký tự';
+                if (value.length < 2) {
+                  return isVi
+                      ? 'Họ tên tối thiểu 2 ký tự'
+                      : 'Full name must be at least 2 characters';
+                }
+                if (value.length > 100) {
+                  return isVi
+                      ? 'Họ tên tối đa 100 ký tự'
+                      : 'Full name maximum 100 characters';
+                }
                 return null;
               },
             ),
@@ -135,10 +151,14 @@ class _AdminCustomerFormScreenState
             const SizedBox(height: 16),
             AppTextField(
               labelText: _hasPlaceholderPhone
-                  ? 'Số điện thoại (tùy chọn - tài khoản Google)'
-                  : 'Số điện thoại',
+                  ? (isVi
+                      ? 'Số điện thoại (tùy chọn - tài khoản Google)'
+                      : 'Phone number (optional - Google account)')
+                  : (isVi ? 'Số điện thoại' : 'Phone Number'),
               hintText: _hasPlaceholderPhone
-                  ? 'Để trống nếu chưa cập nhật SĐT'
+                  ? (isVi
+                      ? 'Để trống nếu chưa cập nhật SĐT'
+                      : 'Leave empty if phone not updated')
                   : null,
               controller: _phone,
               keyboardType: TextInputType.phone,
@@ -146,7 +166,9 @@ class _AdminCustomerFormScreenState
                 final value = (v ?? '').trim();
                 if (value.isEmpty && _hasPlaceholderPhone) return null;
                 if (!RegExp(r'^\+?[0-9]{9,15}$').hasMatch(value)) {
-                  return 'Số điện thoại gồm 9 đến 15 chữ số';
+                  return isVi
+                      ? 'Số điện thoại gồm 9 đến 15 chữ số'
+                      : 'Phone number must be 9 to 15 digits';
                 }
                 return null;
               },
@@ -154,24 +176,32 @@ class _AdminCustomerFormScreenState
             if (!_isEdit) ...[
               const SizedBox(height: 16),
               AppTextField(
-                labelText: 'Mật khẩu',
+                labelText: isVi ? 'Mật khẩu' : 'Password',
                 controller: _password,
                 obscureText: true,
                 validator: (v) {
-                  if ((v ?? '').length < 6) return 'Mật khẩu tối thiểu 6 ký tự';
+                  if ((v ?? '').length < 6) {
+                    return isVi
+                        ? 'Mật khẩu tối thiểu 6 ký tự'
+                        : 'Password must be at least 6 characters';
+                  }
                   return null;
                 },
               ),
               const SizedBox(height: 16),
               AppTextField(
-                labelText: 'Số dư tiền mặt ban đầu (tùy chọn)',
+                labelText: isVi
+                    ? 'Số dư tiền mặt ban đầu (tùy chọn)'
+                    : 'Initial cash balance (optional)',
                 controller: _cash,
                 keyboardType: TextInputType.number,
                 validator: (v) {
                   final value = (v ?? '').trim();
                   if (value.isEmpty) return null;
                   if (!RegExp(r'^[0-9]+(\.[0-9]{1,2})?$').hasMatch(value)) {
-                    return 'Nhập số không âm, ví dụ 1000000';
+                    return isVi
+                        ? 'Nhập số không âm, ví dụ 1000000'
+                        : 'Enter non-negative number, e.g. 1000000';
                   }
                   return null;
                 },
@@ -179,23 +209,27 @@ class _AdminCustomerFormScreenState
             ],
             if (!widget.isSelf) ...[
               const SizedBox(height: 20),
-              _sectionLabel('Vai trò'),
+              _sectionLabel(isVi ? 'Vai trò' : 'Role'),
               _choices(
                 AdminConstants.customerRoles,
                 _role,
                 (v) => setState(() => _role = v),
+                isVi,
               ),
               const SizedBox(height: 16),
-              _sectionLabel('Trạng thái'),
+              _sectionLabel(isVi ? 'Trạng thái' : 'Status'),
               _choices(
                 AdminConstants.customerStatuses,
                 _status,
                 (v) => setState(() => _status = v),
+                isVi,
               ),
             ],
             const SizedBox(height: 28),
             GradientButton(
-              text: _isEdit ? 'Lưu thay đổi' : 'Tạo khách hàng',
+              text: _isEdit
+                  ? (isVi ? 'Lưu thay đổi' : 'Save Changes')
+                  : (isVi ? 'Tạo khách hàng' : 'Create Customer'),
               isLoading: _saving,
               onPressed: _submit,
             ),
@@ -223,6 +257,7 @@ class _AdminCustomerFormScreenState
     List<String> options,
     String selected,
     ValueChanged<String> onSelected,
+    bool isVi,
   ) {
     return Wrap(
       spacing: 8,
@@ -230,7 +265,7 @@ class _AdminCustomerFormScreenState
       children: [
         for (final option in options)
           ChoiceChip(
-            label: Text(AdminConstants.label(option)),
+            label: Text(AdminConstants.label(option, isVi)),
             selected: selected == option,
             showCheckmark: false,
             onSelected: (_) => onSelected(option),

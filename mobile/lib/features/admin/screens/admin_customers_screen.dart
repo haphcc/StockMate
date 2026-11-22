@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../providers/app_providers.dart';
 import '../data/admin_constants.dart';
 import '../data/models/admin_customer_model.dart';
 import '../data/models/admin_page.dart';
@@ -77,6 +78,8 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
     final async = ref.watch(adminCustomersProvider(_query));
 
     return Scaffold(
@@ -85,10 +88,10 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Khách hàng'),
+        title: Text(isVi ? 'Khách hàng' : 'Customers'),
         actions: [
           IconButton(
-            tooltip: 'Thêm khách hàng',
+            tooltip: isVi ? 'Thêm khách hàng' : 'Add Customer',
             icon: const Icon(Icons.person_add_alt_1_rounded),
             onPressed: _openCreate,
           ),
@@ -100,7 +103,9 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: AppTextField(
               controller: _searchController,
-              hintText: 'Tìm theo tên, email, số điện thoại',
+              hintText: isVi
+                  ? 'Tìm theo tên, email, số điện thoại'
+                  : 'Search by name, email, phone number',
               prefixIcon: const Icon(
                 Icons.search_rounded,
                 color: AppColors.darkTextMuted,
@@ -141,9 +146,11 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
               ),
               data: (page) {
                 if (page.items.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.people_outline_rounded,
-                    message: 'Không tìm thấy khách hàng nào',
+                    message: isVi
+                        ? 'Không tìm thấy khách hàng nào'
+                        : 'No customers found',
                   );
                 }
                 return Column(
@@ -153,10 +160,11 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                         itemCount: page.items.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (_, i) => _customerTile(page.items[i]),
+                        itemBuilder: (_, i) =>
+                            _customerTile(page.items[i], isVi),
                       ),
                     ),
-                    _pager(page),
+                    _pager(page, isVi),
                   ],
                 );
               },
@@ -167,7 +175,7 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
     );
   }
 
-  Widget _customerTile(AdminCustomerModel c) {
+  Widget _customerTile(AdminCustomerModel c, bool isVi) {
     return AdminCard(
       onTap: () => _openDetail(c),
       child: Row(
@@ -232,7 +240,7 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
               ],
               const SizedBox(height: 6),
               Text(
-                '${c.accountsCount} tài khoản',
+                '${c.accountsCount} ${isVi ? 'tài khoản' : 'accounts'}',
                 style: const TextStyle(
                   color: AppColors.darkTextMuted,
                   fontSize: 11,
@@ -245,33 +253,16 @@ class _AdminCustomersScreenState extends ConsumerState<AdminCustomersScreen> {
     );
   }
 
-  Widget _pager(AdminPage<AdminCustomerModel> page) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextButton(
-            onPressed: page.page > 1
-                ? () => setState(() => _page = page.page - 1)
-                : null,
-            child: const Text('Trước'),
-          ),
-          Text(
-            'Trang ${page.page}/${page.totalPages} · ${page.total} khách hàng',
-            style: const TextStyle(
-              color: AppColors.darkTextSecondary,
-              fontSize: 12,
-            ),
-          ),
-          TextButton(
-            onPressed: page.page < page.totalPages
-                ? () => setState(() => _page = page.page + 1)
-                : null,
-            child: const Text('Sau'),
-          ),
-        ],
-      ),
+  Widget _pager(AdminPage<AdminCustomerModel> page, bool isVi) {
+    return AdminPaginationBar(
+      page: page.page,
+      totalPages: page.totalPages,
+      total: page.total,
+      itemName: isVi ? 'khách hàng' : 'customers',
+      onPrevious: page.page > 1 ? () => setState(() => _page = page.page - 1) : null,
+      onNext: page.page < page.totalPages
+          ? () => setState(() => _page = page.page + 1)
+          : null,
     );
   }
 

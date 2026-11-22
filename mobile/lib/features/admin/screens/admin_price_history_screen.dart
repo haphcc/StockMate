@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../providers/app_providers.dart';
 import '../data/models/admin_candle_model.dart';
 import '../data/models/admin_page.dart';
 import '../data/models/admin_stock_model.dart';
@@ -24,11 +25,14 @@ class _AdminPriceHistoryScreenState
   bool _syncing = false;
 
   Future<void> _pickStock() async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     final repo = ref.read(adminRepositoryProvider);
     final picked = await showAdminSearchPicker<AdminStockModel>(
       context,
-      title: 'Chọn mã cổ phiếu',
-      searchHint: 'Tìm mã cổ phiếu hoặc tên công ty...',
+      title: isVi ? 'Chọn mã cổ phiếu' : 'Select Stock Symbol',
+      searchHint: isVi
+          ? 'Tìm mã cổ phiếu hoặc tên công ty...'
+          : 'Search symbol or company name...',
       loadItems: (q) async =>
           (await repo.listStocks(q: q.isEmpty ? null : q, pageSize: 50)).items,
       itemTitle: (s) => '${s.stockSymbol} · ${s.exchange}',
@@ -44,28 +48,33 @@ class _AdminPriceHistoryScreenState
 
   Future<void> _syncLiveHistory() async {
     if (_syncing) return;
+    final isVi = ref.read(l10nProvider).isVietnamese;
     final stock = _stock;
     if (stock == null) {
       final confirm = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
           backgroundColor: AppColors.darkSurface,
-          title: const Text(
-            'Đồng bộ giá thực toàn thị trường',
-            style: TextStyle(color: Colors.white),
+          title: Text(
+            isVi
+                ? 'Đồng bộ giá thực toàn thị trường'
+                : 'Sync Real Prices for Entire Market',
+            style: const TextStyle(color: Colors.white),
           ),
-          content: const Text(
-            'Kéo dữ liệu nến ngày từ DNSE và giá trong phiên từ SSI cho toàn bộ mã cổ phiếu đang hoạt động?',
-            style: TextStyle(color: AppColors.darkTextSecondary),
+          content: Text(
+            isVi
+                ? 'Kéo dữ liệu nến ngày từ DNSE và giá trong phiên từ SSI cho toàn bộ mã cổ phiếu đang hoạt động?'
+                : 'Fetch daily candle data from DNSE and intraday prices from SSI for all active stocks?',
+            style: const TextStyle(color: AppColors.darkTextSecondary),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Hủy'),
+              child: Text(isVi ? 'Hủy' : 'Cancel'),
             ),
             FilledButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Đồng bộ'),
+              child: Text(isVi ? 'Đồng bộ' : 'Sync'),
             ),
           ],
         ),
@@ -83,16 +92,24 @@ class _AdminPriceHistoryScreenState
       ref.invalidate(adminCandlesProvider);
       ref.invalidate(adminStocksProvider);
 
-      final targetLabel =
-          stock != null ? stock.stockSymbol : '${result.syncedStocks}/${result.totalStocks} mã';
+      final targetLabel = stock != null
+          ? stock.stockSymbol
+          : (isVi
+              ? '${result.syncedStocks}/${result.totalStocks} mã'
+              : '${result.syncedStocks}/${result.totalStocks} symbols');
       final latestPart = result.displayLatestDate != null
-          ? ' · mới nhất ${result.displayLatestDate}'
+          ? (isVi
+              ? ' · mới nhất ${result.displayLatestDate}'
+              : ' · latest ${result.displayLatestDate}')
           : '';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Đã đồng bộ $targetLabel: +${result.insertedCandles} mới, '
-            '${result.updatedCandles} cập nhật$latestPart',
+            isVi
+                ? 'Đã đồng bộ $targetLabel: +${result.insertedCandles} mới, '
+                    '${result.updatedCandles} cập nhật$latestPart'
+                : 'Synced $targetLabel: +${result.insertedCandles} new, '
+                    '${result.updatedCandles} updated$latestPart',
           ),
         ),
       );
@@ -101,7 +118,11 @@ class _AdminPriceHistoryScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: AppColors.priceDown,
-          content: Text('Đồng bộ giá thực thất bại: $e'),
+          content: Text(
+            isVi
+                ? 'Đồng bộ giá thực thất bại: $e'
+                : 'Real price sync failed: $e',
+          ),
         ),
       );
     } finally {
@@ -122,6 +143,8 @@ class _AdminPriceHistoryScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
     final stock = _stock;
     final async = stock == null
         ? null
@@ -137,7 +160,7 @@ class _AdminPriceHistoryScreenState
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Lịch sử giá'),
+        title: Text(isVi ? 'Lịch sử giá' : 'Price History'),
         actions: [
           if (_syncing)
             const Padding(
@@ -153,13 +176,17 @@ class _AdminPriceHistoryScreenState
           else
             IconButton(
               tooltip: stock == null
-                  ? 'Đồng bộ giá thực tất cả mã'
-                  : 'Đồng bộ giá thực ${stock.stockSymbol}',
+                  ? (isVi
+                      ? 'Đồng bộ giá thực tất cả mã'
+                      : 'Sync real prices for all')
+                  : (isVi
+                      ? 'Đồng bộ giá thực ${stock.stockSymbol}'
+                      : 'Sync real prices for ${stock.stockSymbol}'),
               icon: const Icon(Icons.sync_rounded),
               onPressed: _syncLiveHistory,
             ),
           IconButton(
-            tooltip: 'Thêm phiên giá',
+            tooltip: isVi ? 'Thêm phiên giá' : 'Add Price Session',
             icon: const Icon(Icons.post_add_rounded),
             onPressed: stock == null ? null : () => _openForm(),
           ),
@@ -175,7 +202,9 @@ class _AdminPriceHistoryScreenState
                 Expanded(
                   child: Text(
                     stock == null
-                        ? 'Chọn mã cổ phiếu...'
+                        ? (isVi
+                            ? 'Chọn mã cổ phiếu...'
+                            : 'Select stock symbol...')
                         : '${stock.stockSymbol} · ${stock.companyName}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -197,7 +226,9 @@ class _AdminPriceHistoryScreenState
           if (async == null)
             _hint(
               Icons.show_chart_rounded,
-              'Chọn mã cổ phiếu để xem lịch sử giá',
+              isVi
+                  ? 'Chọn mã cổ phiếu để xem lịch sử giá'
+                  : 'Select a stock symbol to view price history',
             )
           else
             async.when(
@@ -208,7 +239,9 @@ class _AdminPriceHistoryScreenState
               error: (e, _) => AdminCard(
                 onTap: () => ref.invalidate(adminCandlesProvider),
                 child: Text(
-                  'Không tải được lịch sử giá: $e\nBấm để thử lại.',
+                  isVi
+                      ? 'Không tải được lịch sử giá: $e\nBấm để thử lại.'
+                      : 'Failed to load price history: $e\nTap to retry.',
                   style: const TextStyle(color: AppColors.priceDown),
                 ),
               ),
@@ -216,7 +249,9 @@ class _AdminPriceHistoryScreenState
                 if (page.items.isEmpty) {
                   return _hint(
                     Icons.candlestick_chart_outlined,
-                    'Mã này chưa có dữ liệu nến',
+                    isVi
+                        ? 'Mã này chưa có dữ liệu nến'
+                        : 'No candle data for this symbol',
                   );
                 }
                 // Danh sách xếp ngày giảm dần; biểu đồ cần cũ đến mới.
@@ -231,8 +266,9 @@ class _AdminPriceHistoryScreenState
                           Padding(
                             padding: const EdgeInsets.only(left: 8, bottom: 8),
                             child: Text(
-                              'Biểu đồ nến · ${ascending.length} phiên '
-                              '(trang $_page)',
+                              '${isVi ? 'Biểu đồ nến' : 'Candle chart'} · '
+                              '${ascending.length} ${isVi ? 'phiên' : 'sessions'} '
+                              '(${isVi ? 'trang' : 'page'} $_page)',
                               style: const TextStyle(
                                 color: AppColors.darkTextSecondary,
                                 fontSize: 12,
@@ -245,10 +281,10 @@ class _AdminPriceHistoryScreenState
                     ),
                     const SizedBox(height: 12),
                     for (final c in page.items) ...[
-                      _candleTile(c),
+                      _candleTile(c, isVi),
                       const SizedBox(height: 8),
                     ],
-                    _pager(page),
+                    _pager(page, isVi),
                   ],
                 );
               },
@@ -274,7 +310,7 @@ class _AdminPriceHistoryScreenState
     );
   }
 
-  Widget _candleTile(AdminCandleModel c) {
+  Widget _candleTile(AdminCandleModel c, bool isVi) {
     final color = c.isUp ? AppColors.priceUp : AppColors.priceDown;
     return AdminCard(
       onTap: () => _openForm(candle: c),
@@ -294,16 +330,16 @@ class _AdminPriceHistoryScreenState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Mở ${formatNumber(c.openPrice)} · '
-                  'Cao ${formatNumber(c.highestPrice)} · '
-                  'Thấp ${formatNumber(c.lowestPrice)}',
+                  '${isVi ? 'Mở' : 'Open'} ${formatNumber(c.openPrice)} · '
+                  '${isVi ? 'Cao' : 'High'} ${formatNumber(c.highestPrice)} · '
+                  '${isVi ? 'Thấp' : 'Low'} ${formatNumber(c.lowestPrice)}',
                   style: const TextStyle(
                     color: AppColors.darkTextMuted,
                     fontSize: 11,
                   ),
                 ),
                 Text(
-                  'KL ${formatNumber(c.tradingVolume.toString())}',
+                  '${isVi ? 'KL' : 'Vol'} ${formatNumber(c.tradingVolume.toString())}',
                   style: const TextStyle(
                     color: AppColors.darkTextMuted,
                     fontSize: 11,
@@ -315,9 +351,12 @@ class _AdminPriceHistoryScreenState
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              const Text(
-                'Đóng',
-                style: TextStyle(color: AppColors.darkTextMuted, fontSize: 10),
+              Text(
+                isVi ? 'Đóng' : 'Close',
+                style: const TextStyle(
+                  color: AppColors.darkTextMuted,
+                  fontSize: 10,
+                ),
               ),
               Text(
                 formatNumber(c.closePrice),
@@ -334,30 +373,17 @@ class _AdminPriceHistoryScreenState
     );
   }
 
-  Widget _pager(AdminPage<AdminCandleModel> page) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        TextButton(
-          onPressed: page.page > 1
-              ? () => setState(() => _page = page.page - 1)
-              : null,
-          child: const Text('Trước'),
-        ),
-        Text(
-          'Trang ${page.page}/${page.totalPages} · ${page.total} phiên',
-          style: const TextStyle(
-            color: AppColors.darkTextSecondary,
-            fontSize: 12,
-          ),
-        ),
-        TextButton(
-          onPressed: page.page < page.totalPages
-              ? () => setState(() => _page = page.page + 1)
-              : null,
-          child: const Text('Sau'),
-        ),
-      ],
+  Widget _pager(AdminPage<AdminCandleModel> page, bool isVi) {
+    return AdminPaginationBar(
+      page: page.page,
+      totalPages: page.totalPages,
+      total: page.total,
+      itemName: isVi ? 'phiên' : 'sessions',
+      padding: EdgeInsets.zero,
+      onPrevious: page.page > 1 ? () => setState(() => _page = page.page - 1) : null,
+      onNext: page.page < page.totalPages
+          ? () => setState(() => _page = page.page + 1)
+          : null,
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../providers/app_providers.dart';
 import '../data/admin_constants.dart';
 import '../data/models/admin_order_model.dart';
 import '../providers/admin_providers.dart';
@@ -28,21 +29,29 @@ class _AdminOrderDetailScreenState
   }
 
   Future<void> _cancel() async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     final controller = TextEditingController();
-    final side = _order.orderType == 'BUY' ? 'mua' : 'bán';
-    // Controller sống ngắn, không dispose ngay để tránh lỗi khi hộp thoại đang đóng.
+    final side = _order.orderType == 'BUY'
+        ? (isVi ? 'mua' : 'buy')
+        : (isVi ? 'bán' : 'sell');
     final reason = await showDialog<String>(
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.darkSurface,
-        title: const Text('Hủy lệnh', style: TextStyle(color: Colors.white)),
+        title: Text(
+          isVi ? 'Hủy lệnh' : 'Cancel Order',
+          style: const TextStyle(color: Colors.white),
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hủy lệnh $side ${_order.stockSymbol} của ${_order.customerName}? '
-              'Lệnh sẽ chuyển sang trạng thái Đã hủy.',
+              isVi
+                  ? 'Hủy lệnh $side ${_order.stockSymbol} của ${_order.customerName}? '
+                      'Lệnh sẽ chuyển sang trạng thái Đã hủy.'
+                  : 'Cancel $side order ${_order.stockSymbol} of ${_order.customerName}? '
+                      'The order will be changed to Cancelled.',
               style: const TextStyle(color: AppColors.darkTextSecondary),
             ),
             const SizedBox(height: 12),
@@ -50,8 +59,10 @@ class _AdminOrderDetailScreenState
               controller: controller,
               maxLength: 255,
               style: const TextStyle(color: Colors.white),
-              decoration: const InputDecoration(
-                hintText: 'Lý do hủy (tùy chọn)',
+              decoration: InputDecoration(
+                hintText: isVi
+                    ? 'Lý do hủy (tùy chọn)'
+                    : 'Cancellation reason (optional)',
               ),
             ),
           ],
@@ -59,13 +70,14 @@ class _AdminOrderDetailScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Đóng'),
+            child: Text(isVi ? 'Đóng' : 'Close'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext, controller.text.trim()),
-            child: const Text(
-              'Hủy lệnh',
-              style: TextStyle(color: AppColors.priceDown),
+            onPressed: () =>
+                Navigator.pop(dialogContext, controller.text.trim()),
+            child: Text(
+              isVi ? 'Hủy lệnh' : 'Cancel Order',
+              style: const TextStyle(color: AppColors.priceDown),
             ),
           ),
         ],
@@ -86,7 +98,10 @@ class _AdminOrderDetailScreenState
         _order = updated;
         _busy = false;
       });
-      showAdminSnack(context, 'Đã hủy lệnh');
+      showAdminSnack(
+        context,
+        isVi ? 'Đã hủy lệnh' : 'Order cancelled successfully',
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() => _busy = false);
@@ -95,13 +110,18 @@ class _AdminOrderDetailScreenState
   }
 
   Future<void> _delete() async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     final ok = await showAdminConfirm(
       context,
-      title: 'Xóa lệnh',
-      message: 'Xóa vĩnh viễn lệnh #${_order.orderId} '
-          '(${_order.stockSymbol}, ${_order.customerName})? '
-          'Hành động này không thể hoàn tác.',
-      confirmText: 'Xóa',
+      title: isVi ? 'Xóa lệnh' : 'Delete Order',
+      message: isVi
+          ? 'Xóa vĩnh viễn lệnh #${_order.orderId} '
+              '(${_order.stockSymbol}, ${_order.customerName})? '
+              'Hành động này không thể hoàn tác.'
+          : 'Permanently delete order #${_order.orderId} '
+              '(${_order.stockSymbol}, ${_order.customerName})? '
+              'This action cannot be undone.',
+      confirmText: isVi ? 'Xóa' : 'Delete',
       danger: true,
     );
     if (!ok) return;
@@ -109,7 +129,10 @@ class _AdminOrderDetailScreenState
     try {
       await ref.read(adminRepositoryProvider).deleteOrder(_order.orderId);
       if (!mounted) return;
-      showAdminSnack(context, 'Đã xóa lệnh');
+      showAdminSnack(
+        context,
+        isVi ? 'Đã xóa lệnh' : 'Order deleted successfully',
+      );
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
@@ -120,15 +143,18 @@ class _AdminOrderDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
     final o = _order;
     final isMarket = o.orderKind == 'MP' || num.tryParse(o.orderPrice) == 0;
+
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text('Lệnh #${o.orderId}'),
+        title: Text(isVi ? 'Lệnh #${o.orderId}' : 'Order #${o.orderId}'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -137,7 +163,7 @@ class _AdminOrderDetailScreenState
             children: [
               Expanded(
                 child: Text(
-                  '${AdminConstants.label(o.orderType)} ${o.stockSymbol}',
+                  '${AdminConstants.label(o.orderType, isVi)} ${o.stockSymbol}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -152,40 +178,54 @@ class _AdminOrderDetailScreenState
           AdminCard(
             child: Column(
               children: [
-                AdminInfoRow(label: 'Khách hàng', value: o.customerName),
-                AdminInfoRow(label: 'Tài khoản', value: o.accountNumber),
                 AdminInfoRow(
-                  label: 'Hình thức',
-                  value: AdminConstants.label(o.orderKind),
+                  label: isVi ? 'Khách hàng' : 'Customer',
+                  value: o.customerName,
                 ),
                 AdminInfoRow(
-                  label: 'Giá đặt',
-                  value: isMarket ? 'Giá thị trường' : formatVnd(o.orderPrice),
+                  label: isVi ? 'Tài khoản' : 'Account',
+                  value: o.accountNumber,
                 ),
                 AdminInfoRow(
-                  label: 'Số lượng',
+                  label: isVi ? 'Hình thức' : 'Order Type',
+                  value: AdminConstants.label(o.orderKind, isVi),
+                ),
+                AdminInfoRow(
+                  label: isVi ? 'Giá đặt' : 'Order Price',
+                  value: isMarket
+                      ? (isVi ? 'Giá thị trường' : 'Market Price')
+                      : formatVnd(o.orderPrice),
+                ),
+                AdminInfoRow(
+                  label: isVi ? 'Số lượng' : 'Quantity',
                   value: formatNumber(o.quantity.toString()),
                 ),
                 AdminInfoRow(
-                  label: 'Đã khớp',
+                  label: isVi ? 'Đã khớp' : 'Filled Quantity',
                   value: formatNumber(o.filledQuantity.toString()),
                 ),
                 AdminInfoRow(
-                  label: 'Còn lại',
+                  label: isVi ? 'Còn lại' : 'Remaining Quantity',
                   value: formatNumber(o.remainingQuantity.toString()),
                 ),
                 AdminInfoRow(
-                  label: 'Ngày đặt',
+                  label: isVi ? 'Ngày đặt' : 'Order Date',
                   value: formatDateTime(o.orderDate),
                 ),
                 if (o.matchedAt != null)
                   AdminInfoRow(
-                    label: 'Thời điểm khớp',
+                    label: isVi ? 'Thời điểm khớp' : 'Matched At',
                     value: formatDateTime(o.matchedAt!),
                   ),
                 if (o.rejectReason != null && o.rejectReason!.isNotEmpty)
-                  AdminInfoRow(label: 'Lý do', value: o.rejectReason!),
-                AdminInfoRow(label: 'Mã tham chiếu', value: o.clientOrderId),
+                  AdminInfoRow(
+                    label: isVi ? 'Lý do' : 'Reason',
+                    value: o.rejectReason!,
+                  ),
+                AdminInfoRow(
+                  label: isVi ? 'Mã tham chiếu' : 'Client Order ID',
+                  value: o.clientOrderId,
+                ),
               ],
             ),
           ),
@@ -193,23 +233,25 @@ class _AdminOrderDetailScreenState
           if (o.canCancel)
             _actionTile(
               icon: Icons.cancel_rounded,
-              label: 'Hủy lệnh',
+              label: isVi ? 'Hủy lệnh' : 'Cancel Order',
               danger: true,
               onTap: _cancel,
             ),
           if (o.canDelete)
             _actionTile(
               icon: Icons.delete_forever_rounded,
-              label: 'Xóa lệnh',
+              label: isVi ? 'Xóa lệnh' : 'Delete Order',
               danger: true,
               onTap: _delete,
             ),
           if (!o.canCancel && !o.canDelete)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
               child: Text(
-                'Lệnh đã khớp nên không thể can thiệp.',
-                style: TextStyle(color: AppColors.darkTextMuted),
+                isVi
+                    ? 'Lệnh đã khớp nên không thể can thiệp.'
+                    : 'The order is filled and cannot be modified.',
+                style: const TextStyle(color: AppColors.darkTextMuted),
               ),
             ),
         ],

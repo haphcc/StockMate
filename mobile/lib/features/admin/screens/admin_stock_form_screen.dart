@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../../../providers/app_providers.dart';
 import '../data/admin_constants.dart';
 import '../data/models/admin_stock_model.dart';
 import '../providers/admin_providers.dart';
@@ -63,11 +64,17 @@ class _AdminStockFormScreenState extends ConsumerState<AdminStockFormScreen> {
     super.dispose();
   }
 
-  String? _validatePrice(String? v, {required bool isRequired}) {
+  String? _validatePrice(String? v, {required bool isRequired, required bool isVi}) {
     final value = (v ?? '').trim();
-    if (value.isEmpty) return isRequired ? 'Không được để trống' : null;
+    if (value.isEmpty) {
+      return isRequired
+          ? (isVi ? 'Không được để trống' : 'Cannot be empty')
+          : null;
+    }
     if (!RegExp(r'^[0-9]+(\.[0-9]{1,2})?$').hasMatch(value)) {
-      return 'Nhập số không âm, tối đa 2 chữ số thập phân';
+      return isVi
+          ? 'Nhập số không âm, tối đa 2 chữ số thập phân'
+          : 'Enter non-negative number, up to 2 decimal places';
     }
     return null;
   }
@@ -78,6 +85,7 @@ class _AdminStockFormScreenState extends ConsumerState<AdminStockFormScreen> {
   }
 
   Future<void> _submit() async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     if (!_formKey.currentState!.validate()) return;
     final s = widget.stock;
 
@@ -88,13 +96,13 @@ class _AdminStockFormScreenState extends ConsumerState<AdminStockFormScreen> {
         _changed(_ceiling.text, s.ceilingPrice) ||
         _changed(_floor.text, s.floorPrice);
     if (priceChanged) {
-      final ref = num.tryParse(_reference.text.trim());
+      final refPrice = num.tryParse(_reference.text.trim());
       final cur = num.tryParse(_current.text.trim());
       var ceil = num.tryParse(_ceiling.text.trim());
       var floor = num.tryParse(_floor.text.trim());
-      if (ref != null) {
+      if (refPrice != null) {
         final (calcCeil, calcFloor) =
-            AdminConstants.computeStockLimits(_exchange, ref);
+            AdminConstants.computeStockLimits(_exchange, refPrice);
         final refOrExChanged = s != null &&
             (_changed(_reference.text, s.referencePrice) ||
                 _exchange != s.exchange);
@@ -110,10 +118,11 @@ class _AdminStockFormScreenState extends ConsumerState<AdminStockFormScreen> {
         }
       }
       final problem = AdminConstants.validateStockPrices(
-        reference: ref,
+        reference: refPrice,
         current: cur,
         ceiling: ceil,
         floor: floor,
+        isVietnamese: isVi,
       );
       if (problem != null) {
         showAdminSnack(context, problem, error: true);
@@ -143,7 +152,10 @@ class _AdminStockFormScreenState extends ConsumerState<AdminStockFormScreen> {
         if (_status != s.status) 'status': _status,
       };
       if (changes.isEmpty) {
-        showAdminSnack(context, 'Chưa có thay đổi nào.');
+        showAdminSnack(
+          context,
+          isVi ? 'Chưa có thay đổi nào.' : 'No changes made.',
+        );
         return;
       }
     }
@@ -180,13 +192,17 @@ class _AdminStockFormScreenState extends ConsumerState<AdminStockFormScreen> {
   }
 
   Future<void> _delete() async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     final s = widget.stock!;
     final ok = await showAdminConfirm(
       context,
-      title: 'Xóa mã cổ phiếu',
-      message: 'Xóa vĩnh viễn mã ${s.stockSymbol} cùng lịch sử giá và danh '
-          'sách theo dõi liên quan? Hành động này không thể hoàn tác.',
-      confirmText: 'Xóa vĩnh viễn',
+      title: isVi ? 'Xóa mã cổ phiếu' : 'Delete Stock Symbol',
+      message: isVi
+          ? 'Xóa vĩnh viễn mã ${s.stockSymbol} cùng lịch sử giá và danh '
+              'sách theo dõi liên quan? Hành động này không thể hoàn tác.'
+          : 'Permanently delete symbol ${s.stockSymbol} along with its price '
+              'history and related watchlists? This action cannot be undone.',
+      confirmText: isVi ? 'Xóa vĩnh viễn' : 'Delete Permanently',
       danger: true,
     );
     if (!ok) return;
@@ -194,7 +210,10 @@ class _AdminStockFormScreenState extends ConsumerState<AdminStockFormScreen> {
     try {
       await ref.read(adminRepositoryProvider).deleteStock(s.stockId);
       if (!mounted) return;
-      showAdminSnack(context, 'Đã xóa mã ${s.stockSymbol}');
+      showAdminSnack(
+        context,
+        isVi ? 'Đã xóa mã ${s.stockSymbol}' : 'Deleted symbol ${s.stockSymbol}',
+      );
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
@@ -205,14 +224,21 @@ class _AdminStockFormScreenState extends ConsumerState<AdminStockFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
     final s = widget.stock;
+
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text(_isEdit ? 'Sửa ${s!.stockSymbol}' : 'Thêm mã cổ phiếu'),
+        title: Text(
+          _isEdit
+              ? (isVi ? 'Sửa ${s!.stockSymbol}' : 'Edit ${s!.stockSymbol}')
+              : (isVi ? 'Thêm mã cổ phiếu' : 'Add Stock Symbol'),
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -223,9 +249,12 @@ class _AdminStockFormScreenState extends ConsumerState<AdminStockFormScreen> {
               AdminCard(
                 child: Column(
                   children: [
-                    AdminInfoRow(label: 'Mã', value: s!.stockSymbol),
                     AdminInfoRow(
-                      label: 'Khối lượng GD',
+                      label: isVi ? 'Mã' : 'Symbol',
+                      value: s!.stockSymbol,
+                    ),
+                    AdminInfoRow(
+                      label: isVi ? 'Khối lượng GD' : 'Trading Volume',
                       value: formatNumber(s.totalVolume.toString()),
                     ),
                   ],
@@ -233,104 +262,142 @@ class _AdminStockFormScreenState extends ConsumerState<AdminStockFormScreen> {
               )
             else
               AppTextField(
-                labelText: 'Mã cổ phiếu (3 đến 10 ký tự)',
+                labelText: isVi
+                    ? 'Mã cổ phiếu (3 đến 10 ký tự)'
+                    : 'Stock symbol (3 to 10 characters)',
                 controller: _symbol,
                 validator: (v) {
                   final value = (v ?? '').trim();
                   if (!RegExp(r'^[A-Za-z0-9]{3,10}$').hasMatch(value)) {
-                    return 'Mã gồm 3 đến 10 chữ cái hoặc số';
+                    return isVi
+                        ? 'Mã gồm 3 đến 10 chữ cái hoặc số'
+                        : 'Symbol must be 3 to 10 letters or digits';
                   }
                   return null;
                 },
               ),
             const SizedBox(height: 16),
             AppTextField(
-              labelText: 'Tên công ty',
+              labelText: isVi ? 'Tên công ty' : 'Company Name',
               controller: _name,
               validator: (v) {
                 final value = (v ?? '').trim();
-                if (value.length < 2) return 'Tên tối thiểu 2 ký tự';
-                if (value.length > 200) return 'Tên tối đa 200 ký tự';
+                if (value.length < 2) {
+                  return isVi
+                      ? 'Tên tối thiểu 2 ký tự'
+                      : 'Name must be at least 2 characters';
+                }
+                if (value.length > 200) {
+                  return isVi
+                      ? 'Tên tối đa 200 ký tự'
+                      : 'Name maximum 200 characters';
+                }
                 return null;
               },
             ),
             const SizedBox(height: 20),
-            _sectionLabel('Sàn giao dịch'),
+            _sectionLabel(isVi ? 'Sàn giao dịch' : 'Exchange'),
             _choices(
               AdminConstants.exchanges,
               _exchange,
               (v) => setState(() => _exchange = v),
+              isVi,
             ),
             const SizedBox(height: 16),
             AppTextField(
-              labelText: 'Ngành (tùy chọn)',
+              labelText: isVi ? 'Ngành (tùy chọn)' : 'Industry (optional)',
               controller: _industry,
             ),
             const SizedBox(height: 16),
             AppTextField(
               labelText: _isEdit
-                  ? 'Số cổ phiếu niêm yết'
-                  : 'Số cổ phiếu niêm yết (để trống = 0)',
+                  ? (isVi ? 'Số cổ phiếu niêm yết' : 'Listed shares')
+                  : (isVi
+                      ? 'Số cổ phiếu niêm yết (để trống = 0)'
+                      : 'Listed shares (leave empty = 0)'),
               controller: _shares,
               keyboardType: TextInputType.number,
               validator: (v) {
                 final value = (v ?? '').trim();
-                if (value.isEmpty) return _isEdit ? 'Không được để trống' : null;
+                if (value.isEmpty) {
+                  return _isEdit
+                      ? (isVi ? 'Không được để trống' : 'Cannot be empty')
+                      : null;
+                }
                 if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
-                  return 'Chỉ nhập số nguyên không âm';
+                  return isVi
+                      ? 'Chỉ nhập số nguyên không âm'
+                      : 'Enter non-negative integer only';
                 }
                 return null;
               },
             ),
             const SizedBox(height: 16),
             AppTextField(
-              labelText: 'Giá hiện tại',
+              labelText: isVi ? 'Giá hiện tại' : 'Current Price',
               controller: _current,
               keyboardType: TextInputType.number,
-              validator: (v) => _validatePrice(v, isRequired: true),
+              validator: (v) => _validatePrice(v, isRequired: true, isVi: isVi),
             ),
             const SizedBox(height: 16),
             AppTextField(
-              labelText: 'Giá tham chiếu',
+              labelText: isVi ? 'Giá tham chiếu' : 'Reference Price',
               controller: _reference,
               keyboardType: TextInputType.number,
-              validator: (v) => _validatePrice(v, isRequired: true),
+              validator: (v) => _validatePrice(v, isRequired: true, isVi: isVi),
             ),
             const SizedBox(height: 16),
             AppTextField(
-              labelText:
-                  _isEdit ? 'Giá trần' : 'Giá trần (để trống = tự tính theo biên độ)',
+              labelText: _isEdit
+                  ? (isVi ? 'Giá trần' : 'Ceiling Price')
+                  : (isVi
+                      ? 'Giá trần (để trống = tự tính theo biên độ)'
+                      : 'Ceiling price (leave empty = auto)'),
               controller: _ceiling,
               keyboardType: TextInputType.number,
-              validator: (v) => _validatePrice(v, isRequired: _isEdit),
+              validator: (v) =>
+                  _validatePrice(v, isRequired: _isEdit, isVi: isVi),
             ),
             const SizedBox(height: 16),
             AppTextField(
-              labelText:
-                  _isEdit ? 'Giá sàn' : 'Giá sàn (để trống = tự tính theo biên độ)',
+              labelText: _isEdit
+                  ? (isVi ? 'Giá sàn' : 'Floor Price')
+                  : (isVi
+                      ? 'Giá sàn (để trống = tự tính theo biên độ)'
+                      : 'Floor price (leave empty = auto)'),
               controller: _floor,
               keyboardType: TextInputType.number,
-              validator: (v) => _validatePrice(v, isRequired: _isEdit),
+              validator: (v) =>
+                  _validatePrice(v, isRequired: _isEdit, isVi: isVi),
             ),
             if (_isEdit)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'Nếu chỉ đổi giá tham chiếu và không sửa trần, sàn, hệ thống '
-                  'sẽ tự tính lại trần và sàn theo biên độ của sàn.',
-                  style: TextStyle(color: AppColors.darkTextMuted, fontSize: 12),
+                  isVi
+                      ? 'Nếu chỉ đổi giá tham chiếu và không sửa trần, sàn, hệ thống '
+                          'sẽ tự tính lại trần và sàn theo biên độ của sàn.'
+                      : 'If only reference price is changed, ceiling and floor will be '
+                          'recalculated based on exchange limits.',
+                  style: const TextStyle(
+                    color: AppColors.darkTextMuted,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             const SizedBox(height: 20),
-            _sectionLabel('Trạng thái'),
+            _sectionLabel(isVi ? 'Trạng thái' : 'Status'),
             _choices(
               AdminConstants.stockStatuses,
               _status,
               (v) => setState(() => _status = v),
+              isVi,
             ),
             const SizedBox(height: 28),
             GradientButton(
-              text: _isEdit ? 'Lưu thay đổi' : 'Thêm mã cổ phiếu',
+              text: _isEdit
+                  ? (isVi ? 'Lưu thay đổi' : 'Save Changes')
+                  : (isVi ? 'Thêm mã cổ phiếu' : 'Add Stock Symbol'),
               isLoading: _saving,
               onPressed: _submit,
             ),
@@ -342,9 +409,9 @@ class _AdminStockFormScreenState extends ConsumerState<AdminStockFormScreen> {
                   Icons.delete_forever_rounded,
                   color: AppColors.priceDown,
                 ),
-                label: const Text(
-                  'Xóa mã cổ phiếu',
-                  style: TextStyle(color: AppColors.priceDown),
+                label: Text(
+                  isVi ? 'Xóa mã cổ phiếu' : 'Delete Stock Symbol',
+                  style: const TextStyle(color: AppColors.priceDown),
                 ),
               ),
             ],
@@ -372,6 +439,7 @@ class _AdminStockFormScreenState extends ConsumerState<AdminStockFormScreen> {
     List<String> options,
     String selected,
     ValueChanged<String> onSelected,
+    bool isVi,
   ) {
     return Wrap(
       spacing: 8,
@@ -379,7 +447,7 @@ class _AdminStockFormScreenState extends ConsumerState<AdminStockFormScreen> {
       children: [
         for (final option in options)
           ChoiceChip(
-            label: Text(AdminConstants.label(option)),
+            label: Text(AdminConstants.label(option, isVi)),
             selected: selected == option,
             showCheckmark: false,
             onSelected: (_) => onSelected(option),

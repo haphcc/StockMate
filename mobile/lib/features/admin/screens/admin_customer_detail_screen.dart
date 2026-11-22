@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../providers/app_providers.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/admin_constants.dart';
 import '../data/models/admin_account_model.dart';
@@ -60,14 +61,23 @@ class _AdminCustomerDetailScreenState
   }
 
   Future<void> _toggleLock(AdminCustomerModel c) async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     final lock = c.status == 'ACTIVE';
     final ok = await showAdminConfirm(
       context,
-      title: lock ? 'Khóa khách hàng' : 'Kích hoạt khách hàng',
+      title: lock
+          ? (isVi ? 'Khóa khách hàng' : 'Lock Customer')
+          : (isVi ? 'Kích hoạt khách hàng' : 'Activate Customer'),
       message: lock
-          ? 'Khóa ${c.fullName}? Khách hàng sẽ không đăng nhập được.'
-          : 'Kích hoạt lại ${c.fullName}?',
-      confirmText: lock ? 'Khóa' : 'Kích hoạt',
+          ? (isVi
+              ? 'Khóa ${c.fullName}? Khách hàng sẽ không đăng nhập được.'
+              : 'Lock ${c.fullName}? Customer will not be able to log in.')
+          : (isVi
+              ? 'Kích hoạt lại ${c.fullName}?'
+              : 'Reactivate ${c.fullName}?'),
+      confirmText: lock
+          ? (isVi ? 'Khóa' : 'Lock')
+          : (isVi ? 'Kích hoạt' : 'Activate'),
       danger: lock,
     );
     if (!ok) return;
@@ -76,27 +86,30 @@ class _AdminCustomerDetailScreenState
         c.customerId,
         {'status': lock ? 'LOCKED' : 'ACTIVE'},
       ),
-      lock ? 'Đã khóa khách hàng' : 'Đã kích hoạt khách hàng',
+      lock
+          ? (isVi ? 'Đã khóa khách hàng' : 'Customer locked')
+          : (isVi ? 'Đã kích hoạt khách hàng' : 'Customer activated'),
     );
   }
 
   Future<void> _changeRole(AdminCustomerModel c) async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     var selected = c.role;
     final result = await showDialog<String>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
           backgroundColor: AppColors.darkSurface,
-          title: const Text(
-            'Đổi vai trò',
-            style: TextStyle(color: Colors.white),
+          title: Text(
+            isVi ? 'Đổi vai trò' : 'Change Role',
+            style: const TextStyle(color: Colors.white),
           ),
           content: Wrap(
             spacing: 8,
             children: [
               for (final role in AdminConstants.customerRoles)
                 ChoiceChip(
-                  label: Text(AdminConstants.label(role)),
+                  label: Text(AdminConstants.label(role, isVi)),
                   selected: selected == role,
                   showCheckmark: false,
                   onSelected: (_) => setLocal(() => selected = role),
@@ -106,11 +119,11 @@ class _AdminCustomerDetailScreenState
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Hủy'),
+              child: Text(isVi ? 'Hủy' : 'Cancel'),
             ),
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, selected),
-              child: const Text('Lưu'),
+              child: Text(isVi ? 'Lưu' : 'Save'),
             ),
           ],
         ),
@@ -122,11 +135,12 @@ class _AdminCustomerDetailScreenState
         c.customerId,
         {'role': result},
       ),
-      'Đã đổi vai trò',
+      isVi ? 'Đã đổi vai trò' : 'Role changed successfully',
     );
   }
 
   Future<void> _resetPassword(AdminCustomerModel c) async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     // Controller sống ngắn, không dispose ngay để tránh lỗi khi hộp thoại đang đóng.
     final controller = TextEditingController();
     String? error;
@@ -135,34 +149,38 @@ class _AdminCustomerDetailScreenState
       builder: (dialogContext) => StatefulBuilder(
         builder: (ctx, setLocal) => AlertDialog(
           backgroundColor: AppColors.darkSurface,
-          title: const Text(
-            'Đặt lại mật khẩu',
-            style: TextStyle(color: Colors.white),
+          title: Text(
+            isVi ? 'Đặt lại mật khẩu' : 'Reset Password',
+            style: const TextStyle(color: Colors.white),
           ),
           content: TextField(
             controller: controller,
             obscureText: true,
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
-              hintText: 'Mật khẩu mới (tối thiểu 6 ký tự)',
+              hintText: isVi
+                  ? 'Mật khẩu mới (tối thiểu 6 ký tự)'
+                  : 'New password (min 6 characters)',
               errorText: error,
             ),
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Hủy'),
+              child: Text(isVi ? 'Hủy' : 'Cancel'),
             ),
             TextButton(
               onPressed: () {
                 final value = controller.text;
                 if (value.length < 6) {
-                  setLocal(() => error = 'Tối thiểu 6 ký tự');
+                  setLocal(() => error = isVi
+                      ? 'Tối thiểu 6 ký tự'
+                      : 'Minimum 6 characters');
                   return;
                 }
                 Navigator.pop(dialogContext, value);
               },
-              child: const Text('Đặt lại'),
+              child: Text(isVi ? 'Đặt lại' : 'Reset'),
             ),
           ],
         ),
@@ -174,17 +192,21 @@ class _AdminCustomerDetailScreenState
         c.customerId,
         {'password': password},
       ),
-      'Đã đặt lại mật khẩu',
+      isVi ? 'Đã đặt lại mật khẩu' : 'Password reset successfully',
     );
   }
 
   Future<void> _delete(AdminCustomerModel c) async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     final ok = await showAdminConfirm(
       context,
-      title: 'Xóa khách hàng',
-      message: 'Xóa vĩnh viễn ${c.fullName} cùng toàn bộ tài khoản, lệnh, '
-          'giao dịch và dữ liệu liên quan? Hành động này không thể hoàn tác.',
-      confirmText: 'Xóa vĩnh viễn',
+      title: isVi ? 'Xóa khách hàng' : 'Delete Customer',
+      message: isVi
+          ? 'Xóa vĩnh viễn ${c.fullName} cùng toàn bộ tài khoản, lệnh, '
+              'giao dịch và dữ liệu liên quan? Hành động này không thể hoàn tác.'
+          : 'Permanently delete ${c.fullName} along with all accounts, orders, '
+              'transactions and related data? This action cannot be undone.',
+      confirmText: isVi ? 'Xóa vĩnh viễn' : 'Delete Permanently',
       danger: true,
     );
     if (!ok) return;
@@ -193,7 +215,10 @@ class _AdminCustomerDetailScreenState
       await ref.read(adminRepositoryProvider).deleteCustomer(c.customerId);
       ref.invalidate(adminCustomersProvider);
       if (!mounted) return;
-      showAdminSnack(context, 'Đã xóa khách hàng');
+      showAdminSnack(
+        context,
+        isVi ? 'Đã xóa khách hàng' : 'Customer deleted successfully',
+      );
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
@@ -230,6 +255,8 @@ class _AdminCustomerDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
     final async = ref.watch(adminCustomerDetailProvider(widget.customerId));
     final selfEmail = ref.watch(authProvider).value?.email.toLowerCase();
 
@@ -239,7 +266,7 @@ class _AdminCustomerDetailScreenState
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Chi tiết khách hàng'),
+        title: Text(isVi ? 'Chi tiết khách hàng' : 'Customer Details'),
       ),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -247,12 +274,12 @@ class _AdminCustomerDetailScreenState
           message: e.toString(),
           onRetry: _refresh,
         ),
-        data: (c) => _buildBody(c, c.email.toLowerCase() == selfEmail),
+        data: (c) => _buildBody(c, c.email.toLowerCase() == selfEmail, isVi),
       ),
     );
   }
 
-  Widget _buildBody(AdminCustomerModel c, bool isSelf) {
+  Widget _buildBody(AdminCustomerModel c, bool isSelf, bool isVi) {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -305,27 +332,36 @@ class _AdminCustomerDetailScreenState
             children: [
               AdminInfoRow(label: 'Email', value: c.email),
               AdminInfoRow(
-                label: 'Đăng nhập',
+                label: isVi ? 'Đăng nhập' : 'Login Method',
                 value: c.isGoogleAccount
-                    ? 'Tài khoản Google'
-                    : 'Email / Mật khẩu',
+                    ? (isVi ? 'Tài khoản Google' : 'Google Account')
+                    : (isVi ? 'Email / Mật khẩu' : 'Email / Password'),
               ),
               AdminInfoRow(
-                label: 'Số điện thoại',
+                label: isVi ? 'Số điện thoại' : 'Phone Number',
                 value: c.displayPhoneNumber,
               ),
               if (c.dateOfBirth != null)
-                AdminInfoRow(label: 'Ngày sinh', value: c.dateOfBirth!),
+                AdminInfoRow(
+                  label: isVi ? 'Ngày sinh' : 'Date of Birth',
+                  value: c.dateOfBirth!,
+                ),
               if (c.idCardNumber != null)
-                AdminInfoRow(label: 'CCCD', value: c.idCardNumber!),
+                AdminInfoRow(
+                  label: isVi ? 'CCCD' : 'ID Card Number',
+                  value: c.idCardNumber!,
+                ),
               if (c.address != null)
-                AdminInfoRow(label: 'Địa chỉ', value: c.address!),
+                AdminInfoRow(
+                  label: isVi ? 'Địa chỉ' : 'Address',
+                  value: c.address!,
+                ),
             ],
           ),
         ),
         const SizedBox(height: 20),
         Text(
-          'Tài khoản đầu tư (${c.accounts.length})',
+          '${isVi ? 'Tài khoản đầu tư' : 'Investment Accounts'} (${c.accounts.length})',
           style: const TextStyle(
             color: Colors.white,
             fontSize: 15,
@@ -334,51 +370,54 @@ class _AdminCustomerDetailScreenState
         ),
         const SizedBox(height: 8),
         if (c.accounts.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
-              'Khách hàng chưa có tài khoản đầu tư.',
-              style: TextStyle(color: AppColors.darkTextMuted),
+              isVi
+                  ? 'Khách hàng chưa có tài khoản đầu tư.'
+                  : 'Customer has no investment accounts yet.',
+              style: const TextStyle(color: AppColors.darkTextMuted),
             ),
           )
         else
           for (final account in c.accounts) ...[
-            _accountTile(account),
+            _accountTile(account, isVi),
             const SizedBox(height: 8),
           ],
         const SizedBox(height: 12),
         if (isSelf)
-          const Padding(
-            padding: EdgeInsets.only(bottom: 10),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
             child: Text(
-              'Đây là tài khoản bạn đang đăng nhập: không thể đổi vai trò, '
-              'khóa hoặc xóa.',
-              style: TextStyle(color: AppColors.priceRef, fontSize: 12),
+              isVi
+                  ? 'Đây là tài khoản bạn đang đăng nhập: không thể đổi vai trò, khóa hoặc xóa.'
+                  : 'This is your active account: role change, locking, or deletion is disabled.',
+              style: const TextStyle(color: AppColors.priceRef, fontSize: 12),
             ),
           ),
         _actionTile(
           icon: Icons.edit_rounded,
-          label: 'Sửa thông tin',
+          label: isVi ? 'Sửa thông tin' : 'Edit Information',
           onTap: () => _edit(c, isSelf),
         ),
         _actionTile(
           icon: Icons.add_card_rounded,
-          label: 'Mở tài khoản đầu tư',
+          label: isVi ? 'Mở tài khoản đầu tư' : 'Open Investment Account',
           onTap: () => _openAccount(c),
         ),
         _actionTile(
           icon: Icons.notifications_active_rounded,
-          label: 'Gửi thông báo',
+          label: isVi ? 'Gửi thông báo' : 'Send Notification',
           onTap: () => _notify(c),
         ),
         _actionTile(
           icon: Icons.lock_reset_rounded,
-          label: 'Đặt lại mật khẩu',
+          label: isVi ? 'Đặt lại mật khẩu' : 'Reset Password',
           onTap: () => _resetPassword(c),
         ),
         _actionTile(
           icon: Icons.admin_panel_settings_rounded,
-          label: 'Đổi vai trò',
+          label: isVi ? 'Đổi vai trò' : 'Change Role',
           enabled: !isSelf,
           onTap: () => _changeRole(c),
         ),
@@ -386,13 +425,15 @@ class _AdminCustomerDetailScreenState
           icon: c.status == 'ACTIVE'
               ? Icons.lock_rounded
               : Icons.lock_open_rounded,
-          label: c.status == 'ACTIVE' ? 'Khóa tài khoản' : 'Kích hoạt',
+          label: c.status == 'ACTIVE'
+              ? (isVi ? 'Khóa tài khoản' : 'Lock Account')
+              : (isVi ? 'Kích hoạt' : 'Activate'),
           enabled: !isSelf,
           onTap: () => _toggleLock(c),
         ),
         _actionTile(
           icon: Icons.delete_forever_rounded,
-          label: 'Xóa khách hàng',
+          label: isVi ? 'Xóa khách hàng' : 'Delete Customer',
           danger: true,
           enabled: !isSelf,
           onTap: () => _delete(c),
@@ -402,7 +443,7 @@ class _AdminCustomerDetailScreenState
     );
   }
 
-  Widget _accountTile(AdminAccountModel a) {
+  Widget _accountTile(AdminAccountModel a, bool isVi) {
     return AdminCard(
       onTap: () => _editAccount(a),
       child: Column(
@@ -420,7 +461,7 @@ class _AdminCustomerDetailScreenState
                 ),
               ),
               Text(
-                AdminConstants.label(a.accountType),
+                AdminConstants.label(a.accountType, isVi),
                 style: const TextStyle(
                   color: AppColors.darkTextSecondary,
                   fontSize: 12,
@@ -431,9 +472,12 @@ class _AdminCustomerDetailScreenState
             ],
           ),
           const SizedBox(height: 6),
-          AdminInfoRow(label: 'Tiền mặt', value: formatVnd(a.cashBalance)),
           AdminInfoRow(
-            label: 'Tổng tài sản',
+            label: isVi ? 'Tiền mặt' : 'Cash',
+            value: formatVnd(a.cashBalance),
+          ),
+          AdminInfoRow(
+            label: isVi ? 'Tổng tài sản' : 'Total Assets',
             value: formatVnd(a.totalAssetValue),
           ),
         ],

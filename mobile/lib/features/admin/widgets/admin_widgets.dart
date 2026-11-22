@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../data/admin_constants.dart';
 
 /// Thẻ nền tối có viền, bấm được (có hiệu ứng gợn sóng).
@@ -63,6 +64,7 @@ class AdminStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -70,7 +72,7 @@ class AdminStatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        AdminConstants.label(code),
+        AdminConstants.label(code, l10n.isVietnamese),
         style: TextStyle(
           color: _color,
           fontSize: 12,
@@ -126,9 +128,11 @@ Future<bool> showAdminConfirm(
   BuildContext context, {
   required String title,
   required String message,
-  String confirmText = 'Xác nhận',
+  String? confirmText,
   bool danger = false,
 }) async {
+  final l10n = AppLocalizations.of(context);
+  final confirm = confirmText ?? (l10n.isVietnamese ? 'Xác nhận' : 'Confirm');
   final result = await showDialog<bool>(
     context: context,
     builder: (dialogContext) => AlertDialog(
@@ -141,12 +145,12 @@ Future<bool> showAdminConfirm(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(dialogContext, false),
-          child: const Text('Hủy'),
+          child: Text(l10n.isVietnamese ? 'Hủy' : 'Cancel'),
         ),
         TextButton(
           onPressed: () => Navigator.pop(dialogContext, true),
           child: Text(
-            confirmText,
+            confirm,
             style: TextStyle(
               color: danger ? AppColors.priceDown : AppColors.primary,
             ),
@@ -196,15 +200,16 @@ class AdminFilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return SizedBox(
       height: 44,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
-          _chip('Tất cả', null),
+          _chip(l10n.isVietnamese ? 'Tất cả' : 'All', null),
           for (final option in options)
-            _chip(AdminConstants.label(option), option),
+            _chip(AdminConstants.label(option, l10n.isVietnamese), option),
         ],
       ),
     );
@@ -425,11 +430,13 @@ class _AdminSearchPickerSheetState<T>
                           ),
                         )
                       : _items.isEmpty
-                          ? const Center(
+                          ? Center(
                               child: Text(
-                                'Không tìm thấy kết quả phù hợp',
+                                AppLocalizations.of(context).isVietnamese
+                                    ? 'Không tìm thấy kết quả phù hợp'
+                                    : 'No matching results found',
                                 style:
-                                    TextStyle(color: AppColors.darkTextMuted),
+                                    const TextStyle(color: AppColors.darkTextMuted),
                               ),
                             )
                           : ListView.builder(
@@ -456,6 +463,59 @@ class _AdminSearchPickerSheetState<T>
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Thanh chuyển trang dùng chung cho các màn hình danh sách Admin.
+class AdminPaginationBar extends StatelessWidget {
+  final int page;
+  final int totalPages;
+  final int total;
+  final String itemName;
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
+  final EdgeInsetsGeometry padding;
+
+  const AdminPaginationBar({
+    super.key,
+    required this.page,
+    required this.totalPages,
+    required this.total,
+    required this.itemName,
+    this.onPrevious,
+    this.onNext,
+    this.padding = const EdgeInsets.fromLTRB(8, 0, 8, 12),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final isVi = l10n.isVietnamese;
+    return Padding(
+      padding: padding,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          TextButton(
+            onPressed: onPrevious,
+            child: Text(isVi ? 'Trước' : 'Previous'),
+          ),
+          Text(
+            isVi
+                ? 'Trang $page/$totalPages · $total $itemName'
+                : 'Page $page/$totalPages · $total $itemName',
+            style: const TextStyle(
+              color: AppColors.darkTextSecondary,
+              fontSize: 12,
+            ),
+          ),
+          TextButton(
+            onPressed: onNext,
+            child: Text(isVi ? 'Sau' : 'Next'),
+          ),
+        ],
       ),
     );
   }

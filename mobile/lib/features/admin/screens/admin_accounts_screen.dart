@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../providers/app_providers.dart';
 import '../data/admin_constants.dart';
 import '../data/models/admin_account_model.dart';
 import '../data/models/admin_page.dart';
@@ -64,6 +65,8 @@ class _AdminAccountsScreenState extends ConsumerState<AdminAccountsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
     final async = ref.watch(adminAccountsProvider(_query));
 
     return Scaffold(
@@ -72,10 +75,10 @@ class _AdminAccountsScreenState extends ConsumerState<AdminAccountsScreen> {
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Tài khoản đầu tư'),
+        title: Text(isVi ? 'Tài khoản đầu tư' : 'Investment Accounts'),
         actions: [
           IconButton(
-            tooltip: 'Mở tài khoản mới',
+            tooltip: isVi ? 'Mở tài khoản mới' : 'Open New Account',
             icon: const Icon(Icons.add_card_rounded),
             onPressed: () => _openForm(),
           ),
@@ -87,7 +90,9 @@ class _AdminAccountsScreenState extends ConsumerState<AdminAccountsScreen> {
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: AppTextField(
               controller: _searchController,
-              hintText: 'Tìm theo số tài khoản hoặc tên khách hàng',
+              hintText: isVi
+                  ? 'Tìm theo số tài khoản hoặc tên khách hàng'
+                  : 'Search by account number or customer name',
               prefixIcon: const Icon(
                 Icons.search_rounded,
                 color: AppColors.darkTextMuted,
@@ -120,9 +125,11 @@ class _AdminAccountsScreenState extends ConsumerState<AdminAccountsScreen> {
               ),
               data: (page) {
                 if (page.items.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.account_balance_wallet_outlined,
-                    message: 'Không tìm thấy tài khoản nào',
+                    message: isVi
+                        ? 'Không tìm thấy tài khoản nào'
+                        : 'No accounts found',
                   );
                 }
                 return Column(
@@ -132,10 +139,10 @@ class _AdminAccountsScreenState extends ConsumerState<AdminAccountsScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                         itemCount: page.items.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (_, i) => _accountTile(page.items[i]),
+                        itemBuilder: (_, i) => _accountTile(page.items[i], isVi),
                       ),
                     ),
-                    _pager(page),
+                    _pager(page, isVi),
                   ],
                 );
               },
@@ -146,7 +153,7 @@ class _AdminAccountsScreenState extends ConsumerState<AdminAccountsScreen> {
     );
   }
 
-  Widget _accountTile(AdminAccountModel a) {
+  Widget _accountTile(AdminAccountModel a, bool isVi) {
     return AdminCard(
       onTap: () => _openForm(account: a),
       child: Column(
@@ -165,7 +172,7 @@ class _AdminAccountsScreenState extends ConsumerState<AdminAccountsScreen> {
                 ),
               ),
               Text(
-                AdminConstants.label(a.accountType),
+                AdminConstants.label(a.accountType, isVi),
                 style: const TextStyle(
                   color: AppColors.darkTextSecondary,
                   fontSize: 12,
@@ -188,7 +195,7 @@ class _AdminAccountsScreenState extends ConsumerState<AdminAccountsScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'Tiền mặt: ${formatVnd(a.cashBalance)}',
+                  '${isVi ? 'Tiền mặt' : 'Cash'}: ${formatVnd(a.cashBalance)}',
                   style: const TextStyle(
                     color: AppColors.darkTextMuted,
                     fontSize: 12,
@@ -210,33 +217,16 @@ class _AdminAccountsScreenState extends ConsumerState<AdminAccountsScreen> {
     );
   }
 
-  Widget _pager(AdminPage<AdminAccountModel> page) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextButton(
-            onPressed: page.page > 1
-                ? () => setState(() => _page = page.page - 1)
-                : null,
-            child: const Text('Trước'),
-          ),
-          Text(
-            'Trang ${page.page}/${page.totalPages} · ${page.total} tài khoản',
-            style: const TextStyle(
-              color: AppColors.darkTextSecondary,
-              fontSize: 12,
-            ),
-          ),
-          TextButton(
-            onPressed: page.page < page.totalPages
-                ? () => setState(() => _page = page.page + 1)
-                : null,
-            child: const Text('Sau'),
-          ),
-        ],
-      ),
+  Widget _pager(AdminPage<AdminAccountModel> page, bool isVi) {
+    return AdminPaginationBar(
+      page: page.page,
+      totalPages: page.totalPages,
+      total: page.total,
+      itemName: isVi ? 'tài khoản' : 'accounts',
+      onPrevious: page.page > 1 ? () => setState(() => _page = page.page - 1) : null,
+      onNext: page.page < page.totalPages
+          ? () => setState(() => _page = page.page + 1)
+          : null,
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../../../providers/app_providers.dart';
 import '../data/models/admin_candle_model.dart';
 import '../data/models/admin_stock_model.dart';
 import '../providers/admin_providers.dart';
@@ -63,29 +64,47 @@ class _AdminCandleFormScreenState extends ConsumerState<AdminCandleFormScreen> {
       '${d.month.toString().padLeft(2, '0')}-'
       '${d.day.toString().padLeft(2, '0')}';
 
-  String? _validateDate(String? v) {
+  String? _validateDate(String? v, {required bool isVi}) {
     final value = (v ?? '').trim();
     if (!RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) {
-      return 'Nhập ngày theo dạng năm-tháng-ngày, ví dụ 2026-11-11';
+      return isVi
+          ? 'Nhập ngày theo dạng năm-tháng-ngày, ví dụ 2026-11-11'
+          : 'Enter date as YYYY-MM-DD, e.g. 2026-11-11';
     }
     final parsed = DateTime.tryParse(value);
-    if (parsed == null || _fmt(parsed) != value) return 'Ngày không hợp lệ';
-    return null;
-  }
-
-  String? _validatePrice(String? v, {required bool isRequired}) {
-    final value = (v ?? '').trim();
-    if (value.isEmpty) return isRequired ? 'Không được để trống' : null;
-    if (!RegExp(r'^[0-9]+(\.[0-9]{1,2})?$').hasMatch(value)) {
-      return 'Nhập số không âm, tối đa 2 chữ số thập phân';
+    if (parsed == null || _fmt(parsed) != value) {
+      return isVi ? 'Ngày không hợp lệ' : 'Invalid date';
     }
     return null;
   }
 
-  String? _validateVolume(String? v) {
+  String? _validatePrice(String? v, {required bool isRequired, required bool isVi}) {
     final value = (v ?? '').trim();
-    if (value.isEmpty) return _isEdit ? 'Không được để trống' : null;
-    if (!RegExp(r'^[0-9]+$').hasMatch(value)) return 'Chỉ nhập số nguyên không âm';
+    if (value.isEmpty) {
+      return isRequired
+          ? (isVi ? 'Không được để trống' : 'Cannot be empty')
+          : null;
+    }
+    if (!RegExp(r'^[0-9]+(\.[0-9]{1,2})?$').hasMatch(value)) {
+      return isVi
+          ? 'Nhập số không âm, tối đa 2 chữ số thập phân'
+          : 'Enter non-negative number, up to 2 decimal places';
+    }
+    return null;
+  }
+
+  String? _validateVolume(String? v, {required bool isVi}) {
+    final value = (v ?? '').trim();
+    if (value.isEmpty) {
+      return _isEdit
+          ? (isVi ? 'Không được để trống' : 'Cannot be empty')
+          : null;
+    }
+    if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+      return isVi
+          ? 'Chỉ nhập số nguyên không âm'
+          : 'Enter non-negative integer only';
+    }
     return null;
   }
 
@@ -99,15 +118,21 @@ class _AdminCandleFormScreenState extends ConsumerState<AdminCandleFormScreen> {
     if (picked != null && mounted) _date.text = _fmt(picked);
   }
 
-  String? _checkCandle(num open, num close, num high, num low) {
+  String? _checkCandle(num open, num close, num high, num low, {required bool isVi}) {
     if (high < low) {
-      return 'Giá cao nhất phải lớn hơn hoặc bằng giá thấp nhất.';
+      return isVi
+          ? 'Giá cao nhất phải lớn hơn hoặc bằng giá thấp nhất.'
+          : 'Highest price must be greater than or equal to lowest price.';
     }
     if (open < low || open > high) {
-      return 'Giá mở cửa phải nằm trong khoảng từ giá thấp nhất đến cao nhất.';
+      return isVi
+          ? 'Giá mở cửa phải nằm trong khoảng từ giá thấp nhất đến cao nhất.'
+          : 'Open price must be between lowest and highest price.';
     }
     if (close < low || close > high) {
-      return 'Giá đóng cửa phải nằm trong khoảng từ giá thấp nhất đến cao nhất.';
+      return isVi
+          ? 'Giá đóng cửa phải nằm trong khoảng từ giá thấp nhất đến cao nhất.'
+          : 'Close price must be between lowest and highest price.';
     }
     return null;
   }
@@ -116,12 +141,13 @@ class _AdminCandleFormScreenState extends ConsumerState<AdminCandleFormScreen> {
       num.tryParse(text.trim()) != num.tryParse(original);
 
   Future<void> _submit() async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     if (!_formKey.currentState!.validate()) return;
     final open = num.parse(_open.text.trim());
     final high = num.parse(_high.text.trim());
     final low = num.parse(_low.text.trim());
     final close = num.parse(_close.text.trim());
-    final problem = _checkCandle(open, close, high, low);
+    final problem = _checkCandle(open, close, high, low, isVi: isVi);
     if (problem != null) {
       showAdminSnack(context, problem, error: true);
       return;
@@ -144,7 +170,10 @@ class _AdminCandleFormScreenState extends ConsumerState<AdminCandleFormScreen> {
           'trading_value': _value.text.trim(),
       };
       if (changes.isEmpty) {
-        showAdminSnack(context, 'Chưa có thay đổi nào.');
+        showAdminSnack(
+          context,
+          isVi ? 'Chưa có thay đổi nào.' : 'No changes made.',
+        );
         return;
       }
     }
@@ -178,13 +207,17 @@ class _AdminCandleFormScreenState extends ConsumerState<AdminCandleFormScreen> {
   }
 
   Future<void> _delete() async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     final c = widget.candle!;
     final ok = await showAdminConfirm(
       context,
-      title: 'Xóa phiên giá',
-      message: 'Xóa vĩnh viễn phiên ${c.displayDate} của ${c.stockSymbol}? '
-          'Hành động này không thể hoàn tác.',
-      confirmText: 'Xóa vĩnh viễn',
+      title: isVi ? 'Xóa phiên giá' : 'Delete Price Session',
+      message: isVi
+          ? 'Xóa vĩnh viễn phiên ${c.displayDate} của ${c.stockSymbol}? '
+              'Hành động này không thể hoàn tác.'
+          : 'Permanently delete session ${c.displayDate} of ${c.stockSymbol}? '
+              'This action cannot be undone.',
+      confirmText: isVi ? 'Xóa vĩnh viễn' : 'Delete Permanently',
       danger: true,
     );
     if (!ok) return;
@@ -192,7 +225,10 @@ class _AdminCandleFormScreenState extends ConsumerState<AdminCandleFormScreen> {
     try {
       await ref.read(adminRepositoryProvider).deleteCandle(c.candleId);
       if (!mounted) return;
-      showAdminSnack(context, 'Đã xóa phiên giá');
+      showAdminSnack(
+        context,
+        isVi ? 'Đã xóa phiên giá' : 'Price session deleted successfully',
+      );
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
@@ -203,14 +239,21 @@ class _AdminCandleFormScreenState extends ConsumerState<AdminCandleFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
     final c = widget.candle;
+
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text(_isEdit ? 'Sửa phiên giá' : 'Thêm phiên giá'),
+        title: Text(
+          _isEdit
+              ? (isVi ? 'Sửa phiên giá' : 'Edit Price Session')
+              : (isVi ? 'Thêm phiên giá' : 'Add Price Session'),
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -221,21 +264,26 @@ class _AdminCandleFormScreenState extends ConsumerState<AdminCandleFormScreen> {
               child: Column(
                 children: [
                   AdminInfoRow(
-                    label: 'Cổ phiếu',
+                    label: isVi ? 'Cổ phiếu' : 'Stock Symbol',
                     value:
                         '${widget.stock.stockSymbol} · ${widget.stock.companyName}',
                   ),
                   if (_isEdit)
-                    AdminInfoRow(label: 'Ngày', value: c!.displayDate),
+                    AdminInfoRow(
+                      label: isVi ? 'Ngày' : 'Date',
+                      value: c!.displayDate,
+                    ),
                 ],
               ),
             ),
             if (!_isEdit) ...[
               const SizedBox(height: 16),
               AppTextField(
-                labelText: 'Ngày giao dịch (năm-tháng-ngày)',
+                labelText: isVi
+                    ? 'Ngày giao dịch (năm-tháng-ngày)'
+                    : 'Trading Date (YYYY-MM-DD)',
                 controller: _date,
-                validator: _validateDate,
+                validator: (v) => _validateDate(v, isVi: isVi),
                 suffixIcon: IconButton(
                   icon: const Icon(
                     Icons.calendar_today_rounded,
@@ -247,53 +295,60 @@ class _AdminCandleFormScreenState extends ConsumerState<AdminCandleFormScreen> {
             ],
             const SizedBox(height: 16),
             AppTextField(
-              labelText: 'Giá mở cửa',
+              labelText: isVi ? 'Giá mở cửa' : 'Open Price',
               controller: _open,
               keyboardType: TextInputType.number,
-              validator: (v) => _validatePrice(v, isRequired: true),
+              validator: (v) => _validatePrice(v, isRequired: true, isVi: isVi),
             ),
             const SizedBox(height: 16),
             AppTextField(
-              labelText: 'Giá cao nhất',
+              labelText: isVi ? 'Giá cao nhất' : 'Highest Price',
               controller: _high,
               keyboardType: TextInputType.number,
-              validator: (v) => _validatePrice(v, isRequired: true),
+              validator: (v) => _validatePrice(v, isRequired: true, isVi: isVi),
             ),
             const SizedBox(height: 16),
             AppTextField(
-              labelText: 'Giá thấp nhất',
+              labelText: isVi ? 'Giá thấp nhất' : 'Lowest Price',
               controller: _low,
               keyboardType: TextInputType.number,
-              validator: (v) => _validatePrice(v, isRequired: true),
+              validator: (v) => _validatePrice(v, isRequired: true, isVi: isVi),
             ),
             const SizedBox(height: 16),
             AppTextField(
-              labelText: 'Giá đóng cửa',
+              labelText: isVi ? 'Giá đóng cửa' : 'Close Price',
               controller: _close,
               keyboardType: TextInputType.number,
-              validator: (v) => _validatePrice(v, isRequired: true),
+              validator: (v) => _validatePrice(v, isRequired: true, isVi: isVi),
             ),
             const SizedBox(height: 16),
             AppTextField(
               labelText: _isEdit
-                  ? 'Khối lượng giao dịch'
-                  : 'Khối lượng giao dịch (để trống = 0)',
+                  ? (isVi ? 'Khối lượng giao dịch' : 'Trading volume')
+                  : (isVi
+                      ? 'Khối lượng giao dịch (để trống = 0)'
+                      : 'Trading volume (leave empty = 0)'),
               controller: _volume,
               keyboardType: TextInputType.number,
-              validator: _validateVolume,
+              validator: (v) => _validateVolume(v, isVi: isVi),
             ),
             const SizedBox(height: 16),
             AppTextField(
               labelText: _isEdit
-                  ? 'Giá trị giao dịch'
-                  : 'Giá trị giao dịch (để trống = 0)',
+                  ? (isVi ? 'Giá trị giao dịch' : 'Trading value')
+                  : (isVi
+                      ? 'Giá trị giao dịch (để trống = 0)'
+                      : 'Trading value (leave empty = 0)'),
               controller: _value,
               keyboardType: TextInputType.number,
-              validator: (v) => _validatePrice(v, isRequired: _isEdit),
+              validator: (v) =>
+                  _validatePrice(v, isRequired: _isEdit, isVi: isVi),
             ),
             const SizedBox(height: 28),
             GradientButton(
-              text: _isEdit ? 'Lưu thay đổi' : 'Thêm phiên giá',
+              text: _isEdit
+                  ? (isVi ? 'Lưu thay đổi' : 'Save Changes')
+                  : (isVi ? 'Thêm phiên giá' : 'Add Price Session'),
               isLoading: _saving,
               onPressed: _submit,
             ),
@@ -305,9 +360,9 @@ class _AdminCandleFormScreenState extends ConsumerState<AdminCandleFormScreen> {
                   Icons.delete_forever_rounded,
                   color: AppColors.priceDown,
                 ),
-                label: const Text(
-                  'Xóa phiên giá',
-                  style: TextStyle(color: AppColors.priceDown),
+                label: Text(
+                  isVi ? 'Xóa phiên giá' : 'Delete Price Session',
+                  style: const TextStyle(color: AppColors.priceDown),
                 ),
               ),
             ],
