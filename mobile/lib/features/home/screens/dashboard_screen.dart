@@ -149,6 +149,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
     final dashboardAsync = ref.watch(dashboardProvider);
     final baseStocks = dashboardAsync.value?.marketBoard.isNotEmpty == true
         ? dashboardAsync.value!.marketBoard

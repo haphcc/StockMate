@@ -7,6 +7,7 @@ import '../../../data/models/account_model.dart';
 import '../../../data/models/portfolio_model.dart';
 import '../../../providers/account_providers.dart';
 import '../../../providers/app_providers.dart';
+import '../../../l10n/app_localizations.dart';
 
 class PortfolioScreen extends ConsumerWidget {
   const PortfolioScreen({super.key});

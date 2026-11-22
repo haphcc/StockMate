@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/network/stockmate_api.dart';
 import '../../../data/models/stock_model.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../providers/app_providers.dart';
 import '../../market/data/market_fixtures.dart';
 import '../../market/widgets/market_components.dart';

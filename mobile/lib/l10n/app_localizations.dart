@@ -573,8 +573,11 @@ class AppLocalizations {
   String volumePrefix(String vol) =>
       isVietnamese ? 'KL: $vol' : 'Vol: $vol';
 
-  String get today =>
-      isVietnamese ? 'Hôm nay' : 'Today';
+  String get buyAction => isVietnamese ? 'Mua' : 'Buy';
+  String get sellAction => isVietnamese ? 'Bán' : 'Sell';
+  String get placeOrderTitle => isVietnamese ? 'Đặt lệnh LO' : 'Place LO Order';
+  String get txHistoryTitle => transactionHistoryTitle;
+
   String get orEnterSymbol =>
       isVietnamese ? 'HOẶC TỰ NHẬP MÃ' : 'OR ENTER SYMBOL';
   String get quickSelectFromListed =>

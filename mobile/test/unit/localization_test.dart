@@ -22,13 +22,13 @@ void main() {
       expect(l10n.tabWatchlist, 'Theo dõi');
       expect(l10n.tabOrders, 'Sổ lệnh');
       expect(l10n.tabTrade, 'Đặt lệnh');
-      expect(l10n.tabPortfolio, 'Tài sản');
+      expect(l10n.tabPortfolio, 'Danh mục');
       expect(l10n.loginButton, 'Đăng Nhập Ngay');
       expect(l10n.labelLanguage, 'Ngôn ngữ hiển thị');
       expect(l10n.darkMode, 'Chế độ tối');
       expect(l10n.logoutButton, 'Đăng xuất tài khoản');
       expect(l10n.placeOrderTitle, 'Đặt lệnh LO');
-      expect(l10n.orderBookTitle, 'Sổ lệnh trong ngày');
+      expect(l10n.orderBookTitle, 'Sổ lệnh');
       expect(l10n.txHistoryTitle, 'Lịch sử giao dịch');
       expect(l10n.notificationsTitle, 'Thông báo');
       expect(l10n.depositTitle, 'Nạp tiền vào tài khoản');
@@ -51,10 +51,10 @@ void main() {
       expect(l10n.darkMode, 'Dark Mode');
       expect(l10n.logoutButton, 'Log Out');
       expect(l10n.placeOrderTitle, 'Place LO Order');
-      expect(l10n.orderBookTitle, 'Daily Order Book');
+      expect(l10n.orderBookTitle, 'Order Book');
       expect(l10n.txHistoryTitle, 'Transaction History');
       expect(l10n.notificationsTitle, 'Notifications');
-      expect(l10n.depositTitle, 'Deposit Money');
+      expect(l10n.depositTitle, 'Deposit Funds');
     });
 
     test('All critical strings are distinct between VI and EN', () {

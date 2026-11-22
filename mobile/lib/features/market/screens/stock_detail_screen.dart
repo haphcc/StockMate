@@ -6,6 +6,7 @@ import '../../../core/config/app_config.dart';
 import '../../../core/network/stockmate_api.dart';
 import '../../../data/models/stock_model.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../l10n/app_localizations.dart';
 import '../../../providers/app_providers.dart';
 import '../data/market_fixtures.dart';
 import '../widgets/market_components.dart';
@@ -357,8 +358,8 @@ class _StockDetailScreenState extends ConsumerState<StockDetailScreen> {
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              Spacer(),
-              Icon(
+              const Spacer(),
+              const Icon(
                 Icons.tune_rounded,
                 color: AppColors.darkTextMuted,
                 size: 18,
@@ -609,16 +610,6 @@ class _StockDetailScreenState extends ConsumerState<StockDetailScreen> {
                     style: const TextStyle(
                       color: AppColors.darkTextMuted,
                       fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: .5,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      );
                       fontWeight: FontWeight.w700,
                       letterSpacing: .5,
                     ),
