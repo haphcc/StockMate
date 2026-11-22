@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stockmate/core/widgets/language_switch_button.dart';
 import 'package:stockmate/features/auth/screens/login_screen.dart';
 import 'package:stockmate/features/auth/screens/register_screen.dart';
+import 'package:stockmate/features/home/screens/settings_screen.dart';
 import 'package:stockmate/features/profile/screens/profile_screen.dart';
 import 'package:stockmate/l10n/app_localizations.dart';
 import 'package:stockmate/providers/app_providers.dart';
@@ -145,6 +146,32 @@ void main() {
 
       // Kiểm tra chuyển sang tiếng Anh
       expect(find.text('Create StockMate Account'), findsOneWidget);
+    });
+  });
+
+  group('SettingsScreen (Hồ sơ & Cài đặt) language toggle tests', () {
+    testWidgets('SettingsScreen renders with language options and toggles language', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: _buildTestApp(const SettingsScreen()),
+        ),
+      );
+
+      // Ban đầu là Tiếng Việt
+      expect(find.text('Cài đặt & Tài khoản'), findsOneWidget);
+      expect(find.text('TÀI KHOẢN'), findsOneWidget);
+      expect(find.text('Sửa thông tin'), findsOneWidget);
+      expect(find.text('CÀI ĐẶT & NGÔN NGỮ'), findsOneWidget);
+
+      // Chuyển sang Tiếng Anh bằng nút EN trên AppBar
+      await tester.tap(find.text('EN').first);
+      await tester.pumpAndSettle();
+
+      // Kiểm tra chuyển sang tiếng Anh
+      expect(find.text('Settings & Account'), findsOneWidget);
+      expect(find.text('ACCOUNT'), findsOneWidget);
+      expect(find.text('Edit profile'), findsOneWidget);
+      expect(find.text('PREFERENCES & LANGUAGE'), findsOneWidget);
     });
   });
 

@@ -66,6 +66,7 @@ class LanguageSwitchButton extends ConsumerWidget {
     required bool isActive,
   }) {
     return GestureDetector(
+      key: ValueKey('lang_opt_$code'),
       onTap: () {
         if (!isActive) {
           HapticFeedback.selectionClick();
@@ -124,7 +125,7 @@ class LanguageSwitchButton extends ConsumerWidget {
   }
 }
 
-/// Dòng cài đặt ngôn ngữ chuyên biệt cho màn hình Hồ sơ (Profile).
+/// Dòng cài đặt ngôn ngữ chuyên biệt cho màn hình Hồ sơ (Profile) / Cài đặt.
 class LanguageSettingsTile extends ConsumerWidget {
   const LanguageSettingsTile({super.key});
 
@@ -170,7 +171,7 @@ class LanguageSettingsTile extends ConsumerWidget {
                     l10n.labelLanguage,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 14.0,
+                      fontSize: 15.0,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

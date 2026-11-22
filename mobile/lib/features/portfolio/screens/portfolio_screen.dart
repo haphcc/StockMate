@@ -6,6 +6,7 @@ import '../../../core/widgets/stockmate_brand.dart';
 import '../../../data/models/account_model.dart';
 import '../../../data/models/portfolio_model.dart';
 import '../../../providers/account_providers.dart';
+import '../../../providers/app_providers.dart';
 
 class PortfolioScreen extends ConsumerWidget {
   const PortfolioScreen({super.key});
@@ -21,13 +22,14 @@ class PortfolioScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final assets = ref.watch(assetsProvider);
     final portfolio = ref.watch(portfolioProvider);
 
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
-        title: const Text('Danh mục đầu tư'),
+        title: Text(l10n.portfolioTitle),
         actions: const [
           Padding(
             padding: EdgeInsets.only(right: 16),
@@ -56,12 +58,12 @@ class PortfolioScreen extends ConsumerWidget {
               ),
               error: (e, _) => _ErrorCard(message: e.toString()),
               data: (items) => items.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.all(40),
+                  ? Padding(
+                      padding: const EdgeInsets.all(40),
                       child: Center(
                         child: Text(
-                          'Danh mục chưa có cổ phiếu',
-                          style: TextStyle(color: AppColors.darkTextSecondary),
+                          l10n.noHoldings,
+                          style: const TextStyle(color: AppColors.darkTextSecondary),
                         ),
                       ),
                     )
@@ -70,16 +72,16 @@ class PortfolioScreen extends ConsumerWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'DANH MỤC NẮM GIỮ',
-                              style: TextStyle(
+                            Text(
+                              l10n.holdingsHeader,
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 13,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
-                              '${items.length} mã',
+                              l10n.holdingsCount(items.length),
                               style: const TextStyle(
                                 color: AppColors.darkTextSecondary,
                                 fontSize: 12,
@@ -105,12 +107,13 @@ class PortfolioScreen extends ConsumerWidget {
   }
 }
 
-class _AssetCard extends StatelessWidget {
+class _AssetCard extends ConsumerWidget {
   final AssetModel? asset;
   const _AssetCard({required this.asset});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     if (asset == null) {
       return const _ErrorCard(
         message: 'Không có tài khoản CASH đang hoạt động.',
@@ -133,93 +136,105 @@ class _AssetCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Tổng tài sản ròng',
-            style: TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            a.totalAssetValue.formatVnd(),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _Stat('Lãi / Lỗ', a.totalProfitLoss.formatVnd(), c),
-              _Stat('Sức mua tiền mặt', a.cashBalance.formatVnd(), Colors.white),
+              Text(
+                l10n.totalNetAssets,
+                style: const TextStyle(
+                  color: AppColors.darkTextSecondary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              FilledButton.icon(
+                onPressed: () => context.push('/deposit'),
+                icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
+                label: Text(l10n.deposit),
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: const Color(0xFF06251C),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            a.nav.formatVND,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              letterSpacing: -0.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Divider(color: AppColors.darkCardBorder, height: 1),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _stat(
+                  l10n.buyingPower,
+                  a.cashAvailable.formatVND,
+                ),
+              ),
+              Expanded(
+                child: _stat(
+                  l10n.profitLoss,
+                  '${a.totalProfitLoss.formatVND} (${a.profitRate.toStringAsFixed(2)}%)',
+                  color: c,
+                ),
+              ),
             ],
           ),
         ],
       ),
     );
   }
-}
 
-class _Stat extends StatelessWidget {
-  final String label, value;
-  final Color color;
-  const _Stat(this.label, this.value, this.color);
-
-  @override
-  Widget build(BuildContext context) => Column(
+  Widget _stat(String label, String value, {Color? color}) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
             style: const TextStyle(
               color: AppColors.darkTextSecondary,
-              fontSize: 11,
+              fontSize: 12,
             ),
           ),
-          const SizedBox(height: 3),
+          const SizedBox(height: 4),
           Text(
             value,
             style: TextStyle(
-              color: color,
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
+              color: color ?? Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
       );
 }
 
-class _LoadingCard extends StatelessWidget {
-  const _LoadingCard();
-  @override
-  Widget build(BuildContext context) => const SizedBox(
-        height: 150,
-        child: Center(child: CircularProgressIndicator()),
-      );
-}
-
-class _ErrorCard extends StatelessWidget {
-  final String message;
-  const _ErrorCard({required this.message});
-  @override
-  Widget build(BuildContext context) => Text(
-        message,
-        style: const TextStyle(color: AppColors.priceDown),
-      );
-}
-
 class _HoldingItem extends StatelessWidget {
-  final PortfolioModel item;
+  final PortfolioItemModel item;
   const _HoldingItem({required this.item});
 
   @override
   Widget build(BuildContext context) {
-    final isProfitable = item.profitLoss.cents >= 0;
-    final colorProfit =
-        isProfitable ? AppColors.primary : AppColors.priceDown;
-    final percentStr = item.profitLossPercent != null
-        ? '${isProfitable ? '+' : ''}${item.profitLossPercent!.decimalString}%'
-        : '—';
+    final c = item.profitLoss.cents >= 0
+        ? AppColors.primary
+        : AppColors.priceDown;
     final hasAvailable = item.availableQuantity > 0;
 
     return Container(
@@ -238,7 +253,6 @@ class _HoldingItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header mã cổ phiếu & Lãi/Lỗ
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -248,92 +262,86 @@ class _HoldingItem extends StatelessWidget {
                           item.stockSymbol,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        if (item.exchange.isNotEmpty) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E293B),
-                              borderRadius: BorderRadius.circular(5),
-                            ),
-                            child: Text(
-                              item.exchange,
-                              style: const TextStyle(
-                                color: AppColors.darkTextSecondary,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                              ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.darkSurface,
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            item.exchange,
+                            style: const TextStyle(
+                              color: AppColors.darkTextSecondary,
+                              fontSize: 10,
                             ),
                           ),
-                        ],
+                        ),
                       ],
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          '${isProfitable ? '+' : ''}${item.profitLoss.formatVnd()}',
-                          style: TextStyle(
-                            color: colorProfit,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          percentStr,
-                          style: TextStyle(
-                            color: colorProfit,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
+                    Text(
+                      '${item.profitLoss.formatVND} (${item.profitRate.toStringAsFixed(2)}%)',
+                      style: TextStyle(
+                        color: c,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ],
                 ),
+                const SizedBox(height: 4),
                 Text(
                   item.companyName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: AppColors.darkTextSecondary,
-                    fontSize: 11,
+                    fontSize: 12,
                   ),
                 ),
-                const Divider(color: AppColors.darkCardBorder, height: 20),
-
-                // Grid thông số chi tiết
+                const SizedBox(height: 12),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _holdingStat(
-                      'Khối lượng',
-                      '${item.quantity}',
-                      subLabel: 'Khả dụng: ${item.availableQuantity}',
+                    Expanded(
+                      child: _holdingStat(
+                        'Khả dụng / Tổng',
+                        '${item.availableQuantity} / ${item.quantity}',
+                        subLabel: item.t1PendingQuantity > 0 ||
+                                item.t2PendingQuantity > 0
+                            ? 'Chờ: T+1: ${item.t1PendingQuantity} | T+2: ${item.t2PendingQuantity}'
+                            : null,
+                      ),
                     ),
-                    _holdingStat(
-                      'Giá vốn',
-                      '${item.averagePrice.decimalString} ₫',
-                      subLabel: 'TT: ${item.marketPrice.decimalString} ₫',
+                    Expanded(
+                      child: _holdingStat(
+                        'Giá vốn / Hiện tại',
+                        '${item.avgBuyPrice.formatVND} / ${item.currentPrice.formatVND}',
+                        alignRight: true,
+                      ),
                     ),
-                    _holdingStat(
-                      'Giá trị',
-                      item.currentValue.formatVnd(),
-                      alignRight: true,
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _holdingStat(
+                        'Giá trị thị trường',
+                        item.marketValue.formatVND,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 14),
+                const Divider(color: AppColors.darkCardBorder, height: 1),
+                const SizedBox(height: 12),
 
-                // Hàng nút thao tác Mua thêm / Bán / Biểu đồ
+                // Hành động nhanh
                 Row(
                   children: [
                     // Nút Bán
@@ -464,5 +472,38 @@ class _HoldingItem extends StatelessWidget {
             ),
           ],
         ],
+      );
+}
+
+class _LoadingCard extends StatelessWidget {
+  const _LoadingCard();
+
+  @override
+  Widget build(BuildContext context) => Container(
+        height: 180,
+        decoration: BoxDecoration(
+          color: AppColors.darkCard,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Center(child: CircularProgressIndicator()),
+      );
+}
+
+class _ErrorCard extends StatelessWidget {
+  final String message;
+  const _ErrorCard({required this.message});
+
+  @override
+  Widget build(BuildContext context) => Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.priceDown.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.priceDown),
+        ),
+        child: Text(
+          message,
+          style: const TextStyle(color: AppColors.priceDown),
+        ),
       );
 }
