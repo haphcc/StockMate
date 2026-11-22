@@ -166,3 +166,29 @@ SELECT w.watchlist_id,
        w.created_at
   FROM watchlists w
   JOIN stocks s ON s.stock_id = w.stock_id;
+
+-- ---------------------------------------------------------------------
+-- 7. So cai thanh toan bu tru co phieu T+2
+-- ---------------------------------------------------------------------
+CREATE OR REPLACE VIEW v_share_settlements AS
+SELECT ss.settlement_id,
+       ss.transaction_id,
+       ss.account_id,
+       a.account_number,
+       a.customer_id,
+       s.stock_id,
+       s.stock_symbol,
+       s.company_name,
+       ss.quantity,
+       ss.settlement_date,
+       ss.status,
+       ss.settled_at,
+       t.price                   AS matched_price,
+       t.total_amount,
+       t.transaction_date,
+       ss.created_at
+  FROM share_settlements ss
+  JOIN investment_accounts a ON a.account_id = ss.account_id
+  JOIN stocks s              ON s.stock_id   = ss.stock_id
+  JOIN transactions t        ON t.transaction_id = ss.transaction_id;
+

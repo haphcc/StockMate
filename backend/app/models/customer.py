@@ -33,6 +33,18 @@ class Customer(Base):
     avatar_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
     role: Mapped[str] = mapped_column(String(20), nullable=False, default="CUSTOMER")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="ACTIVE")
+    auth_provider: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="LOCAL",
+        server_default="LOCAL",
+    )
+    google_id: Mapped[str | None] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=True,
+        index=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -61,3 +73,8 @@ class Customer(Base):
         back_populates="customer",
         cascade="all, delete-orphan",
     )
+
+    @property
+    def has_password(self) -> bool:
+        """Return True if the account has a local password hash (not Google-only sentinel)."""
+        return bool(self.password_hash) and self.password_hash != "GOOGLE_OAUTH_ACCOUNT"

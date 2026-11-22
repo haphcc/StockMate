@@ -42,7 +42,8 @@ Dùng giá DEMO, tài khoản CASH, lệnh LO theo lô 100 cổ phiếu; có đ�
 tài sản, watchlist, giao dịch và thông báo trong app. Chi tiết: [MVP_SCOPE](MVP_SCOPE.md).
 
 Sau demo mới xem xét vnstock/giá trực tiếp, margin, MP/ATO/ATC, đăng nhập Google/OTP và push notification.
-Code Flutter và SQL gốc được giữ; phần backend/migration/Docker bổ sung hiện chỉ có khung TODO.
+Code Flutter và SQL gốc được giữ. Backend CP1 và migration/seed đã có code thực thi;
+trạng thái bàn giao, kể cả các phần còn TODO, xem WORK_BOARD và hướng dẫn từng thành viên.
 
 Khi code mới tra [API_CONTRACT](API_CONTRACT.md) về JSON/API,
 [BUSINESS_RULES](BUSINESS_RULES.md) về tiền/giao dịch và [ACCEPTANCE_TESTS](ACCEPTANCE_TESTS.md) để kiểm thử.

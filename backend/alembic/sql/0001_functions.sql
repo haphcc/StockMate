@@ -188,19 +188,29 @@ CREATE TRIGGER trg_stocks_reprice
 -- ---------------------------------------------------------------------
 -- 7. Giai phong co phieu T+2
 -- ---------------------------------------------------------------------
-CREATE OR REPLACE PROCEDURE sp_settle_pending_shares()
+CREATE OR REPLACE PROCEDURE sp_settle_pending_shares(p_as_of_date DATE DEFAULT CURRENT_DATE)
 LANGUAGE plpgsql AS $$
+DECLARE
+    r RECORD;
 BEGIN
-    UPDATE portfolios p
-       SET available_quantity = p.quantity,
-           updated_at         = now()
-     WHERE p.available_quantity < p.quantity
-       AND NOT EXISTS (
-            SELECT 1 FROM transactions t
-             WHERE t.account_id = p.account_id
-               AND t.stock_id   = p.stock_id
-               AND t.transaction_type = 'BUY'
-               AND t.settlement_date > CURRENT_DATE);
+    FOR r IN
+        SELECT settlement_id, account_id, stock_id, quantity
+          FROM share_settlements
+         WHERE status = 'PENDING'
+           AND settlement_date <= p_as_of_date
+         FOR UPDATE
+    LOOP
+        UPDATE portfolios
+           SET available_quantity = LEAST(available_quantity + r.quantity, quantity - blocked_quantity),
+               updated_at         = now()
+         WHERE account_id = r.account_id
+           AND stock_id   = r.stock_id;
+
+        UPDATE share_settlements
+           SET status     = 'SETTLED',
+               settled_at = now()
+         WHERE settlement_id = r.settlement_id;
+    END LOOP;
 END;
 $$;
 

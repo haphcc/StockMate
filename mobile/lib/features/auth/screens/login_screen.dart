@@ -4,9 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
-import '../../../core/widgets/language_switch_button.dart';
 import '../../../core/widgets/stockmate_brand.dart';
-import '../../../providers/app_providers.dart';
+import '../../../core/services/google_sign_in_service.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/social_login_buttons.dart';
 
@@ -32,16 +31,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _login() async {
-    // If empty, fill default for easy testing
-    if (_accountController.text.trim().isEmpty) {
-      _accountController.text = '086C123456';
-    }
-    if (_passwordController.text.trim().isEmpty) {
-      _passwordController.text = '12345678';
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     try {
-      await ref.read(authProvider.notifier).login(
+      await ref
+          .read(authProvider.notifier)
+          .login(
             _accountController.text.trim(),
             _passwordController.text.trim(),
           );
@@ -50,11 +45,40 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString().replaceAll('Exception: ', '')),
             backgroundColor: AppColors.priceDown,
             behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  void _googleSignIn() async {
+    try {
+      final credentials = await GoogleSignInService().signIn();
+      await ref.read(authProvider.notifier).googleLogin(
+            idToken: credentials.idToken,
+            accessToken: credentials.accessToken,
+          );
+      if (mounted) {
+        context.go('/home/overview');
+      }
+    } catch (e) {
+      if (mounted) {
+        final msg = e.toString().replaceAll('Exception: ', '');
+        if (msg.contains('Đã hủy')) return;
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(msg),
+            backgroundColor: AppColors.priceDown,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
           ),
         );
       }
@@ -65,7 +89,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
     final isLoading = authState.isLoading;
-    final l10n = ref.watch(l10nProvider);
 
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
@@ -96,16 +119,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     const SizedBox(width: 16),
                     const StockMateBrand(iconSize: 28, fontSize: 18),
-                    const Spacer(),
-                    const LanguageSwitchButton(height: 32),
                   ],
                 ),
                 const SizedBox(height: 32),
 
                 // Title
-                Text(
-                  l10n.loginTitle,
-                  style: const TextStyle(
+                const Text(
+                  'Đăng nhập tài khoản',
+                  style: TextStyle(
                     color: Colors.white,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -116,11 +137,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Account Field
                 AppTextField(
-                  labelText: l10n.accountLabel,
-                  hintText: l10n.accountHint,
+                  labelText: 'Email',
+                  hintText: 'investor@stockmate.vn',
                   controller: _accountController,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: (value) =>
+                      value == null ||
+                          !RegExp(
+                            r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+                          ).hasMatch(value.trim())
+                      ? 'Email không hợp lệ'
+                      : null,
                   prefixIcon: const Icon(
-                    Icons.badge_outlined,
+                    Icons.email_outlined,
                     color: AppColors.darkTextSecondary,
                     size: 20,
                   ),
@@ -129,9 +158,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                 // Password Field
                 AppTextField(
-                  labelText: l10n.passwordLabel,
-                  hintText: l10n.passwordHint,
+                  labelText: 'Mật khẩu PIN / Đăng nhập',
+                  hintText: '••••••••••••',
                   controller: _passwordController,
+                  validator: (value) => value == null || value.length < 8
+                      ? 'Mật khẩu tối thiểu 8 ký tự'
+                      : null,
                   obscureText: _obscurePassword,
                   prefixIcon: const Icon(
                     Icons.lock_outline_rounded,
@@ -140,11 +172,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                      _obscurePassword
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                       color: AppColors.darkTextSecondary,
                       size: 20,
                     ),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -163,10 +198,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             width: 18,
                             height: 18,
                             decoration: BoxDecoration(
-                              color: _rememberMe ? AppColors.primary : Colors.transparent,
+                              color: _rememberMe
+                                  ? AppColors.primary
+                                  : Colors.transparent,
                               borderRadius: BorderRadius.circular(4),
                               border: Border.all(
-                                color: _rememberMe ? AppColors.primary : AppColors.darkTextMuted,
+                                color: _rememberMe
+                                    ? AppColors.primary
+                                    : AppColors.darkTextMuted,
                                 width: 1.5,
                               ),
                             ),
@@ -179,9 +218,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 : null,
                           ),
                           const SizedBox(width: 8),
-                          Text(
-                            l10n.rememberMe,
-                            style: const TextStyle(
+                          const Text(
+                            'Ghi nhớ',
+                            style: TextStyle(
                               color: Colors.white,
                               fontSize: 13,
                               fontWeight: FontWeight.w400,
@@ -192,9 +231,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                     GestureDetector(
                       onTap: () {},
-                      child: Text(
-                        l10n.forgotPassword,
-                        style: const TextStyle(
+                      child: const Text(
+                        'Quên mật khẩu?',
+                        style: TextStyle(
                           color: AppColors.primary,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -205,72 +244,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 26),
 
-                // Login Button + Biometrics Button Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: GradientButton(
-                        text: l10n.loginButton,
-                        isLoading: isLoading,
-                        trailingIcon: const Icon(
-                          Icons.arrow_forward_rounded,
-                          size: 18,
-                          color: Color(0xFF032617),
-                        ),
-                        onPressed: _login,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Biometric button with green status dot
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        InkWell(
-                          onTap: () {
-                            // Biometric mock trigger
-                            _login();
-                          },
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            width: 54,
-                            height: 54,
-                            decoration: BoxDecoration(
-                              color: AppColors.darkInput,
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(color: AppColors.darkInputBorder, width: 1),
-                            ),
-                            child: const Center(
-                              child: Icon(
-                                Icons.face_rounded,
-                                color: AppColors.primary,
-                                size: 28,
-                              ),
-                            ),
-                          ),
-                        ),
-                        Positioned(
-                          top: -2,
-                          right: -2,
-                          child: Container(
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.darkBackground, width: 1.5),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                // Login Button
+                GradientButton(
+                  text: 'Đăng Nhập Ngay',
+                  isLoading: isLoading,
+                  trailingIcon: const Icon(
+                    Icons.arrow_forward_rounded,
+                    size: 18,
+                    color: Color(0xFF032617),
+                  ),
+                  onPressed: _login,
                 ),
                 const SizedBox(height: 36),
 
                 // Social logins
                 SocialAuthSection(
-                  dividerText: l10n.orLoginWith,
-                  onGoogleTap: () => _login(),
+                  dividerText: 'HOẶC ĐĂNG NHẬP QUA',
+                  onGoogleTap: _googleSignIn,
                   onAppleTap: () => _login(),
                 ),
                 const SizedBox(height: 36),
@@ -280,18 +270,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        l10n.noAccount,
-                        style: const TextStyle(
+                      const Text(
+                        'Chưa có tài khoản? ',
+                        style: TextStyle(
                           color: AppColors.darkTextSecondary,
                           fontSize: 13,
                         ),
                       ),
                       GestureDetector(
                         onTap: () => context.push('/register'),
-                        child: Text(
-                          l10n.registerNow,
-                          style: const TextStyle(
+                        child: const Text(
+                          'Đăng ký ngay',
+                          style: TextStyle(
                             color: AppColors.primary,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,

@@ -8,9 +8,9 @@ Châu cập nhật khi người nhận đã thử bàn giao. Chọn một trạn
 | Phuoc | Dựng DB, migration, seed và môi trường | Chưa làm | Bàn giao kết nối/cách dựng cho LB, Tuệ, Châu |
 | Sơn | Form auth, token và nối API đăng nhập | Chưa làm | Dùng JSON mẫu trước; nối API khi LB bàn giao |
 | Me (TV3) | Bảng giá/chi tiết với JSON mẫu | Chưa làm | Nhận helper/network/router từ Sơn |
-| LB | FastAPI, kết nối DB, health, auth và accounts | Chưa làm | Viết app/schema trước, nối DB khi Phuoc bàn giao |
+| LB | CP1 auth/accounts; CP2 market/chart/watchlist/assets/portfolio; CP3 tích hợp tài sản và báo cáo | Chờ bàn giao | Backend đã kiểm thử PostgreSQL 16; [bằng chứng CP2/3](qa/TV4_CP2_CP3.md), [báo cáo LB](reports/TV4_LB_BACKEND.md). Chờ Sơn/Me/Châu xác nhận trên Flutter |
 | Tuệ | Đặt/khớp/hủy lệnh, giữ tiền/CP, T+2, thông báo | Chờ bàn giao | Đã xong TR-01/02/03 + 9 unit test pass; sẵn sàng bàn giao cho Me (TV3) & Châu (TV6) |
-| Châu | Thử setup, soạn case và kiểm tra auth khi có API | Chưa làm | Ghi phần chưa chạy thay vì đánh dấu pass |
+| Châu | Thử setup, soạn case và dựng Tab Quản trị Admin trên mobile | Chờ bàn giao | Đã dựng DB/seed/API ([environment](qa/environment.md)); bug ghi ở [bugs](qa/bugs.md). Mobile Admin đã hoàn thành toàn bộ 8 phân hệ (Dashboard, Khách hàng, Tài khoản, Cổ phiếu, Sổ lệnh, Lịch sử GD, Danh mục nắm giữ, Lịch sử giá & Biểu đồ nến OHLCV, Thông báo) + bỏ mock để nối API/PostgreSQL thật (`ApiAdminRepository`, hỗ trợ `--dart-define=ADMIN_DEV_EMAIL/PASSWORD` tạm thời); `flutter test` & `flutter analyze` sạch lỗi. Chờ Sơn hoàn thành FE-02 (login thật & `AppConfig.useMock = false`) để dùng `StoredTokenSource` mặc định. |
 
 | Chặng | Xong khi | Trạng thái |
 |---|---|---|

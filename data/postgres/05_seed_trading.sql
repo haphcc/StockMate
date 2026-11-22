@@ -110,6 +110,20 @@ BEGIN
                             THEN v_total + v_fee
                             ELSE v_total - v_fee - v_tax END;
 
+            -- Match the live engine: a fill consumes an existing cash/share hold.
+            -- Historical seed fills must reserve first as well (CASH-01/SHARE-01).
+            IF r.otype = 'BUY' THEN
+                UPDATE investment_accounts
+                   SET cash_balance = cash_balance - v_net,
+                       blocked_balance = blocked_balance + v_net
+                 WHERE account_id = r.account_id;
+            ELSE
+                UPDATE portfolios
+                   SET available_quantity = available_quantity - r.qty,
+                       blocked_quantity = blocked_quantity + r.qty
+                 WHERE account_id = r.account_id AND stock_id = r.stock_id;
+            END IF;
+
             INSERT INTO transactions (order_id, account_id, stock_id, transaction_type,
                                       quantity, price, total_amount, transaction_fee,
                                       tax_amount, net_amount, transaction_date, settlement_date)
@@ -119,8 +133,24 @@ BEGIN
     END LOOP;
 END $$;
 
+-- Dong bo so cai share_settlements cho cac giao dich BUY lich su
+INSERT INTO share_settlements (
+    transaction_id, account_id, stock_id, quantity, settlement_date, status, settled_at
+)
+SELECT
+    t.transaction_id,
+    t.account_id,
+    t.stock_id,
+    t.quantity,
+    COALESCE(t.settlement_date, CURRENT_DATE),
+    CASE WHEN COALESCE(t.settlement_date, CURRENT_DATE) <= CURRENT_DATE THEN 'SETTLED' ELSE 'PENDING' END,
+    CASE WHEN COALESCE(t.settlement_date, CURRENT_DATE) <= CURRENT_DATE THEN t.transaction_date ELSE NULL END
+FROM transactions t
+WHERE t.transaction_type = 'BUY'
+ON CONFLICT (transaction_id) DO NOTHING;
+
 -- Co phieu da qua ngay thanh toan T+2 -> cho phep ban
-CALL sp_settle_pending_shares();
+CALL sp_settle_pending_shares(CURRENT_DATE);
 
 -- Dinh gia lai toan bo danh muc theo gia thi truong hien tai
 UPDATE portfolios p
@@ -131,7 +161,22 @@ UPDATE portfolios p
  WHERE s.stock_id = p.stock_id;
 
 -- ---------------------------------------------------------------------
--- Phong toa tien cho cac lenh MUA dang cho khop
+-- Phong toa co phieu cho cac lenh BAN dang cho khop (SHARE-01)
+-- ---------------------------------------------------------------------
+UPDATE portfolios p
+   SET blocked_quantity   = x.blocked_qty,
+       available_quantity = GREATEST(p.available_quantity - x.blocked_qty, 0)
+  FROM (
+        SELECT o.account_id, o.stock_id, SUM(o.quantity - o.filled_quantity) AS blocked_qty
+          FROM stock_orders o
+         WHERE o.order_type = 'SELL'
+           AND o.status IN ('PENDING', 'PARTIAL')
+         GROUP BY o.account_id, o.stock_id
+       ) x
+ WHERE x.account_id = p.account_id AND x.stock_id = p.stock_id;
+
+-- ---------------------------------------------------------------------
+-- Phong toa tien cho cac lenh MUA dang cho khop (CASH-01)
 -- (lenh MP duoc phong toa theo gia tran de dam bao du suc mua)
 -- ---------------------------------------------------------------------
 UPDATE investment_accounts a

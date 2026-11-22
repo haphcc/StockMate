@@ -13,6 +13,7 @@ from app.core.errors import ForbiddenException, UnauthorizedException
 from app.core.security import decode_access_token
 from app.db.session import get_db
 from app.models.customer import Customer
+from app.services.auth_service import ensure_active
 
 security_bearer = HTTPBearer(auto_error=False)
 
@@ -30,26 +31,7 @@ def get_current_user(
 
     token = credentials.credentials
     payload = decode_access_token(token)
-    if payload is None:
-        raise UnauthorizedException(
-            message="Access token không hợp lệ hoặc đã hết hạn.",
-            code="TOKEN_EXPIRED",
-        )
-
-    sub = payload.get("sub")
-    if not sub:
-        raise UnauthorizedException(
-            message="Token không chứa thông tin định danh.",
-            code="INVALID_CREDENTIALS",
-        )
-
-    try:
-        customer_id = int(sub)
-    except ValueError:
-        raise UnauthorizedException(
-            message="Token không hợp lệ.",
-            code="INVALID_CREDENTIALS",
-        )
+    customer_id = int(payload["sub"])
 
     customer = db.query(Customer).filter(Customer.customer_id == customer_id).first()
     if customer is None:
@@ -58,16 +40,7 @@ def get_current_user(
             code="UNAUTHORIZED",
         )
 
-    if customer.status == "LOCKED":
-        raise ForbiddenException(
-            message="Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.",
-            code="ACCOUNT_LOCKED",
-        )
-    if customer.status == "CLOSED":
-        raise ForbiddenException(
-            message="Tài khoản này đã bị đóng.",
-            code="ACCOUNT_CLOSED",
-        )
+    ensure_active(customer)
 
     return customer
 
