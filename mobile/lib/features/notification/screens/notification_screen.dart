@@ -311,7 +311,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
                                   children: [
                                     Expanded(
                                       child: Text(
-                                        item.title,
+                                        item.getDisplayTitle(l10n),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
@@ -336,7 +336,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  item.content,
+                                  item.getDisplayContent(l10n),
                                   style: const TextStyle(
                                     color: AppColors.darkTextSecondary,
                                     fontSize: 10,
@@ -363,7 +363,7 @@ class _NotificationScreenState extends ConsumerState<NotificationScreen> {
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
-                                      item.time,
+                                      item.getDisplayTime(l10n),
                                       style: const TextStyle(
                                         color: AppColors.darkTextMuted,
                                         fontSize: 9,
@@ -409,4 +409,49 @@ class _NoticePreview {
   final String title, content, time, type;
   final IconData icon;
   bool unread;
+
+  String getDisplayTitle(AppLocalizations l10n) {
+    if (id != null) return title;
+    switch (type) {
+      case 'ORDER':
+        return l10n.isVietnamese ? 'Lệnh FPT khớp một phần' : 'Partial match for FPT order';
+      case 'ACCOUNT':
+        return l10n.isVietnamese ? 'Xác nhận giao dịch' : 'Trade confirmation';
+      case 'PRICE_ALERT':
+        return l10n.isVietnamese ? 'Bản tin thị trường' : 'Market bulletin';
+      case 'SYSTEM':
+        return l10n.isVietnamese ? 'Lịch nghỉ giao dịch' : 'Market holiday schedule';
+      default:
+        return title;
+    }
+  }
+
+  String getDisplayContent(AppLocalizations l10n) {
+    if (id != null) return content;
+    switch (type) {
+      case 'ORDER':
+        return l10n.isVietnamese
+            ? 'Lệnh mua 500 cổ phiếu FPT đã khớp 200 cổ phiếu ở mức giá 134.200 ₫.'
+            : 'Buy order for 500 FPT shares partially filled with 200 shares at 134,200 ₫.';
+      case 'ACCOUNT':
+        return l10n.isVietnamese
+            ? 'Giao dịch bán 300 cổ phiếu SSI đã hoàn tất. Tiền bán dự kiến về tài khoản ngày 18/11.'
+            : 'Sell order for 300 SSI shares completed. Proceeds expected on Nov 18.';
+      case 'PRICE_ALERT':
+        return l10n.isVietnamese
+            ? 'VN-Index tăng 0,97% trong phiên sáng, thanh khoản tập trung ở nhóm ngân hàng và công nghệ.'
+            : 'VN-Index rose 0.97% in morning session, liquidity focused in banking and tech sectors.';
+      case 'SYSTEM':
+        return l10n.isVietnamese
+            ? 'Thị trường chứng khoán sẽ nghỉ giao dịch vào ngày lễ theo lịch công bố của sở giao dịch.'
+            : 'The stock exchange will be closed on official holidays per regulation.';
+      default:
+        return content;
+    }
+  }
+
+  String getDisplayTime(AppLocalizations l10n) {
+    if (id != null) return time;
+    return time.replaceAll('Hôm nay', l10n.today);
+  }
 }

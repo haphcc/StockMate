@@ -159,7 +159,7 @@ class _StockSearchDialogState extends ConsumerState<StockSearchDialog> {
                   : _error != null
                       ? Center(
                           child: Text(
-                            _error!,
+                            l10n.isVietnamese ? 'Không thể tải danh sách cổ phiếu.' : 'Failed to load stock list.',
                             style: const TextStyle(color: AppColors.priceDown),
                           ),
                         )

@@ -168,7 +168,7 @@ class _PlaceOrderScreenState extends ConsumerState<PlaceOrderScreen> {
       if (stocks.isEmpty) {
         setState(() {
           _marketLoading = false;
-          _marketError = 'Backend chưa có mã cổ phiếu để đặt lệnh.';
+          _marketError = 'NO_STOCKS';
         });
         return;
       }
@@ -189,7 +189,7 @@ class _PlaceOrderScreenState extends ConsumerState<PlaceOrderScreen> {
       if (mounted) {
         setState(() {
           _marketLoading = false;
-          _marketError = 'Không tải được danh sách mã cổ phiếu.';
+          _marketError = 'LOAD_FAILED';
         });
       }
     }
@@ -206,6 +206,17 @@ class _PlaceOrderScreenState extends ConsumerState<PlaceOrderScreen> {
   Widget build(BuildContext context) {
     final l10n = ref.watch(l10nProvider);
     if (_stocks.isEmpty) {
+      final errorMsg = _marketError == 'NO_STOCKS'
+          ? (l10n.isVietnamese
+              ? 'Backend chưa có mã cổ phiếu để đặt lệnh.'
+              : 'No stock symbols available for trading.')
+          : _marketError == 'LOAD_FAILED'
+              ? (l10n.isVietnamese
+                  ? 'Không tải được danh sách mã cổ phiếu.'
+                  : 'Failed to load stock list.')
+              : (l10n.isVietnamese
+                  ? 'Không có dữ liệu cổ phiếu.'
+                  : 'No stock data available.');
       return Scaffold(
         backgroundColor: AppColors.darkBackground,
         body: Center(
@@ -215,7 +226,7 @@ class _PlaceOrderScreenState extends ConsumerState<PlaceOrderScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      _marketError ?? (l10n.isVietnamese ? 'Không có dữ liệu cổ phiếu.' : 'No stock data available.'),
+                      errorMsg,
                       style: const TextStyle(
                         color: AppColors.darkTextSecondary,
                       ),
@@ -938,7 +949,7 @@ class _PlaceOrderScreenState extends ConsumerState<PlaceOrderScreen> {
               _reviewLine(l10n.orderTypeLabel, '${_isBuy ? l10n.orderBuy : l10n.orderSell} $symbol'),
               _reviewLine(
                 l10n.pricePerQty,
-                '${price.toStringAsFixed(1)} × 1.000 ₫  ·  $quantity cp',
+                '${price.toStringAsFixed(1)} × 1.000 ₫  ·  $quantity ${l10n.isVietnamese ? 'cp' : 'shares'}',
               ),
               _reviewLine(l10n.expectedValue, '${_money(estimate)} ₫'),
               const SizedBox(height: 16),
