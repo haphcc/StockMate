@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../../../providers/app_providers.dart';
 import '../data/admin_constants.dart';
 import '../data/models/admin_customer_model.dart';
 import '../providers/admin_providers.dart';
@@ -76,26 +77,38 @@ class _AdminNotificationComposeScreenState
   }
 
   /// Lấy phần trong ngoặc vuông, ví dụ "Broadcast đến 9 khách hàng".
-  String _summary(String content) {
+  String _summary(String content, bool isVi) {
     final end = content.indexOf(']');
     if (content.startsWith('[') && end > 1) return content.substring(1, end);
-    return 'thông báo';
+    return isVi ? 'thông báo' : 'notification';
   }
 
   Future<void> _submit() async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     if (!_broadcast && _customer == null) {
-      showAdminSnack(context, 'Hãy chọn khách hàng nhận thông báo', error: true);
+      showAdminSnack(
+        context,
+        isVi
+            ? 'Hãy chọn khách hàng nhận thông báo'
+            : 'Please select a recipient',
+        error: true,
+      );
       return;
     }
     if (!_formKey.currentState!.validate()) return;
     if (_broadcast) {
       final ok = await showAdminConfirm(
         context,
-        title: 'Gửi cho tất cả khách hàng',
-        message: 'Thông báo sẽ được gửi tới toàn bộ khách hàng đang hoạt động. '
-            'Mỗi người nhận một bản riêng và không thể thu hồi hàng loạt. '
-            'Tiếp tục?',
-        confirmText: 'Gửi',
+        title: isVi
+            ? 'Gửi cho tất cả khách hàng'
+            : 'Broadcast to All Customers',
+        message: isVi
+            ? 'Thông báo sẽ được gửi tới toàn bộ khách hàng đang hoạt động. '
+                'Mỗi người nhận một bản riêng và không thể thu hồi hàng loạt. '
+                'Tiếp tục?'
+            : 'Notification will be sent to all active customers. '
+                'Each customer will receive their own copy. Continue?',
+        confirmText: isVi ? 'Gửi' : 'Send',
         danger: true,
       );
       if (!ok) return;
@@ -112,8 +125,12 @@ class _AdminNotificationComposeScreenState
       showAdminSnack(
         context,
         _broadcast
-            ? 'Đã gửi: ${_summary(result.content)}'
-            : 'Đã gửi cho ${result.customerName}',
+            ? (isVi
+                ? 'Đã gửi: ${_summary(result.content, isVi)}'
+                : 'Sent: ${_summary(result.content, isVi)}')
+            : (isVi
+                ? 'Đã gửi cho ${result.customerName}'
+                : 'Sent to ${result.customerName}'),
       );
       Navigator.of(context).pop(true);
     } catch (e) {
@@ -125,31 +142,34 @@ class _AdminNotificationComposeScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
+
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Soạn thông báo'),
+        title: Text(isVi ? 'Soạn thông báo' : 'Compose Notification'),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            _sectionLabel('Người nhận'),
+            _sectionLabel(isVi ? 'Người nhận' : 'Recipient'),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
                 _chip(
-                  'Tất cả khách hàng',
+                  isVi ? 'Tất cả khách hàng' : 'All Customers',
                   _broadcast,
                   () => setState(() => _broadcast = true),
                 ),
                 _chip(
-                  'Một khách hàng',
+                  isVi ? 'Một khách hàng' : 'Single Customer',
                   !_broadcast,
                   () => setState(() => _broadcast = false),
                 ),
@@ -164,7 +184,9 @@ class _AdminNotificationComposeScreenState
                     Expanded(
                       child: Text(
                         _customer == null
-                            ? 'Chọn khách hàng...'
+                            ? (isVi
+                                ? 'Chọn khách hàng...'
+                                : 'Select customer...')
                             : '${_customer!.fullName} · ${_customer!.email}',
                         style: TextStyle(
                           color: _customer == null
@@ -182,14 +204,14 @@ class _AdminNotificationComposeScreenState
               ),
             ],
             const SizedBox(height: 20),
-            _sectionLabel('Loại thông báo'),
+            _sectionLabel(isVi ? 'Loại thông báo' : 'Notification Type'),
             Wrap(
               spacing: 8,
               runSpacing: 8,
               children: [
                 for (final type in AdminConstants.notificationTypes)
                   _chip(
-                    AdminConstants.label(type),
+                    AdminConstants.label(type, isVi),
                     _type == type,
                     () => setState(() => _type = type),
                   ),
@@ -197,27 +219,39 @@ class _AdminNotificationComposeScreenState
             ),
             const SizedBox(height: 20),
             AppTextField(
-              labelText: 'Tiêu đề',
+              labelText: isVi ? 'Tiêu đề' : 'Title',
               controller: _title,
               validator: (v) {
                 final value = (v ?? '').trim();
-                if (value.length < 2) return 'Tiêu đề tối thiểu 2 ký tự';
-                if (value.length > 200) return 'Tiêu đề tối đa 200 ký tự';
+                if (value.length < 2) {
+                  return isVi
+                      ? 'Tiêu đề tối thiểu 2 ký tự'
+                      : 'Title must be at least 2 characters';
+                }
+                if (value.length > 200) {
+                  return isVi
+                      ? 'Tiêu đề tối đa 200 ký tự'
+                      : 'Title maximum 200 characters';
+                }
                 return null;
               },
             ),
             const SizedBox(height: 16),
-            _sectionLabel('Nội dung'),
+            _sectionLabel(isVi ? 'Nội dung' : 'Content'),
             TextFormField(
               controller: _content,
               minLines: 4,
               maxLines: 8,
               style: const TextStyle(color: Colors.white, fontSize: 15),
               validator: (v) => (v ?? '').trim().length < 2
-                  ? 'Nội dung tối thiểu 2 ký tự'
+                  ? (isVi
+                      ? 'Nội dung tối thiểu 2 ký tự'
+                      : 'Content must be at least 2 characters')
                   : null,
               decoration: InputDecoration(
-                hintText: 'Nhập nội dung thông báo',
+                hintText: isVi
+                    ? 'Nhập nội dung thông báo'
+                    : 'Enter notification content',
                 hintStyle: const TextStyle(
                   color: AppColors.darkTextMuted,
                   fontSize: 14,
@@ -226,13 +260,18 @@ class _AdminNotificationComposeScreenState
                 fillColor: AppColors.darkInput,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(color: AppColors.darkInputBorder),
+                  borderSide:
+                      const BorderSide(color: AppColors.darkInputBorder),
                 ),
               ),
             ),
             const SizedBox(height: 28),
             GradientButton(
-              text: _broadcast ? 'Gửi cho tất cả khách hàng' : 'Gửi thông báo',
+              text: _broadcast
+                  ? (isVi
+                      ? 'Gửi cho tất cả khách hàng'
+                      : 'Broadcast to All Customers')
+                  : (isVi ? 'Gửi thông báo' : 'Send Notification'),
               isLoading: _saving,
               onPressed: _submit,
             ),

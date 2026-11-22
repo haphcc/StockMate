@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../../../providers/app_providers.dart';
 import '../data/admin_constants.dart';
 import '../data/models/admin_account_model.dart';
 import '../data/models/admin_portfolio_model.dart';
@@ -54,41 +55,61 @@ class _AdminPortfolioFormScreenState
     super.dispose();
   }
 
-  String? _validateInt(String? v, {required bool isRequired}) {
+  String? _validateInt(String? v, {required bool isRequired, required bool isVi}) {
     final value = (v ?? '').trim();
-    if (value.isEmpty) return isRequired ? 'Không được để trống' : null;
-    if (!RegExp(r'^[0-9]+$').hasMatch(value)) return 'Chỉ nhập số nguyên không âm';
+    if (value.isEmpty) {
+      return isRequired
+          ? (isVi ? 'Không được để trống' : 'Cannot be empty')
+          : null;
+    }
+    if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+      return isVi
+          ? 'Chỉ nhập số nguyên không âm'
+          : 'Enter non-negative integer only';
+    }
     return null;
   }
 
-  String? _validatePrice(String? v) {
+  String? _validatePrice(String? v, {required bool isVi}) {
     final value = (v ?? '').trim();
-    if (value.isEmpty) return 'Không được để trống';
+    if (value.isEmpty) {
+      return isVi ? 'Không được để trống' : 'Cannot be empty';
+    }
     if (!RegExp(r'^[0-9]+(\.[0-9]{1,2})?$').hasMatch(value)) {
-      return 'Nhập số không âm, tối đa 2 chữ số thập phân';
+      return isVi
+          ? 'Nhập số không âm, tối đa 2 chữ số thập phân'
+          : 'Enter non-negative number, up to 2 decimal places';
     }
     return null;
   }
 
   Future<void> _pickAccount() async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     final repo = ref.read(adminRepositoryProvider);
     final picked = await showAdminSearchPicker<AdminAccountModel>(
       context,
-      title: 'Chọn tài khoản đầu tư',
-      searchHint: 'Tìm số tài khoản, tên hoặc email...',
+      title: isVi ? 'Chọn tài khoản đầu tư' : 'Select Investment Account',
+      searchHint: isVi
+          ? 'Tìm số tài khoản, tên hoặc email...'
+          : 'Search account number, name, or email...',
       loadItems: (q) async =>
           (await repo.listAccounts(q: q.isEmpty ? null : q, pageSize: 50))
               .items,
       itemTitle: (a) =>
-          '${a.accountNumber} · ${AdminConstants.label(a.accountType)}',
+          '${a.accountNumber} · ${AdminConstants.label(a.accountType, isVi)}',
       itemSubtitle: (a) => a.customerName,
     );
     if (picked != null && mounted) setState(() => _account = picked);
   }
 
   Future<void> _submit() async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     if (!_isEdit && _account == null) {
-      showAdminSnack(context, 'Hãy chọn tài khoản', error: true);
+      showAdminSnack(
+        context,
+        isVi ? 'Hãy chọn tài khoản' : 'Please select an account',
+        error: true,
+      );
       return;
     }
     if (!_formKey.currentState!.validate()) return;
@@ -100,7 +121,9 @@ class _AdminPortfolioFormScreenState
     if (available + blocked > quantity) {
       showAdminSnack(
         context,
-        'Số khả dụng cộng số phong tỏa không được vượt số lượng.',
+        isVi
+            ? 'Số khả dụng cộng số phong tỏa không được vượt số lượng.'
+            : 'Available quantity plus blocked quantity cannot exceed total quantity.',
         error: true,
       );
       return;
@@ -117,7 +140,10 @@ class _AdminPortfolioFormScreenState
           'average_price': _average.text.trim(),
       };
       if (changes.isEmpty) {
-        showAdminSnack(context, 'Chưa có thay đổi nào.');
+        showAdminSnack(
+          context,
+          isVi ? 'Chưa có thay đổi nào.' : 'No changes made.',
+        );
         return;
       }
     }
@@ -147,13 +173,17 @@ class _AdminPortfolioFormScreenState
   }
 
   Future<void> _delete() async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     final p = widget.portfolio!;
     final ok = await showAdminConfirm(
       context,
-      title: 'Xóa dòng nắm giữ',
-      message: 'Xóa vĩnh viễn dòng ${p.stockSymbol} của ${p.customerName}? '
-          'Số cổ phiếu này sẽ biến mất khỏi danh mục của tài khoản.',
-      confirmText: 'Xóa vĩnh viễn',
+      title: isVi ? 'Xóa dòng nắm giữ' : 'Delete Holding',
+      message: isVi
+          ? 'Xóa vĩnh viễn dòng ${p.stockSymbol} của ${p.customerName}? '
+              'Số cổ phiếu này sẽ biến mất khỏi danh mục của tài khoản.'
+          : 'Permanently delete holding ${p.stockSymbol} of ${p.customerName}? '
+              'This stock will be removed from the account portfolio.',
+      confirmText: isVi ? 'Xóa vĩnh viễn' : 'Delete Permanently',
       danger: true,
     );
     if (!ok) return;
@@ -161,7 +191,10 @@ class _AdminPortfolioFormScreenState
     try {
       await ref.read(adminRepositoryProvider).deletePortfolio(p.portfolioId);
       if (!mounted) return;
-      showAdminSnack(context, 'Đã xóa dòng nắm giữ');
+      showAdminSnack(
+        context,
+        isVi ? 'Đã xóa dòng nắm giữ' : 'Holding deleted successfully',
+      );
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
@@ -172,14 +205,21 @@ class _AdminPortfolioFormScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
     final p = widget.portfolio;
+
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text(_isEdit ? 'Sửa ${p!.stockSymbol}' : 'Thêm dòng nắm giữ'),
+        title: Text(
+          _isEdit
+              ? (isVi ? 'Sửa ${p!.stockSymbol}' : 'Edit ${p!.stockSymbol}')
+              : (isVi ? 'Thêm dòng nắm giữ' : 'Add Holding'),
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -190,18 +230,24 @@ class _AdminPortfolioFormScreenState
               AdminCard(
                 child: Column(
                   children: [
-                    AdminInfoRow(label: 'Khách hàng', value: p!.customerName),
-                    AdminInfoRow(label: 'Tài khoản', value: p.accountNumber),
                     AdminInfoRow(
-                      label: 'Cổ phiếu',
+                      label: isVi ? 'Khách hàng' : 'Customer',
+                      value: p!.customerName,
+                    ),
+                    AdminInfoRow(
+                      label: isVi ? 'Tài khoản' : 'Account',
+                      value: p.accountNumber,
+                    ),
+                    AdminInfoRow(
+                      label: isVi ? 'Cổ phiếu' : 'Stock Symbol',
                       value: '${p.stockSymbol} · ${p.companyName}',
                     ),
                     AdminInfoRow(
-                      label: 'Giá trị hiện tại',
+                      label: isVi ? 'Giá trị hiện tại' : 'Current Value',
                       value: formatVnd(p.currentValue),
                     ),
                     AdminInfoRow(
-                      label: 'Lãi/lỗ',
+                      label: isVi ? 'Lãi/lỗ' : 'Profit/Loss',
                       value: '${formatVnd(p.profitLoss)} '
                           '(${p.profitLossPercent}%)',
                     ),
@@ -209,7 +255,7 @@ class _AdminPortfolioFormScreenState
                 ),
               )
             else ...[
-              _sectionLabel('Tài khoản'),
+              _sectionLabel(isVi ? 'Tài khoản' : 'Account'),
               AdminCard(
                 onTap: _saving ? null : _pickAccount,
                 child: Row(
@@ -217,7 +263,7 @@ class _AdminPortfolioFormScreenState
                     Expanded(
                       child: Text(
                         _account == null
-                            ? 'Chọn tài khoản...'
+                            ? (isVi ? 'Chọn tài khoản...' : 'Select account...')
                             : '${_account!.accountNumber} · '
                                 '${_account!.customerName}',
                         style: TextStyle(
@@ -236,12 +282,14 @@ class _AdminPortfolioFormScreenState
               ),
               const SizedBox(height: 16),
               AppTextField(
-                labelText: 'Mã cổ phiếu',
+                labelText: isVi ? 'Mã cổ phiếu' : 'Stock Symbol',
                 controller: _symbol,
                 validator: (v) {
                   final value = (v ?? '').trim();
                   if (!RegExp(r'^[A-Za-z0-9]{3,10}$').hasMatch(value)) {
-                    return 'Mã gồm 3 đến 10 chữ cái hoặc số';
+                    return isVi
+                        ? 'Mã gồm 3 đến 10 chữ cái hoặc số'
+                        : 'Symbol must be 3 to 10 letters or digits';
                   }
                   return null;
                 },
@@ -249,42 +297,51 @@ class _AdminPortfolioFormScreenState
             ],
             const SizedBox(height: 16),
             AppTextField(
-              labelText: 'Số lượng',
+              labelText: isVi ? 'Số lượng' : 'Quantity',
               controller: _quantity,
               keyboardType: TextInputType.number,
-              validator: (v) => _validateInt(v, isRequired: true),
+              validator: (v) => _validateInt(v, isRequired: true, isVi: isVi),
             ),
             const SizedBox(height: 16),
             AppTextField(
-              labelText: 'Số khả dụng',
+              labelText: isVi ? 'Số khả dụng' : 'Available Quantity',
               controller: _available,
               keyboardType: TextInputType.number,
-              validator: (v) => _validateInt(v, isRequired: true),
+              validator: (v) => _validateInt(v, isRequired: true, isVi: isVi),
             ),
             const SizedBox(height: 16),
             AppTextField(
               labelText: _isEdit
-                  ? 'Số bị phong tỏa'
-                  : 'Số bị phong tỏa (để trống = 0)',
+                  ? (isVi ? 'Số bị phong tỏa' : 'Blocked quantity')
+                  : (isVi
+                      ? 'Số bị phong tỏa (để trống = 0)'
+                      : 'Blocked quantity (leave empty = 0)'),
               controller: _blocked,
               keyboardType: TextInputType.number,
-              validator: (v) => _validateInt(v, isRequired: _isEdit),
+              validator: (v) => _validateInt(v, isRequired: _isEdit, isVi: isVi),
             ),
             const SizedBox(height: 16),
             AppTextField(
-              labelText: 'Giá vốn trung bình',
+              labelText: isVi ? 'Giá vốn trung bình' : 'Average Cost Price',
               controller: _average,
               keyboardType: TextInputType.number,
-              validator: _validatePrice,
+              validator: (v) => _validatePrice(v, isVi: isVi),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Khả dụng cộng phong tỏa không được vượt số lượng.',
-              style: TextStyle(color: AppColors.darkTextMuted, fontSize: 12),
+            Text(
+              isVi
+                  ? 'Khả dụng cộng phong tỏa không được vượt số lượng.'
+                  : 'Available quantity plus blocked quantity cannot exceed total quantity.',
+              style: const TextStyle(
+                color: AppColors.darkTextMuted,
+                fontSize: 12,
+              ),
             ),
             const SizedBox(height: 28),
             GradientButton(
-              text: _isEdit ? 'Lưu thay đổi' : 'Thêm dòng nắm giữ',
+              text: _isEdit
+                  ? (isVi ? 'Lưu thay đổi' : 'Save Changes')
+                  : (isVi ? 'Thêm dòng nắm giữ' : 'Add Holding'),
               isLoading: _saving,
               onPressed: _submit,
             ),
@@ -296,9 +353,9 @@ class _AdminPortfolioFormScreenState
                   Icons.delete_forever_rounded,
                   color: AppColors.priceDown,
                 ),
-                label: const Text(
-                  'Xóa dòng nắm giữ',
-                  style: TextStyle(color: AppColors.priceDown),
+                label: Text(
+                  isVi ? 'Xóa dòng nắm giữ' : 'Delete Holding',
+                  style: const TextStyle(color: AppColors.priceDown),
                 ),
               ),
             ],

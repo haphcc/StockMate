@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../providers/app_providers.dart';
 import '../data/admin_constants.dart';
 import '../data/models/admin_page.dart';
 import '../data/models/admin_stock_model.dart';
@@ -63,6 +64,8 @@ class _AdminStocksScreenState extends ConsumerState<AdminStocksScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
     final async = ref.watch(adminStocksProvider(_query));
 
     return Scaffold(
@@ -71,10 +74,10 @@ class _AdminStocksScreenState extends ConsumerState<AdminStocksScreen> {
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Mã cổ phiếu'),
+        title: Text(isVi ? 'Mã cổ phiếu' : 'Stock Symbols'),
         actions: [
           IconButton(
-            tooltip: 'Thêm mã cổ phiếu',
+            tooltip: isVi ? 'Thêm mã cổ phiếu' : 'Add Stock Symbol',
             icon: const Icon(Icons.add_chart_rounded),
             onPressed: () => _openForm(),
           ),
@@ -86,7 +89,9 @@ class _AdminStocksScreenState extends ConsumerState<AdminStocksScreen> {
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: AppTextField(
               controller: _searchController,
-              hintText: 'Tìm theo mã hoặc tên công ty',
+              hintText: isVi
+                  ? 'Tìm theo mã hoặc tên công ty'
+                  : 'Search by symbol or company name',
               prefixIcon: const Icon(
                 Icons.search_rounded,
                 color: AppColors.darkTextMuted,
@@ -119,9 +124,11 @@ class _AdminStocksScreenState extends ConsumerState<AdminStocksScreen> {
               ),
               data: (page) {
                 if (page.items.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.candlestick_chart_outlined,
-                    message: 'Không tìm thấy mã cổ phiếu nào',
+                    message: isVi
+                        ? 'Không tìm thấy mã cổ phiếu nào'
+                        : 'No stock symbols found',
                   );
                 }
                 return Column(
@@ -131,10 +138,10 @@ class _AdminStocksScreenState extends ConsumerState<AdminStocksScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                         itemCount: page.items.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (_, i) => _stockTile(page.items[i]),
+                        itemBuilder: (_, i) => _stockTile(page.items[i], isVi),
                       ),
                     ),
-                    _pager(page),
+                    _pager(page, isVi),
                   ],
                 );
               },
@@ -151,7 +158,7 @@ class _AdminStocksScreenState extends ConsumerState<AdminStocksScreen> {
     return AppColors.priceRef;
   }
 
-  Widget _stockTile(AdminStockModel s) {
+  Widget _stockTile(AdminStockModel s, bool isVi) {
     final color = _trendColor(s);
     final sign = s.trend > 0 ? '+' : '';
     return AdminCard(
@@ -194,9 +201,9 @@ class _AdminStocksScreenState extends ConsumerState<AdminStocksScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Trần ${formatNumber(s.ceilingPrice)} · '
-                  'TC ${formatNumber(s.referencePrice)} · '
-                  'Sàn ${formatNumber(s.floorPrice)}',
+                  '${isVi ? 'Trần' : 'Ceil'} ${formatNumber(s.ceilingPrice)} · '
+                  '${isVi ? 'TC' : 'Ref'} ${formatNumber(s.referencePrice)} · '
+                  '${isVi ? 'Sàn' : 'Floor'} ${formatNumber(s.floorPrice)}',
                   style: const TextStyle(
                     color: AppColors.darkTextMuted,
                     fontSize: 11,
@@ -230,33 +237,16 @@ class _AdminStocksScreenState extends ConsumerState<AdminStocksScreen> {
     );
   }
 
-  Widget _pager(AdminPage<AdminStockModel> page) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextButton(
-            onPressed: page.page > 1
-                ? () => setState(() => _page = page.page - 1)
-                : null,
-            child: const Text('Trước'),
-          ),
-          Text(
-            'Trang ${page.page}/${page.totalPages} · ${page.total} mã',
-            style: const TextStyle(
-              color: AppColors.darkTextSecondary,
-              fontSize: 12,
-            ),
-          ),
-          TextButton(
-            onPressed: page.page < page.totalPages
-                ? () => setState(() => _page = page.page + 1)
-                : null,
-            child: const Text('Sau'),
-          ),
-        ],
-      ),
+  Widget _pager(AdminPage<AdminStockModel> page, bool isVi) {
+    return AdminPaginationBar(
+      page: page.page,
+      totalPages: page.totalPages,
+      total: page.total,
+      itemName: isVi ? 'mã' : 'symbols',
+      onPrevious: page.page > 1 ? () => setState(() => _page = page.page - 1) : null,
+      onNext: page.page < page.totalPages
+          ? () => setState(() => _page = page.page + 1)
+          : null,
     );
   }
 }

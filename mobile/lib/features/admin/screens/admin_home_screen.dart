@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/language_switch_button.dart';
+import '../../../l10n/app_localizations.dart';
+import '../../../providers/app_providers.dart';
 import '../../auth/providers/auth_provider.dart';
 import '../data/models/admin_dashboard_model.dart';
 import '../providers/admin_providers.dart';
@@ -31,6 +34,7 @@ class AdminHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = ref.watch(l10nProvider);
     final user = ref.watch(authProvider).value;
     final dashboard = ref.watch(adminDashboardProvider);
 
@@ -51,17 +55,25 @@ class AdminHomeScreen extends ConsumerWidget {
             // Chừa chỗ phía dưới để không bị thanh điều hướng nổi che.
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 110),
             children: [
-              const Text(
-                'Quản trị hệ thống',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    l10n.isVietnamese ? 'Quản trị hệ thống' : 'System Administration',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const LanguageSwitchButton(height: 30),
+                ],
               ),
               const SizedBox(height: 4),
               Text(
-                'Xin chào, ${user?.fullName ?? ''}',
+                l10n.isVietnamese
+                    ? 'Xin chào, ${user?.fullName ?? ''}'
+                    : 'Welcome, ${user?.fullName ?? ''}',
                 style: const TextStyle(color: AppColors.darkTextSecondary),
               ),
               const SizedBox(height: 20),
@@ -73,16 +85,18 @@ class AdminHomeScreen extends ConsumerWidget {
                 error: (e, _) => AdminCard(
                   onTap: () => ref.invalidate(adminDashboardProvider),
                   child: Text(
-                    'Không tải được chỉ số: $e\nBấm để thử lại.',
+                    l10n.isVietnamese
+                        ? 'Không tải được chỉ số: $e\nBấm để thử lại.'
+                        : 'Failed to load metrics: $e\nTap to retry.',
                     style: const TextStyle(color: AppColors.priceDown),
                   ),
                 ),
-                data: (d) => _KpiGrid(d: d),
+                data: (d) => _KpiGrid(d: d, l10n: l10n),
               ),
               const SizedBox(height: 24),
-              const Text(
-                'Quản lý',
-                style: TextStyle(
+              Text(
+                l10n.isVietnamese ? 'Quản lý' : 'Management',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -91,59 +105,75 @@ class AdminHomeScreen extends ConsumerWidget {
               const SizedBox(height: 12),
               _MenuTile(
                 icon: Icons.people_alt_rounded,
-                title: 'Khách hàng',
-                subtitle: 'Danh sách, thêm, sửa, khóa, xóa',
+                title: l10n.isVietnamese ? 'Khách hàng' : 'Customers',
+                subtitle: l10n.isVietnamese
+                    ? 'Danh sách, thêm, sửa, khóa, xóa'
+                    : 'List, add, edit, lock, delete',
                 onTap: () => _open(context, ref, const AdminCustomersScreen()),
               ),
               const SizedBox(height: 12),
               _MenuTile(
                 icon: Icons.account_balance_wallet_rounded,
-                title: 'Tài khoản đầu tư',
-                subtitle: 'Mở mới, sửa số dư, trạng thái, xóa',
+                title: l10n.isVietnamese ? 'Tài khoản đầu tư' : 'Investment Accounts',
+                subtitle: l10n.isVietnamese
+                    ? 'Mở mới, sửa số dư, trạng thái, xóa'
+                    : 'Open new, edit balance, status, delete',
                 onTap: () => _open(context, ref, const AdminAccountsScreen()),
               ),
               const SizedBox(height: 12),
               _MenuTile(
                 icon: Icons.candlestick_chart_rounded,
-                title: 'Mã cổ phiếu',
-                subtitle: 'Thêm, sửa giá trần/sàn, đổi trạng thái, xóa',
+                title: l10n.isVietnamese ? 'Mã cổ phiếu' : 'Stock Symbols',
+                subtitle: l10n.isVietnamese
+                    ? 'Thêm, sửa giá trần/sàn, đổi trạng thái, xóa'
+                    : 'Add, edit ceil/floor, update status, delete',
                 onTap: () => _open(context, ref, const AdminStocksScreen()),
               ),
               const SizedBox(height: 12),
-                            _MenuTile(
+              _MenuTile(
                 icon: Icons.receipt_long_rounded,
-                title: 'Sổ lệnh',
-                subtitle: 'Tra cứu toàn hệ thống, hủy lệnh đang chờ',
+                title: l10n.isVietnamese ? 'Sổ lệnh' : 'Order Book',
+                subtitle: l10n.isVietnamese
+                    ? 'Tra cứu toàn hệ thống, hủy lệnh đang chờ'
+                    : 'System-wide search, cancel pending orders',
                 onTap: () => _open(context, ref, const AdminOrdersScreen()),
               ),
               const SizedBox(height: 12),
               _MenuTile(
                 icon: Icons.swap_horiz_rounded,
-                title: 'Lịch sử giao dịch',
-                subtitle: 'Lịch sử khớp lệnh toàn hệ thống',
+                title: l10n.isVietnamese ? 'Lịch sử giao dịch' : 'Transaction History',
+                subtitle: l10n.isVietnamese
+                    ? 'Lịch sử khớp lệnh toàn hệ thống'
+                    : 'System-wide trade execution history',
                 onTap: () =>
                     _open(context, ref, const AdminTransactionsScreen()),
               ),
               const SizedBox(height: 12),
               _MenuTile(
                 icon: Icons.pie_chart_rounded,
-                title: 'Danh mục nắm giữ',
-                subtitle: 'Điều chỉnh số lượng cổ phiếu và giá vốn',
+                title: l10n.isVietnamese ? 'Danh mục nắm giữ' : 'Holdings & Portfolios',
+                subtitle: l10n.isVietnamese
+                    ? 'Điều chỉnh số lượng cổ phiếu và giá vốn'
+                    : 'Adjust share quantity and cost basis',
                 onTap: () => _open(context, ref, const AdminPortfoliosScreen()),
               ),
               const SizedBox(height: 12),
               _MenuTile(
                 icon: Icons.show_chart_rounded,
-                title: 'Lịch sử giá',
-                subtitle: 'Biểu đồ nến, thêm, sửa, xóa phiên giá',
+                title: l10n.isVietnamese ? 'Lịch sử giá' : 'Price History',
+                subtitle: l10n.isVietnamese
+                    ? 'Biểu đồ nến, thêm, sửa, xóa phiên giá'
+                    : 'Candlestick chart, add, edit, delete candles',
                 onTap: () =>
                     _open(context, ref, const AdminPriceHistoryScreen()),
               ),
               const SizedBox(height: 12),
               _MenuTile(
                 icon: Icons.campaign_rounded,
-                title: 'Thông báo',
-                subtitle: 'Soạn, gửi cho một hoặc tất cả khách hàng, xóa',
+                title: l10n.isVietnamese ? 'Thông báo' : 'Notifications',
+                subtitle: l10n.isVietnamese
+                    ? 'Soạn, gửi cho một hoặc tất cả khách hàng, xóa'
+                    : 'Compose, send to one or all customers, delete',
                 onTap: () =>
                     _open(context, ref, const AdminNotificationsScreen()),
               ),
@@ -157,48 +187,57 @@ class AdminHomeScreen extends ConsumerWidget {
 
 class _KpiGrid extends StatelessWidget {
   final AdminDashboardModel d;
+  final AppLocalizations l10n;
 
-  const _KpiGrid({required this.d});
+  const _KpiGrid({required this.d, required this.l10n});
 
   @override
   Widget build(BuildContext context) {
+    final vi = l10n.isVietnamese;
     final cards = [
       _KpiCard(
         icon: Icons.people_alt_rounded,
-        label: 'Khách hàng',
+        label: vi ? 'Khách hàng' : 'Customers',
         value: '${d.totalCustomers}',
-        note: '${d.activeCustomers} hoạt động · ${d.lockedCustomers} bị khóa',
+        note: vi
+            ? '${d.activeCustomers} hoạt động · ${d.lockedCustomers} bị khóa'
+            : '${d.activeCustomers} active · ${d.lockedCustomers} locked',
       ),
       _KpiCard(
         icon: Icons.account_balance_wallet_rounded,
-        label: 'Tài khoản đầu tư',
+        label: vi ? 'Tài khoản đầu tư' : 'Investment Accounts',
         value: '${d.totalAccounts}',
-        note: '${d.activeAccounts} hoạt động · ${d.suspendedAccounts} tạm ngưng',
+        note: vi
+            ? '${d.activeAccounts} hoạt động · ${d.suspendedAccounts} tạm ngưng'
+            : '${d.activeAccounts} active · ${d.suspendedAccounts} suspended',
       ),
       _KpiCard(
         icon: Icons.payments_rounded,
-        label: 'Tổng tiền mặt',
+        label: vi ? 'Tổng tiền mặt' : 'Total Cash',
         value: formatVnd(d.totalCashBalance),
-        note: 'Tất cả tài khoản',
+        note: vi ? 'Tất cả tài khoản' : 'All accounts',
       ),
       _KpiCard(
         icon: Icons.savings_rounded,
-        label: 'Tổng tài sản',
+        label: vi ? 'Tổng tài sản' : 'Total Assets',
         value: formatVnd(d.totalAssetValue),
-        note: 'Tất cả tài khoản',
+        note: vi ? 'Tất cả tài khoản' : 'All accounts',
       ),
       _KpiCard(
         icon: Icons.candlestick_chart_rounded,
-        label: 'Mã cổ phiếu',
+        label: vi ? 'Mã cổ phiếu' : 'Stock Symbols',
         value: '${d.totalStocks}',
-        note: '${d.activeStocks} giao dịch · ${d.haltedStocks} tạm dừng',
+        note: vi
+            ? '${d.activeStocks} giao dịch · ${d.haltedStocks} tạm dừng'
+            : '${d.activeStocks} active · ${d.haltedStocks} halted',
       ),
       _KpiCard(
         icon: Icons.receipt_long_rounded,
-        label: 'Lệnh hôm nay',
+        label: vi ? 'Lệnh hôm nay' : 'Orders Today',
         value: '${d.totalOrdersToday}',
-        note: '${d.pendingOrders} chờ · ${d.completedOrders} khớp · '
-            '${d.cancelledOrders} hủy',
+        note: vi
+            ? '${d.pendingOrders} chờ · ${d.completedOrders} khớp · ${d.cancelledOrders} hủy'
+            : '${d.pendingOrders} pending · ${d.completedOrders} filled · ${d.cancelledOrders} cancelled',
       ),
     ];
     return GridView.count(

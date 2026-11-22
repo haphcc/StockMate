@@ -28,7 +28,7 @@ static const List<String> orderStatuses = [
 ];
 static const List<String> orderTypes = ['BUY', 'SELL'];
 
-  static const Map<String, String> _labels = {
+  static const Map<String, String> _labelsVi = {
     'CUSTOMER': 'Khách hàng',
     'ADMIN': 'Quản trị viên',
     'GOOGLE': 'Google',
@@ -57,8 +57,40 @@ static const List<String> orderTypes = ['BUY', 'SELL'];
     'MP': 'Lệnh thị trường',
   };
 
-  /// Trả về nhãn tiếng Việt; không có thì trả lại đúng mã gốc.
-  static String label(String code) => _labels[code] ?? code;
+  static const Map<String, String> _labelsEn = {
+    'CUSTOMER': 'Customer',
+    'ADMIN': 'Administrator',
+    'GOOGLE': 'Google',
+    'LOCAL': 'Email / Password',
+    'PENDING': 'Pending',
+    'ACTIVE': 'Active',
+    'LOCKED': 'Locked',
+    'SUSPENDED': 'Suspended',
+    'CLOSED': 'Closed',
+    'CASH': 'Cash',
+    'MARGIN': 'Margin',
+    'HALTED': 'Halted',
+    'DELISTED': 'Delisted',
+    'SYSTEM': 'System',
+    'NEWS': 'News',
+    'ORDER': 'Order',
+    'TRANSACTION': 'Transaction',
+    'PRICE_ALERT': 'Price Alert',
+    'BUY': 'Buy',
+    'SELL': 'Sell',
+    'PARTIAL': 'Partially Filled',
+    'COMPLETED': 'Completed',
+    'CANCELLED': 'Cancelled',
+    'REJECTED': 'Rejected',
+    'LO': 'Limit Order (LO)',
+    'MP': 'Market Order (MP)',
+  };
+
+  /// Trả về nhãn tiếng Việt hoặc tiếng Anh; không có thì trả lại đúng mã gốc.
+  static String label(String code, [bool isVietnamese = true]) {
+    final map = isVietnamese ? _labelsVi : _labelsEn;
+    return map[code] ?? _labelsVi[code] ?? code;
+  }
 
   /// Tính bước giá và biên độ trần/sàn khớp với trigger PostgreSQL fn_set_price_limits.
   static (num ceiling, num floor) computeStockLimits(
@@ -89,21 +121,32 @@ static const List<String> orderTypes = ['BUY', 'SELL'];
     num? current,
     num? ceiling,
     num? floor,
+    bool isVietnamese = true,
   }) {
     if (reference != null && ceiling != null && ceiling < reference) {
-      return 'Giá trần phải lớn hơn hoặc bằng giá tham chiếu.';
+      return isVietnamese
+          ? 'Giá trần phải lớn hơn hoặc bằng giá tham chiếu.'
+          : 'Ceiling price must be greater than or equal to reference price.';
     }
     if (reference != null && floor != null && floor > reference) {
-      return 'Giá sàn phải nhỏ hơn hoặc bằng giá tham chiếu.';
+      return isVietnamese
+          ? 'Giá sàn phải nhỏ hơn hoặc bằng giá tham chiếu.'
+          : 'Floor price must be less than or equal to reference price.';
     }
     if (ceiling != null && floor != null && floor > ceiling) {
-      return 'Giá sàn không được lớn hơn giá trần.';
+      return isVietnamese
+          ? 'Giá sàn không được lớn hơn giá trần.'
+          : 'Floor price cannot be greater than ceiling price.';
     }
     if (current != null && ceiling != null && current > ceiling) {
-      return 'Giá hiện tại vượt giá trần.';
+      return isVietnamese
+          ? 'Giá hiện tại vượt giá trần.'
+          : 'Current price exceeds ceiling price.';
     }
     if (current != null && floor != null && current < floor) {
-      return 'Giá hiện tại thấp hơn giá sàn.';
+      return isVietnamese
+          ? 'Giá hiện tại thấp hơn giá sàn.'
+          : 'Current price is lower than floor price.';
     }
     return null;
   }

@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../providers/app_providers.dart';
 import '../data/admin_constants.dart';
 import '../data/models/admin_page.dart';
 import '../data/models/admin_transaction_model.dart';
@@ -52,6 +53,7 @@ class _AdminTransactionsScreenState
   }
 
   void _showDetail(AdminTransactionModel t) {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     showModalBottomSheet<void>(
       context: context,
       useRootNavigator: true,
@@ -62,29 +64,59 @@ class _AdminTransactionsScreenState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AdminInfoRow(label: 'Mã giao dịch', value: '#${t.transactionId}'),
-            AdminInfoRow(label: 'Mã lệnh', value: '#${t.orderId}'),
-            AdminInfoRow(label: 'Tài khoản', value: t.accountNumber),
-            AdminInfoRow(label: 'Cổ phiếu', value: t.stockSymbol),
             AdminInfoRow(
-              label: 'Loại',
-              value: AdminConstants.label(t.transactionType),
+              label: isVi ? 'Mã giao dịch' : 'Transaction ID',
+              value: '#${t.transactionId}',
             ),
             AdminInfoRow(
-              label: 'Số lượng',
+              label: isVi ? 'Mã lệnh' : 'Order ID',
+              value: '#${t.orderId}',
+            ),
+            AdminInfoRow(
+              label: isVi ? 'Tài khoản' : 'Account',
+              value: t.accountNumber,
+            ),
+            AdminInfoRow(
+              label: isVi ? 'Cổ phiếu' : 'Stock Symbol',
+              value: t.stockSymbol,
+            ),
+            AdminInfoRow(
+              label: isVi ? 'Loại' : 'Type',
+              value: AdminConstants.label(t.transactionType, isVi),
+            ),
+            AdminInfoRow(
+              label: isVi ? 'Số lượng' : 'Quantity',
               value: formatNumber(t.quantity.toString()),
             ),
-            AdminInfoRow(label: 'Giá khớp', value: formatVnd(t.price)),
-            AdminInfoRow(label: 'Giá trị', value: formatVnd(t.totalAmount)),
-            AdminInfoRow(label: 'Phí', value: formatVnd(t.transactionFee)),
-            AdminInfoRow(label: 'Thuế', value: formatVnd(t.taxAmount)),
-            AdminInfoRow(label: 'Thực thu/chi', value: formatVnd(t.netAmount)),
             AdminInfoRow(
-              label: 'Ngày khớp',
+              label: isVi ? 'Giá khớp' : 'Matched Price',
+              value: formatVnd(t.price),
+            ),
+            AdminInfoRow(
+              label: isVi ? 'Giá trị' : 'Gross Value',
+              value: formatVnd(t.totalAmount),
+            ),
+            AdminInfoRow(
+              label: isVi ? 'Phí' : 'Fee',
+              value: formatVnd(t.transactionFee),
+            ),
+            AdminInfoRow(
+              label: isVi ? 'Thuế' : 'Tax',
+              value: formatVnd(t.taxAmount),
+            ),
+            AdminInfoRow(
+              label: isVi ? 'Thực thu/chi' : 'Net Amount',
+              value: formatVnd(t.netAmount),
+            ),
+            AdminInfoRow(
+              label: isVi ? 'Ngày khớp' : 'Matched Date',
               value: formatDateTime(t.transactionDate),
             ),
             if (t.settlementDate != null)
-              AdminInfoRow(label: 'Ngày thanh toán', value: t.settlementDate!),
+              AdminInfoRow(
+                label: isVi ? 'Ngày thanh toán' : 'Settlement Date',
+                value: t.settlementDate!,
+              ),
           ],
         ),
       ),
@@ -93,6 +125,8 @@ class _AdminTransactionsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
     final async = ref.watch(adminTransactionsProvider(_query));
 
     return Scaffold(
@@ -101,7 +135,7 @@ class _AdminTransactionsScreenState
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Lịch sử giao dịch'),
+        title: Text(isVi ? 'Lịch sử giao dịch' : 'Transaction History'),
       ),
       body: Column(
         children: [
@@ -109,7 +143,9 @@ class _AdminTransactionsScreenState
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: AppTextField(
               controller: _searchController,
-              hintText: 'Nhập đúng mã cổ phiếu (ví dụ ACB)',
+              hintText: isVi
+                  ? 'Nhập đúng mã cổ phiếu (ví dụ ACB)'
+                  : 'Enter stock symbol (e.g. ACB)',
               prefixIcon: const Icon(
                 Icons.search_rounded,
                 color: AppColors.darkTextMuted,
@@ -134,9 +170,11 @@ class _AdminTransactionsScreenState
               ),
               data: (page) {
                 if (page.items.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.swap_horiz_rounded,
-                    message: 'Không tìm thấy giao dịch nào',
+                    message: isVi
+                        ? 'Không tìm thấy giao dịch nào'
+                        : 'No transactions found',
                   );
                 }
                 return Column(
@@ -146,10 +184,10 @@ class _AdminTransactionsScreenState
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                         itemCount: page.items.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (_, i) => _tile(page.items[i]),
+                        itemBuilder: (_, i) => _tile(page.items[i], isVi),
                       ),
                     ),
-                    _pager(page),
+                    _pager(page, isVi),
                   ],
                 );
               },
@@ -160,7 +198,7 @@ class _AdminTransactionsScreenState
     );
   }
 
-  Widget _tile(AdminTransactionModel t) {
+  Widget _tile(AdminTransactionModel t, bool isVi) {
     final color =
         t.transactionType == 'BUY' ? AppColors.priceUp : AppColors.priceDown;
     return AdminCard(
@@ -183,7 +221,7 @@ class _AdminTransactionsScreenState
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      AdminConstants.label(t.transactionType),
+                      AdminConstants.label(t.transactionType, isVi),
                       style: TextStyle(
                         color: color,
                         fontSize: 13,
@@ -226,33 +264,16 @@ class _AdminTransactionsScreenState
     );
   }
 
-  Widget _pager(AdminPage<AdminTransactionModel> page) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextButton(
-            onPressed: page.page > 1
-                ? () => setState(() => _page = page.page - 1)
-                : null,
-            child: const Text('Trước'),
-          ),
-          Text(
-            'Trang ${page.page}/${page.totalPages} · ${page.total} giao dịch',
-            style: const TextStyle(
-              color: AppColors.darkTextSecondary,
-              fontSize: 12,
-            ),
-          ),
-          TextButton(
-            onPressed: page.page < page.totalPages
-                ? () => setState(() => _page = page.page + 1)
-                : null,
-            child: const Text('Sau'),
-          ),
-        ],
-      ),
+  Widget _pager(AdminPage<AdminTransactionModel> page, bool isVi) {
+    return AdminPaginationBar(
+      page: page.page,
+      totalPages: page.totalPages,
+      total: page.total,
+      itemName: isVi ? 'giao dịch' : 'transactions',
+      onPrevious: page.page > 1 ? () => setState(() => _page = page.page - 1) : null,
+      onNext: page.page < page.totalPages
+          ? () => setState(() => _page = page.page + 1)
+          : null,
     );
   }
 }

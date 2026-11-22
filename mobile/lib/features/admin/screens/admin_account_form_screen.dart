@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/gradient_button.dart';
+import '../../../providers/app_providers.dart';
 import '../data/admin_constants.dart';
 import '../data/models/admin_account_model.dart';
 import '../data/models/admin_customer_model.dart';
@@ -65,11 +66,17 @@ class _AdminAccountFormScreenState
     super.dispose();
   }
 
-  String? _validateMoney(String? v, {required bool isRequired}) {
+  String? _validateMoney(String? v, {required bool isRequired, required bool isVi}) {
     final value = (v ?? '').trim();
-    if (value.isEmpty) return isRequired ? 'Không được để trống' : null;
+    if (value.isEmpty) {
+      return isRequired
+          ? (isVi ? 'Không được để trống' : 'Cannot be empty')
+          : null;
+    }
     if (!RegExp(r'^[0-9]+(\.[0-9]{1,2})?$').hasMatch(value)) {
-      return 'Nhập số không âm, tối đa 2 chữ số thập phân';
+      return isVi
+          ? 'Nhập số không âm, tối đa 2 chữ số thập phân'
+          : 'Enter non-negative number, up to 2 decimal places';
     }
     return null;
   }
@@ -107,8 +114,13 @@ class _AdminAccountFormScreenState
   }
 
   Future<void> _submit() async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     if (!_isEdit && _customer == null) {
-      showAdminSnack(context, 'Hãy chọn khách hàng', error: true);
+      showAdminSnack(
+        context,
+        isVi ? 'Hãy chọn khách hàng' : 'Please select a customer',
+        error: true,
+      );
       return;
     }
     if (!_formKey.currentState!.validate()) return;
@@ -119,7 +131,9 @@ class _AdminAccountFormScreenState
       if (asset < cash + blocked) {
         showAdminSnack(
           context,
-          'Tổng giá trị tài sản không được nhỏ hơn tiền mặt cộng tiền phong tỏa.',
+          isVi
+              ? 'Tổng giá trị tài sản không được nhỏ hơn tiền mặt cộng tiền phong tỏa.'
+              : 'Total asset value cannot be less than cash plus blocked balance.',
           error: true,
         );
         return;
@@ -160,13 +174,17 @@ class _AdminAccountFormScreenState
   }
 
   Future<void> _delete() async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     final a = widget.account!;
     final ok = await showAdminConfirm(
       context,
-      title: 'Xóa tài khoản',
-      message: 'Xóa vĩnh viễn tài khoản ${a.accountNumber} cùng toàn bộ lệnh '
-          'và danh mục liên quan? Hành động này không thể hoàn tác.',
-      confirmText: 'Xóa vĩnh viễn',
+      title: isVi ? 'Xóa tài khoản' : 'Delete Account',
+      message: isVi
+          ? 'Xóa vĩnh viễn tài khoản ${a.accountNumber} cùng toàn bộ lệnh '
+              'và danh mục liên quan? Hành động này không thể hoàn tác.'
+          : 'Permanently delete account ${a.accountNumber} along with all orders '
+              'and related portfolios? This action cannot be undone.',
+      confirmText: isVi ? 'Xóa vĩnh viễn' : 'Delete Permanently',
       danger: true,
     );
     if (!ok) return;
@@ -174,7 +192,10 @@ class _AdminAccountFormScreenState
     try {
       await ref.read(adminRepositoryProvider).deleteAccount(a.accountId);
       if (!mounted) return;
-      showAdminSnack(context, 'Đã xóa tài khoản');
+      showAdminSnack(
+        context,
+        isVi ? 'Đã xóa tài khoản' : 'Account deleted successfully',
+      );
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
@@ -185,14 +206,21 @@ class _AdminAccountFormScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
     final a = widget.account;
+
     return Scaffold(
       backgroundColor: AppColors.darkBackground,
       appBar: AppBar(
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: Text(_isEdit ? 'Sửa tài khoản' : 'Mở tài khoản đầu tư'),
+        title: Text(
+          _isEdit
+              ? (isVi ? 'Sửa tài khoản' : 'Edit Account')
+              : (isVi ? 'Mở tài khoản đầu tư' : 'Open Investment Account'),
+        ),
       ),
       body: Form(
         key: _formKey,
@@ -203,14 +231,20 @@ class _AdminAccountFormScreenState
               AdminCard(
                 child: Column(
                   children: [
-                    AdminInfoRow(label: 'Số tài khoản', value: a!.accountNumber),
-                    AdminInfoRow(label: 'Khách hàng', value: a.customerName),
+                    AdminInfoRow(
+                      label: isVi ? 'Số tài khoản' : 'Account Number',
+                      value: a!.accountNumber,
+                    ),
+                    AdminInfoRow(
+                      label: isVi ? 'Khách hàng' : 'Customer',
+                      value: a.customerName,
+                    ),
                     AdminInfoRow(label: 'Email', value: a.customerEmail),
                   ],
                 ),
               )
             else ...[
-              _sectionLabel('Khách hàng'),
+              _sectionLabel(isVi ? 'Khách hàng' : 'Customer'),
               AdminCard(
                 onTap: _saving ? null : _pickCustomer,
                 child: Row(
@@ -218,7 +252,7 @@ class _AdminAccountFormScreenState
                     Expanded(
                       child: Text(
                         _customer == null
-                            ? 'Chọn khách hàng...'
+                            ? (isVi ? 'Chọn khách hàng...' : 'Select customer...')
                             : '${_customer!.fullName} · ${_customer!.email}',
                         style: TextStyle(
                           color: _customer == null
@@ -236,59 +270,67 @@ class _AdminAccountFormScreenState
               ),
               const SizedBox(height: 16),
               AppTextField(
-                labelText: 'Số tài khoản (để trống để tự sinh)',
+                labelText: isVi
+                    ? 'Số tài khoản (để trống để tự sinh)'
+                    : 'Account number (leave empty to auto-generate)',
                 controller: _number,
               ),
             ],
             const SizedBox(height: 20),
-            _sectionLabel('Loại tài khoản'),
+            _sectionLabel(isVi ? 'Loại tài khoản' : 'Account Type'),
             _choices(
               AdminConstants.accountTypes,
               _type,
               (v) => setState(() => _type = v),
+              isVi,
             ),
             const SizedBox(height: 16),
             AppTextField(
-              labelText: _isEdit ? 'Số dư tiền mặt' : 'Số dư tiền mặt ban đầu',
+              labelText: _isEdit
+                  ? (isVi ? 'Số dư tiền mặt' : 'Cash balance')
+                  : (isVi ? 'Số dư tiền mặt ban đầu' : 'Initial cash balance'),
               controller: _cash,
               keyboardType: TextInputType.number,
-              validator: (v) => _validateMoney(v, isRequired: _isEdit),
+              validator: (v) => _validateMoney(v, isRequired: _isEdit, isVi: isVi),
             ),
             if (_isEdit) ...[
               const SizedBox(height: 16),
               AppTextField(
-                labelText: 'Số dư bị phong tỏa',
+                labelText: isVi ? 'Số dư bị phong tỏa' : 'Blocked balance',
                 controller: _blocked,
                 keyboardType: TextInputType.number,
-                validator: (v) => _validateMoney(v, isRequired: true),
+                validator: (v) => _validateMoney(v, isRequired: true, isVi: isVi),
               ),
               const SizedBox(height: 16),
               AppTextField(
-                labelText: 'Tổng giá trị tài sản',
+                labelText: isVi ? 'Tổng giá trị tài sản' : 'Total asset value',
                 controller: _asset,
                 keyboardType: TextInputType.number,
-                validator: (v) => _validateMoney(v, isRequired: true),
+                validator: (v) => _validateMoney(v, isRequired: true, isVi: isVi),
               ),
             ],
             if (_type == 'MARGIN') ...[
               const SizedBox(height: 16),
               AppTextField(
-                labelText: 'Hạn mức ký quỹ',
+                labelText: isVi ? 'Hạn mức ký quỹ' : 'Margin limit',
                 controller: _margin,
                 keyboardType: TextInputType.number,
-                validator: (v) => _validateMoney(v, isRequired: _isEdit),
+                validator: (v) => _validateMoney(v, isRequired: _isEdit, isVi: isVi),
               ),
             ],
             const SizedBox(height: 20),
-            _sectionLabel('Trạng thái'),
+            _sectionLabel(isVi ? 'Trạng thái' : 'Status'),
             _choices(
               AdminConstants.accountStatuses,
               _status,
               (v) => setState(() => _status = v),
+              isVi,
             ),
             const SizedBox(height: 28),
             GradientButton(
-              text: _isEdit ? 'Lưu thay đổi' : 'Mở tài khoản',
+              text: _isEdit
+                  ? (isVi ? 'Lưu thay đổi' : 'Save Changes')
+                  : (isVi ? 'Mở tài khoản' : 'Open Account'),
               isLoading: _saving,
               onPressed: _submit,
             ),
@@ -300,9 +342,9 @@ class _AdminAccountFormScreenState
                   Icons.delete_forever_rounded,
                   color: AppColors.priceDown,
                 ),
-                label: const Text(
-                  'Xóa tài khoản',
-                  style: TextStyle(color: AppColors.priceDown),
+                label: Text(
+                  isVi ? 'Xóa tài khoản' : 'Delete Account',
+                  style: const TextStyle(color: AppColors.priceDown),
                 ),
               ),
             ],
@@ -330,6 +372,7 @@ class _AdminAccountFormScreenState
     List<String> options,
     String selected,
     ValueChanged<String> onSelected,
+    bool isVi,
   ) {
     return Wrap(
       spacing: 8,
@@ -337,7 +380,7 @@ class _AdminAccountFormScreenState
       children: [
         for (final option in options)
           ChoiceChip(
-            label: Text(AdminConstants.label(option)),
+            label: Text(AdminConstants.label(option, isVi)),
             selected: selected == option,
             showCheckmark: false,
             onSelected: (_) => onSelected(option),

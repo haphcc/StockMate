@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../providers/app_providers.dart';
 import '../data/admin_constants.dart';
 import '../data/models/admin_account_model.dart';
 import '../data/models/admin_page.dart';
@@ -35,16 +36,19 @@ class _AdminPortfoliosScreenState extends ConsumerState<AdminPortfoliosScreen> {
       );
 
   Future<void> _pickAccountFilter() async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     final repo = ref.read(adminRepositoryProvider);
     final picked = await showAdminSearchPicker<AdminAccountModel>(
       context,
-      title: 'Lọc theo tài khoản',
-      searchHint: 'Tìm số tài khoản, tên hoặc email...',
+      title: isVi ? 'Lọc theo tài khoản' : 'Filter by Account',
+      searchHint: isVi
+          ? 'Tìm số tài khoản, tên hoặc email...'
+          : 'Search account number, name, or email...',
       loadItems: (q) async =>
           (await repo.listAccounts(q: q.isEmpty ? null : q, pageSize: 50))
               .items,
       itemTitle: (a) =>
-          '${a.accountNumber} · ${AdminConstants.label(a.accountType)}',
+          '${a.accountNumber} · ${AdminConstants.label(a.accountType, isVi)}',
       itemSubtitle: (a) => a.customerName,
     );
     if (picked != null && mounted) {
@@ -84,6 +88,8 @@ class _AdminPortfoliosScreenState extends ConsumerState<AdminPortfoliosScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
     final async = ref.watch(adminPortfoliosProvider(_query));
 
     return Scaffold(
@@ -92,10 +98,10 @@ class _AdminPortfoliosScreenState extends ConsumerState<AdminPortfoliosScreen> {
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Danh mục nắm giữ'),
+        title: Text(isVi ? 'Danh mục nắm giữ' : 'Holdings & Portfolios'),
         actions: [
           IconButton(
-            tooltip: 'Lọc theo tài khoản',
+            tooltip: isVi ? 'Lọc theo tài khoản' : 'Filter by Account',
             icon: Icon(
               _accountFilter == null
                   ? Icons.filter_alt_outlined
@@ -105,7 +111,7 @@ class _AdminPortfoliosScreenState extends ConsumerState<AdminPortfoliosScreen> {
             onPressed: _pickAccountFilter,
           ),
           IconButton(
-            tooltip: 'Thêm dòng nắm giữ',
+            tooltip: isVi ? 'Thêm dòng nắm giữ' : 'Add Holding',
             icon: const Icon(Icons.add_circle_outline_rounded),
             onPressed: () => _openForm(),
           ),
@@ -117,7 +123,9 @@ class _AdminPortfoliosScreenState extends ConsumerState<AdminPortfoliosScreen> {
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: AppTextField(
               controller: _searchController,
-              hintText: 'Nhập đúng mã cổ phiếu (ví dụ ACB)',
+              hintText: isVi
+                  ? 'Nhập đúng mã cổ phiếu (ví dụ ACB)'
+                  : 'Enter stock symbol (e.g. ACB)',
               prefixIcon: const Icon(
                 Icons.search_rounded,
                 color: AppColors.darkTextMuted,
@@ -158,9 +166,11 @@ class _AdminPortfoliosScreenState extends ConsumerState<AdminPortfoliosScreen> {
               ),
               data: (page) {
                 if (page.items.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.pie_chart_outline_rounded,
-                    message: 'Không có dòng nắm giữ nào',
+                    message: isVi
+                        ? 'Không có dòng nắm giữ nào'
+                        : 'No holdings found',
                   );
                 }
                 return Column(
@@ -170,10 +180,10 @@ class _AdminPortfoliosScreenState extends ConsumerState<AdminPortfoliosScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                         itemCount: page.items.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (_, i) => _tile(page.items[i]),
+                        itemBuilder: (_, i) => _tile(page.items[i], isVi),
                       ),
                     ),
-                    _pager(page),
+                    _pager(page, isVi),
                   ],
                 );
               },
@@ -184,7 +194,7 @@ class _AdminPortfoliosScreenState extends ConsumerState<AdminPortfoliosScreen> {
     );
   }
 
-  Widget _tile(AdminPortfolioModel p) {
+  Widget _tile(AdminPortfolioModel p, bool isVi) {
     final color = p.trend > 0
         ? AppColors.priceUp
         : (p.trend < 0 ? AppColors.priceDown : AppColors.priceRef);
@@ -217,10 +227,10 @@ class _AdminPortfoliosScreenState extends ConsumerState<AdminPortfoliosScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'SL ${formatNumber(p.quantity.toString())} '
-                  '(khả dụng ${formatNumber(p.availableQuantity.toString())} · '
-                  'phong tỏa ${formatNumber(p.blockedQuantity.toString())}) · '
-                  'Giá vốn ${formatNumber(p.averagePrice)}',
+                  '${isVi ? 'SL' : 'Qty'} ${formatNumber(p.quantity.toString())} '
+                  '(${isVi ? 'khả dụng' : 'avail'} ${formatNumber(p.availableQuantity.toString())} · '
+                  '${isVi ? 'phong tỏa' : 'blocked'} ${formatNumber(p.blockedQuantity.toString())}) · '
+                  '${isVi ? 'Giá vốn' : 'Avg cost'} ${formatNumber(p.averagePrice)}',
                   style: const TextStyle(
                     color: AppColors.darkTextMuted,
                     fontSize: 11,
@@ -252,33 +262,16 @@ class _AdminPortfoliosScreenState extends ConsumerState<AdminPortfoliosScreen> {
     );
   }
 
-  Widget _pager(AdminPage<AdminPortfolioModel> page) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextButton(
-            onPressed: page.page > 1
-                ? () => setState(() => _page = page.page - 1)
-                : null,
-            child: const Text('Trước'),
-          ),
-          Text(
-            'Trang ${page.page}/${page.totalPages} · ${page.total} dòng',
-            style: const TextStyle(
-              color: AppColors.darkTextSecondary,
-              fontSize: 12,
-            ),
-          ),
-          TextButton(
-            onPressed: page.page < page.totalPages
-                ? () => setState(() => _page = page.page + 1)
-                : null,
-            child: const Text('Sau'),
-          ),
-        ],
-      ),
+  Widget _pager(AdminPage<AdminPortfolioModel> page, bool isVi) {
+    return AdminPaginationBar(
+      page: page.page,
+      totalPages: page.totalPages,
+      total: page.total,
+      itemName: isVi ? 'dòng' : 'holdings',
+      onPrevious: page.page > 1 ? () => setState(() => _page = page.page - 1) : null,
+      onNext: page.page < page.totalPages
+          ? () => setState(() => _page = page.page + 1)
+          : null,
     );
   }
 }

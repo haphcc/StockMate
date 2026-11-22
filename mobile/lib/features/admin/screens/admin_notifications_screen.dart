@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../providers/app_providers.dart';
 import '../data/admin_constants.dart';
 import '../data/models/admin_notification_model.dart';
 import '../data/models/admin_page.dart';
@@ -39,11 +40,14 @@ class _AdminNotificationsScreenState
   }
 
   Future<void> _delete(AdminNotificationModel n) async {
+    final isVi = ref.read(l10nProvider).isVietnamese;
     final ok = await showAdminConfirm(
       context,
-      title: 'Xóa thông báo',
-      message: 'Xóa thông báo "${n.title}" đã gửi cho ${n.customerName}?',
-      confirmText: 'Xóa',
+      title: isVi ? 'Xóa thông báo' : 'Delete Notification',
+      message: isVi
+          ? 'Xóa thông báo "${n.title}" đã gửi cho ${n.customerName}?'
+          : 'Delete notification "${n.title}" sent to ${n.customerName}?',
+      confirmText: isVi ? 'Xóa' : 'Delete',
       danger: true,
     );
     if (!ok) return;
@@ -53,7 +57,10 @@ class _AdminNotificationsScreenState
           .deleteNotification(n.notificationId);
       ref.invalidate(adminNotificationsProvider);
       if (!mounted) return;
-      showAdminSnack(context, 'Đã xóa thông báo');
+      showAdminSnack(
+        context,
+        isVi ? 'Đã xóa thông báo' : 'Notification deleted successfully',
+      );
     } catch (e) {
       if (!mounted) return;
       showAdminSnack(context, e.toString(), error: true);
@@ -62,6 +69,8 @@ class _AdminNotificationsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
     final async = ref.watch(adminNotificationsProvider(_query));
 
     return Scaffold(
@@ -70,10 +79,10 @@ class _AdminNotificationsScreenState
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Thông báo'),
+        title: Text(isVi ? 'Thông báo' : 'Notifications'),
         actions: [
           IconButton(
-            tooltip: 'Soạn thông báo',
+            tooltip: isVi ? 'Soạn thông báo' : 'Compose Notification',
             icon: const Icon(Icons.edit_notifications_rounded),
             onPressed: _compose,
           ),
@@ -98,9 +107,11 @@ class _AdminNotificationsScreenState
               ),
               data: (page) {
                 if (page.items.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.notifications_off_outlined,
-                    message: 'Chưa có thông báo nào',
+                    message: isVi
+                        ? 'Chưa có thông báo nào'
+                        : 'No notifications yet',
                   );
                 }
                 return Column(
@@ -110,10 +121,10 @@ class _AdminNotificationsScreenState
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                         itemCount: page.items.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (_, i) => _tile(page.items[i]),
+                        itemBuilder: (_, i) => _tile(page.items[i], isVi),
                       ),
                     ),
-                    _pager(page),
+                    _pager(page, isVi),
                   ],
                 );
               },
@@ -124,7 +135,7 @@ class _AdminNotificationsScreenState
     );
   }
 
-  Widget _tile(AdminNotificationModel n) {
+  Widget _tile(AdminNotificationModel n, bool isVi) {
     return AdminCard(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -191,7 +202,7 @@ class _AdminNotificationsScreenState
             ),
           ),
           IconButton(
-            tooltip: 'Xóa',
+            tooltip: isVi ? 'Xóa' : 'Delete',
             icon: const Icon(
               Icons.delete_outline_rounded,
               color: AppColors.priceDown,
@@ -203,33 +214,16 @@ class _AdminNotificationsScreenState
     );
   }
 
-  Widget _pager(AdminPage<AdminNotificationModel> page) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextButton(
-            onPressed: page.page > 1
-                ? () => setState(() => _page = page.page - 1)
-                : null,
-            child: const Text('Trước'),
-          ),
-          Text(
-            'Trang ${page.page}/${page.totalPages} · ${page.total} thông báo',
-            style: const TextStyle(
-              color: AppColors.darkTextSecondary,
-              fontSize: 12,
-            ),
-          ),
-          TextButton(
-            onPressed: page.page < page.totalPages
-                ? () => setState(() => _page = page.page + 1)
-                : null,
-            child: const Text('Sau'),
-          ),
-        ],
-      ),
+  Widget _pager(AdminPage<AdminNotificationModel> page, bool isVi) {
+    return AdminPaginationBar(
+      page: page.page,
+      totalPages: page.totalPages,
+      total: page.total,
+      itemName: isVi ? 'thông báo' : 'notifications',
+      onPrevious: page.page > 1 ? () => setState(() => _page = page.page - 1) : null,
+      onNext: page.page < page.totalPages
+          ? () => setState(() => _page = page.page + 1)
+          : null,
     );
   }
 }

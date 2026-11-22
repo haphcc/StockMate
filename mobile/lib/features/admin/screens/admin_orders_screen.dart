@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/app_text_field.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_state.dart';
+import '../../../providers/app_providers.dart';
 import '../data/admin_constants.dart';
 import '../data/models/admin_order_model.dart';
 import '../data/models/admin_page.dart';
@@ -63,6 +64,8 @@ class _AdminOrdersScreenState extends ConsumerState<AdminOrdersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = ref.watch(l10nProvider);
+    final isVi = l10n.isVietnamese;
     final async = ref.watch(adminOrdersProvider(_query));
 
     return Scaffold(
@@ -71,7 +74,7 @@ class _AdminOrdersScreenState extends ConsumerState<AdminOrdersScreen> {
         backgroundColor: AppColors.darkBackground,
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Sổ lệnh'),
+        title: Text(isVi ? 'Sổ lệnh' : 'Order Book'),
       ),
       body: Column(
         children: [
@@ -79,7 +82,9 @@ class _AdminOrdersScreenState extends ConsumerState<AdminOrdersScreen> {
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: AppTextField(
               controller: _searchController,
-              hintText: 'Nhập đúng mã cổ phiếu (ví dụ VCB)',
+              hintText: isVi
+                  ? 'Nhập đúng mã cổ phiếu (ví dụ VCB)'
+                  : 'Enter stock symbol (e.g. VCB)',
               prefixIcon: const Icon(
                 Icons.search_rounded,
                 color: AppColors.darkTextMuted,
@@ -112,9 +117,11 @@ class _AdminOrdersScreenState extends ConsumerState<AdminOrdersScreen> {
               ),
               data: (page) {
                 if (page.items.isEmpty) {
-                  return const EmptyState(
+                  return EmptyState(
                     icon: Icons.receipt_long_outlined,
-                    message: 'Không tìm thấy lệnh nào',
+                    message: isVi
+                        ? 'Không tìm thấy lệnh nào'
+                        : 'No orders found',
                   );
                 }
                 return Column(
@@ -124,10 +131,10 @@ class _AdminOrdersScreenState extends ConsumerState<AdminOrdersScreen> {
                         padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                         itemCount: page.items.length,
                         separatorBuilder: (_, _) => const SizedBox(height: 10),
-                        itemBuilder: (_, i) => _orderTile(page.items[i]),
+                        itemBuilder: (_, i) => _orderTile(page.items[i], isVi),
                       ),
                     ),
-                    _pager(page),
+                    _pager(page, isVi),
                   ],
                 );
               },
@@ -138,11 +145,13 @@ class _AdminOrdersScreenState extends ConsumerState<AdminOrdersScreen> {
     );
   }
 
-  Widget _orderTile(AdminOrderModel o) {
+  Widget _orderTile(AdminOrderModel o, bool isVi) {
     final color =
         o.orderType == 'BUY' ? AppColors.priceUp : AppColors.priceDown;
     final isMarket = o.orderKind == 'MP' || num.tryParse(o.orderPrice) == 0;
-    final price = isMarket ? 'Giá thị trường' : formatNumber(o.orderPrice);
+    final price = isMarket
+        ? (isVi ? 'Giá thị trường' : 'Market Price')
+        : formatNumber(o.orderPrice);
     return AdminCard(
       onTap: () => _openDetail(o),
       child: Row(
@@ -163,7 +172,7 @@ class _AdminOrdersScreenState extends ConsumerState<AdminOrdersScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      AdminConstants.label(o.orderType),
+                      AdminConstants.label(o.orderType, isVi),
                       style: TextStyle(
                         color: color,
                         fontSize: 13,
@@ -172,7 +181,7 @@ class _AdminOrdersScreenState extends ConsumerState<AdminOrdersScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      AdminConstants.label(o.orderKind),
+                      AdminConstants.label(o.orderKind, isVi),
                       style: const TextStyle(
                         color: AppColors.darkTextMuted,
                         fontSize: 11,
@@ -192,7 +201,7 @@ class _AdminOrdersScreenState extends ConsumerState<AdminOrdersScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Khớp ${formatNumber(o.filledQuantity.toString())}/'
+                  '${isVi ? 'Khớp' : 'Filled'} ${formatNumber(o.filledQuantity.toString())}/'
                   '${formatNumber(o.quantity.toString())} · $price · '
                   '${formatDateTime(o.orderDate)}',
                   style: const TextStyle(
@@ -210,33 +219,16 @@ class _AdminOrdersScreenState extends ConsumerState<AdminOrdersScreen> {
     );
   }
 
-  Widget _pager(AdminPage<AdminOrderModel> page) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          TextButton(
-            onPressed: page.page > 1
-                ? () => setState(() => _page = page.page - 1)
-                : null,
-            child: const Text('Trước'),
-          ),
-          Text(
-            'Trang ${page.page}/${page.totalPages} · ${page.total} lệnh',
-            style: const TextStyle(
-              color: AppColors.darkTextSecondary,
-              fontSize: 12,
-            ),
-          ),
-          TextButton(
-            onPressed: page.page < page.totalPages
-                ? () => setState(() => _page = page.page + 1)
-                : null,
-            child: const Text('Sau'),
-          ),
-        ],
-      ),
+  Widget _pager(AdminPage<AdminOrderModel> page, bool isVi) {
+    return AdminPaginationBar(
+      page: page.page,
+      totalPages: page.totalPages,
+      total: page.total,
+      itemName: isVi ? 'lệnh' : 'orders',
+      onPrevious: page.page > 1 ? () => setState(() => _page = page.page - 1) : null,
+      onNext: page.page < page.totalPages
+          ? () => setState(() => _page = page.page + 1)
+          : null,
     );
   }
 }
