@@ -48,7 +48,7 @@ class AppLocalizations {
   String get loginTitle =>
       isVietnamese ? 'Đăng nhập tài khoản' : 'Sign In to Account';
   String get accountLabel =>
-      isVietnamese ? 'Email' : 'Email';
+      isVietnamese ? 'Tài khoản / Email' : 'Email / Account';
   String get accountHint => 'investor@stockmate.vn';
   String get emailInvalid =>
       isVietnamese ? 'Email không hợp lệ' : 'Invalid email format';
@@ -243,7 +243,7 @@ class AppLocalizations {
   String get tabOrders =>
       isVietnamese ? 'Sổ lệnh' : 'Orders';
   String get tabPortfolio =>
-      isVietnamese ? 'Tài sản' : 'Portfolio';
+      isVietnamese ? 'Danh mục' : 'Portfolio';
   String get tabAdmin =>
       isVietnamese ? 'Quản trị' : 'Admin';
   String get tabProfile =>

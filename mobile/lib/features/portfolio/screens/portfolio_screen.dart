@@ -138,106 +138,94 @@ class _AssetCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                l10n.totalNetAssets,
-                style: const TextStyle(
-                  color: AppColors.darkTextSecondary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              FilledButton.icon(
-                onPressed: () => context.push('/deposit'),
-                icon: const Icon(Icons.add_circle_outline_rounded, size: 16),
-                label: Text(l10n.deposit),
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: const Color(0xFF06251C),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  minimumSize: Size.zero,
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  textStyle: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
           Text(
-            a.nav.formatVND,
+            l10n.totalNetAssets,
+            style: const TextStyle(color: AppColors.darkTextSecondary, fontSize: 13),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            a.totalAssetValue.formatVnd(),
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 28,
+              fontSize: 26,
               fontWeight: FontWeight.bold,
-              letterSpacing: -0.5,
             ),
           ),
           const SizedBox(height: 16),
-          const Divider(color: AppColors.darkCardBorder, height: 1),
-          const SizedBox(height: 16),
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: _stat(
-                  l10n.buyingPower,
-                  a.cashAvailable.formatVND,
-                ),
-              ),
-              Expanded(
-                child: _stat(
-                  l10n.profitLoss,
-                  '${a.totalProfitLoss.formatVND} (${a.profitRate.toStringAsFixed(2)}%)',
-                  color: c,
-                ),
-              ),
+              _Stat(l10n.profitLoss, a.totalProfitLoss.formatVnd(), c),
+              _Stat(l10n.buyingPower, a.cashBalance.formatVnd(), Colors.white),
             ],
           ),
         ],
       ),
     );
   }
+}
 
-  Widget _stat(String label, String value, {Color? color}) => Column(
+class _Stat extends StatelessWidget {
+  final String label, value;
+  final Color color;
+  const _Stat(this.label, this.value, this.color);
+
+  @override
+  Widget build(BuildContext context) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             label,
             style: const TextStyle(
               color: AppColors.darkTextSecondary,
-              fontSize: 12,
+              fontSize: 11,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 3),
           Text(
             value,
             style: TextStyle(
-              color: color ?? Colors.white,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
+              color: color,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
             ),
           ),
         ],
       );
 }
 
+class _LoadingCard extends StatelessWidget {
+  const _LoadingCard();
+  @override
+  Widget build(BuildContext context) => const SizedBox(
+        height: 150,
+        child: Center(child: CircularProgressIndicator()),
+      );
+}
+
+class _ErrorCard extends StatelessWidget {
+  final String message;
+  const _ErrorCard({required this.message});
+  @override
+  Widget build(BuildContext context) => Text(
+        message,
+        style: const TextStyle(color: AppColors.priceDown),
+      );
+}
+
 class _HoldingItem extends StatelessWidget {
-  final PortfolioItemModel item;
+  final PortfolioModel item;
   const _HoldingItem({required this.item});
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final c = item.profitLoss.cents >= 0
-        ? AppColors.primary
-        : AppColors.priceDown;
+    final isProfitable = item.profitLoss.cents >= 0;
+    final colorProfit =
+        isProfitable ? AppColors.primary : AppColors.priceDown;
+    final percentStr = item.profitLossPercent != null
+        ? '${isProfitable ? '+' : ''}${item.profitLossPercent!.decimalString}%'
+        : '—';
     final hasAvailable = item.availableQuantity > 0;
 
     return Container(
@@ -256,6 +244,7 @@ class _HoldingItem extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Header mã cổ phiếu & Lãi/Lỗ
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -265,88 +254,92 @@ class _HoldingItem extends StatelessWidget {
                           item.stockSymbol,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.darkSurface,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            item.exchange,
-                            style: const TextStyle(
-                              color: AppColors.darkTextSecondary,
-                              fontSize: 10,
+                        if (item.exchange.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
                             ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E293B),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Text(
+                              item.exchange,
+                              style: const TextStyle(
+                                color: AppColors.darkTextSecondary,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '${isProfitable ? '+' : ''}${item.profitLoss.formatVnd()}',
+                          style: TextStyle(
+                            color: colorProfit,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          percentStr,
+                          style: TextStyle(
+                            color: colorProfit,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
-                    Text(
-                      '${item.profitLoss.formatVND} (${item.profitRate.toStringAsFixed(2)}%)',
-                      style: TextStyle(
-                        color: c,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
                   ],
                 ),
-                const SizedBox(height: 4),
                 Text(
                   item.companyName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: AppColors.darkTextSecondary,
-                    fontSize: 12,
+                    fontSize: 11,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const Divider(color: AppColors.darkCardBorder, height: 20),
+
+                // Grid thông số chi tiết
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: _holdingStat(
-                        l10n.isVietnamese ? 'Khả dụng / Tổng' : 'Available / Total',
-                        '${item.availableQuantity} / ${item.quantity}',
-                        subLabel: item.t1PendingQuantity > 0 ||
-                                item.t2PendingQuantity > 0
-                            ? (l10n.isVietnamese
-                                ? 'Chờ: T+1: ${item.t1PendingQuantity} | T+2: ${item.t2PendingQuantity}'
-                                : 'Pending: T+1: ${item.t1PendingQuantity} | T+2: ${item.t2PendingQuantity}')
-                            : null,
-                      ),
+                    _holdingStat(
+                      l10n.isVietnamese ? 'Khối lượng' : 'Quantity',
+                      '${item.quantity}',
+                      subLabel: '${l10n.isVietnamese ? 'Khả dụng' : 'Available'}: ${item.availableQuantity}',
                     ),
-                    Expanded(
-                      child: _holdingStat(
-                        l10n.isVietnamese ? 'Giá vốn / Hiện tại' : 'Avg Cost / Current',
-                        '${item.avgBuyPrice.formatVND} / ${item.currentPrice.formatVND}',
-                        alignRight: true,
-                      ),
+                    _holdingStat(
+                      l10n.isVietnamese ? 'Giá vốn' : 'Avg Cost',
+                      '${item.averagePrice.decimalString} ₫',
+                      subLabel: '${l10n.isVietnamese ? 'TT' : 'Market'}: ${item.marketPrice.decimalString} ₫',
                     ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _holdingStat(
-                        l10n.isVietnamese ? 'Giá trị thị trường' : 'Market Value',
-                        item.marketValue.formatVND,
-                      ),
+                    _holdingStat(
+                      l10n.isVietnamese ? 'Giá trị' : 'Market Value',
+                      item.currentValue.formatVnd(),
+                      alignRight: true,
                     ),
                   ],
                 ),
                 const SizedBox(height: 14),
-                const Divider(color: AppColors.darkCardBorder, height: 1),
-                const SizedBox(height: 12),
 
-                // Hành động nhanh
+                // Hàng nút thao tác Mua thêm / Bán / Biểu đồ
                 Row(
                   children: [
                     // Nút Bán
@@ -479,38 +472,5 @@ class _HoldingItem extends StatelessWidget {
             ),
           ],
         ],
-      );
-}
-
-class _LoadingCard extends StatelessWidget {
-  const _LoadingCard();
-
-  @override
-  Widget build(BuildContext context) => Container(
-        height: 180,
-        decoration: BoxDecoration(
-          color: AppColors.darkCard,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: const Center(child: CircularProgressIndicator()),
-      );
-}
-
-class _ErrorCard extends StatelessWidget {
-  final String message;
-  const _ErrorCard({required this.message});
-
-  @override
-  Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.priceDown.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.priceDown),
-        ),
-        child: Text(
-          message,
-          style: const TextStyle(color: AppColors.priceDown),
-        ),
       );
 }

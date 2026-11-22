@@ -228,7 +228,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 AppTextField(
                   hintText: l10n.fullNameHint,
                   controller: _nameController,
-                  textCapitalization: TextCapitalization.characters,
                   validator: (value) =>
                       value == null || value.trim().isEmpty ? l10n.fullNameHint : null,
                   prefixIcon: const Icon(
