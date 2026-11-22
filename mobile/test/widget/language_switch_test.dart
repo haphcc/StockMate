@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stockmate/core/widgets/language_switch_button.dart';
+import 'package:stockmate/data/repositories/mock_auth_repository.dart';
 import 'package:stockmate/features/auth/screens/login_screen.dart';
 import 'package:stockmate/features/auth/screens/register_screen.dart';
 import 'package:stockmate/features/home/screens/settings_screen.dart';
@@ -48,6 +49,7 @@ void main() {
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
       expect(find.text('VI'), findsOneWidget);
       expect(find.text('EN'), findsOneWidget);
@@ -81,6 +83,7 @@ void main() {
           ),
         ),
       );
+      await tester.pumpAndSettle();
 
       expect(capturedRef.read(localeProvider).languageCode, 'vi');
 
@@ -102,9 +105,13 @@ void main() {
     testWidgets('LoginScreen updates strings dynamically when switching language', (WidgetTester tester) async {
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            authRepositoryProvider.overrideWithValue(MockAuthRepository()),
+          ],
           child: _buildTestApp(const LoginScreen()),
         ),
       );
+      await tester.pumpAndSettle();
 
       // Ban đầu là Tiếng Việt
       expect(find.text('Đăng nhập tài khoản'), findsOneWidget);
@@ -133,9 +140,13 @@ void main() {
     testWidgets('RegisterScreen updates strings dynamically when switching language', (WidgetTester tester) async {
       await tester.pumpWidget(
         ProviderScope(
+          overrides: [
+            authRepositoryProvider.overrideWithValue(MockAuthRepository()),
+          ],
           child: _buildTestApp(const RegisterScreen()),
         ),
       );
+      await tester.pumpAndSettle();
 
       // Ban đầu là Tiếng Việt
       expect(find.text('Tạo tài khoản StockMate'), findsOneWidget);
@@ -156,6 +167,7 @@ void main() {
           child: _buildTestApp(const SettingsScreen()),
         ),
       );
+      await tester.pumpAndSettle();
 
       // Ban đầu là Tiếng Việt
       expect(find.text('Cài đặt & Tài khoản'), findsOneWidget);
@@ -182,6 +194,7 @@ void main() {
           child: _buildTestApp(const ProfileScreen()),
         ),
       );
+      await tester.pumpAndSettle();
 
       // Ban đầu là Tiếng Việt
       expect(find.text('Hồ sơ cá nhân'), findsOneWidget);

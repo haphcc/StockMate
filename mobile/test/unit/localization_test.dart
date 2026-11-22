@@ -12,7 +12,7 @@ void main() {
 
   group('AppLocalizations unit tests', () {
     test('Vietnamese localizations return correct strings', () {
-      final l10n = AppLocalizations(const Locale('vi'));
+      const l10n = AppLocalizations(Locale('vi'));
 
       expect(l10n.isVietnamese, isTrue);
       expect(l10n.loginTitle, 'Đăng nhập tài khoản');
@@ -29,7 +29,7 @@ void main() {
     });
 
     test('English localizations return correct strings', () {
-      final l10n = AppLocalizations(const Locale('en'));
+      const l10n = AppLocalizations(Locale('en'));
 
       expect(l10n.isVietnamese, isFalse);
       expect(l10n.loginTitle, 'Sign In to Account');
@@ -46,8 +46,8 @@ void main() {
     });
 
     test('All critical strings are distinct between VI and EN', () {
-      final vi = AppLocalizations(const Locale('vi'));
-      final en = AppLocalizations(const Locale('en'));
+      const vi = AppLocalizations(Locale('vi'));
+      const en = AppLocalizations(Locale('en'));
 
       expect(vi.loginTitle, isNot(equals(en.loginTitle)));
       expect(vi.registerTitle, isNot(equals(en.registerTitle)));
