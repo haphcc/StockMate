@@ -43,7 +43,7 @@ class AdminCustomerCreate(BaseModel):
     full_name: str = Field(..., min_length=2, max_length=100)
     email: EmailStr
     phone_number: str = Field(..., min_length=9, max_length=15)
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8, max_length=72)
     role: str = Field(default="CUSTOMER", pattern="^(CUSTOMER|ADMIN)$")
     status: str = Field(default="ACTIVE", pattern="^(PENDING|ACTIVE|LOCKED|CLOSED)$")
     date_of_birth: date | None = None
@@ -59,7 +59,7 @@ class AdminCustomerUpdate(BaseModel):
     full_name: str | None = Field(default=None, min_length=2, max_length=100)
     email: EmailStr | None = None
     phone_number: str | None = Field(default=None, min_length=9, max_length=15)
-    password: str | None = Field(default=None, min_length=6)
+    password: str | None = Field(default=None, min_length=8, max_length=72)
     role: str | None = Field(default=None, pattern="^(CUSTOMER|ADMIN)$")
     status: str | None = Field(default=None, pattern="^(PENDING|ACTIVE|LOCKED|CLOSED)$")
     date_of_birth: date | None = None

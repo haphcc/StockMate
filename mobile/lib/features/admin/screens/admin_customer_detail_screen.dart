@@ -159,8 +159,8 @@ class _AdminCustomerDetailScreenState
             style: const TextStyle(color: Colors.white),
             decoration: InputDecoration(
               hintText: isVi
-                  ? 'Mật khẩu mới (tối thiểu 6 ký tự)'
-                  : 'New password (min 6 characters)',
+                  ? 'Mật khẩu mới (tối thiểu 8 ký tự)'
+                  : 'New password (min 8 characters)',
               errorText: error,
             ),
           ),
@@ -172,10 +172,10 @@ class _AdminCustomerDetailScreenState
             TextButton(
               onPressed: () {
                 final value = controller.text;
-                if (value.length < 6) {
+                if (value.length < 8) {
                   setLocal(() => error = isVi
-                      ? 'Tối thiểu 6 ký tự'
-                      : 'Minimum 6 characters');
+                      ? 'Tối thiểu 8 ký tự'
+                      : 'Minimum 8 characters');
                   return;
                 }
                 Navigator.pop(dialogContext, value);

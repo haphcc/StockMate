@@ -180,10 +180,10 @@ class _AdminCustomerFormScreenState
                 controller: _password,
                 obscureText: true,
                 validator: (v) {
-                  if ((v ?? '').length < 6) {
+                  if ((v ?? '').length < 8) {
                     return isVi
-                        ? 'Mật khẩu tối thiểu 6 ký tự'
-                        : 'Password must be at least 6 characters';
+                        ? 'Mật khẩu tối thiểu 8 ký tự'
+                        : 'Password must be at least 8 characters';
                   }
                   return null;
                 },
@@ -229,7 +229,7 @@ class _AdminCustomerFormScreenState
             GradientButton(
               text: _isEdit
                   ? (isVi ? 'Lưu thay đổi' : 'Save Changes')
-                  : (isVi ? 'Tạo khách hàng' : 'Create Customer'),
+                  : (isVi ? 'Tạo tài khoản' : 'Create Account'),
               isLoading: _saving,
               onPressed: _submit,
             ),
